@@ -1,10 +1,15 @@
 import { streamText } from "ai"
+import { createGoogle } from "@ai-sdk/google"
+import { createOpenAI } from "@ai-sdk/openai"
+import { createAnthropic } from "@ai-sdk/anthropic"
+import { createMistral } from "@ai-sdk/mistral"
 
 /**
  * POST /api/chat
  *
- * This route handler proxies requests to the Vercel AI Gateway.
- * It receives messages from the frontend and streams the AI response back.
+ * This route handler proxies requests to the appropriate AI provider.
+ * It receives custom API keys in headers, falls back to server env vars,
+ * and streams the response back.
  */
 export async function POST(req: Request) {
   try {
@@ -17,7 +22,50 @@ export async function POST(req: Request) {
       })
     }
 
+    // Get API keys from headers
+    const mistralKey = req.headers.get("x-mistral-key")
+    const googleKey = req.headers.get("x-google-key")
+    const openAiKey = req.headers.get("x-openai-key")
+    const anthropicKey = req.headers.get("x-anthropic-key")
+
     const selectedModel = model || "google/gemini-2.0-flash-001"
+
+    let modelInstance
+
+    if (selectedModel.startsWith("google/")) {
+      const modelName = selectedModel.replace("google/", "")
+      const google = createGoogle({
+        apiKey: googleKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
+      })
+      modelInstance = google(modelName)
+    } else if (selectedModel.startsWith("openai/")) {
+      const modelName = selectedModel.replace("openai/", "")
+      const openai = createOpenAI({
+        apiKey: openAiKey || process.env.OPENAI_API_KEY || "",
+      })
+      modelInstance = openai(modelName)
+    } else if (selectedModel.startsWith("anthropic/")) {
+      let modelName = selectedModel.replace("anthropic/", "")
+      // Map frontend alias to actual Anthropic model name
+      if (modelName === "claude-sonnet-4") {
+        modelName = "claude-3-5-sonnet-latest"
+      }
+      const anthropic = createAnthropic({
+        apiKey: anthropicKey || process.env.ANTHROPIC_API_KEY || "",
+      })
+      modelInstance = anthropic(modelName)
+    } else if (selectedModel.startsWith("mistral/")) {
+      const modelName = selectedModel.replace("mistral/", "")
+      const mistral = createMistral({
+        apiKey: mistralKey || process.env.MISTRAL_API_KEY || "",
+      })
+      modelInstance = mistral(modelName)
+    } else {
+      return new Response(JSON.stringify({ error: `Unsupported provider for model: ${selectedModel}` }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
 
     const lastIndex = messages.length - 1
     const transformedMessages = messages.map(
@@ -72,8 +120,8 @@ export async function POST(req: Request) {
     }
 
     const result = streamText({
-      model: selectedModel,
-      messages: validMessages,
+      model: modelInstance as any,
+      messages: validMessages as any,
       system: `You are a helpful, friendly AI assistant. You provide clear, concise, and accurate responses. 
 When explaining code or technical concepts, use markdown formatting with code blocks where appropriate.
 Be conversational but professional. If you're unsure about something, say so honestly.
