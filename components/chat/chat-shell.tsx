@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { MessageSquareDashed } from "lucide-react"
+import { MessageSquareDashed, Sun, Moon } from "lucide-react"
+import { useTheme } from "next-themes"
 import { MessageList } from "./message-list"
 import { Composer, type AIModel } from "./composer"
 import { Button } from "@/components/ui/button"
@@ -31,6 +32,13 @@ export function ChatShell() {
   const [abortController, setAbortController] = useState<AbortController | null>(null)
   const [selectedModel, setSelectedModel] = useState<AIModel>("google/gemini-2.0-flash-001")
   const [isLoaded, setIsLoaded] = useState(false)
+  const { setTheme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -185,7 +193,7 @@ export function ChatShell() {
 
   return (
     <div
-      className="relative h-dvh bg-stone-50"
+      className="relative h-dvh bg-stone-50 dark:bg-zinc-950 transition-colors duration-300"
       style={{
         boxShadow:
           "rgba(14, 63, 126, 0.04) 0px 0px 0px 1px, rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.04) 0px 6px 6px -3px, rgba(14, 63, 126, 0.04) 0px 12px 12px -6px, rgba(14, 63, 126, 0.04) 0px 24px 24px -12px",
@@ -195,11 +203,27 @@ export function ChatShell() {
         onClick={clearChat}
         variant="ghost"
         size="icon"
-        className="absolute top-4 left-4 z-20 h-10 w-10 rounded-full bg-zinc-100 hover:bg-zinc-200 text-stone-600"
+        className="absolute top-4 left-4 z-20 h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-stone-300 border border-border/40 shadow-sm transition-colors"
         aria-label="Reset chat"
       >
         <MessageSquareDashed className="w-5 h-5" />
       </Button>
+
+      {mounted && (
+        <Button
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-stone-300 border border-border/40 shadow-sm transition-all duration-300"
+          aria-label="Toggle theme"
+        >
+          {resolvedTheme === "dark" ? (
+            <Sun className="w-5 h-5 transition-transform duration-300 rotate-0 scale-100" />
+          ) : (
+            <Moon className="w-5 h-5 transition-transform duration-300 rotate-0 scale-100" />
+          )}
+        </Button>
+      )}
 
       <MessageList messages={messages} isStreaming={isStreaming} error={error} onRetry={retry} isLoaded={isLoaded} />
 
