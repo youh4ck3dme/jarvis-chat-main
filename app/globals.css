@@ -124,6 +124,40 @@
   }
 }
 
+/* Dark chat: force high-contrast, almost-white readable text */
+.dark .jarvis-chat {
+  color: #f4f4f5;
+}
+
+.dark .jarvis-chat .assistant-message,
+.dark .jarvis-chat .markdown-content,
+.dark .jarvis-chat .markdown-content strong,
+.dark .jarvis-chat .markdown-content em,
+.dark .jarvis-chat .markdown-content span,
+.dark .jarvis-chat .user-message-text {
+  color: #fafafa;
+}
+
+.dark .jarvis-chat .role-label {
+  color: #d4d4d8;
+}
+
+.dark .jarvis-chat .message-meta {
+  color: #a1a1aa;
+}
+
+.dark .jarvis-chat .composer-input {
+  color: #fafafa;
+}
+
+.dark .jarvis-chat .composer-input::placeholder {
+  color: #71717a;
+}
+
+.dark .jarvis-chat .composer-hint {
+  color: #d4d4d8;
+}
+
 /* Replace gray gradient with colorful animated gradient for AI streaming responses */
 .gradient-text-animated {
   background: linear-gradient(

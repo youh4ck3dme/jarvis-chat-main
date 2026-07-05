@@ -166,10 +166,10 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded }:
       {/* Empty state */}
       {messages.length === 0 && !error && !isStreaming && (
         <div className="flex flex-col items-center justify-center h-full text-center">
-          <p className="text-2xl font-semibold text-stone-800 dark:text-stone-100 mb-2">
+          <p className="text-2xl font-semibold text-stone-800 dark:text-zinc-50 mb-2">
             Hi, my name is Jarvis
           </p>
-          <p className="text-base text-stone-600 dark:text-stone-400 px-4">
+          <p className="text-base text-stone-600 dark:text-zinc-300 px-4">
             Send a message to begin chatting with the AI assistant
           </p>
         </div>
@@ -197,7 +197,7 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded }:
       {/* Error state */}
       {error && (
         <div
-          className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl"
+          className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl"
           role="alert"
           style={{
             boxShadow:
@@ -206,8 +206,8 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded }:
         >
           <AlertCircle className="w-5 h-5 text-red-500 shrink-0" aria-hidden="true" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-red-800">Something went wrong</p>
-            <p className="text-xs text-red-600 mt-0.5">{error}</p>
+            <p className="text-sm font-medium text-red-800 dark:text-red-200">Something went wrong</p>
+            <p className="text-xs text-red-600 dark:text-red-300 mt-0.5">{error}</p>
           </div>
           <Button
             variant="ghost"

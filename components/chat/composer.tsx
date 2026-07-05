@@ -278,7 +278,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
               disabled={isStreaming || disabled}
               rows={1}
               className={cn(
-                "flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-stone-800 dark:text-stone-200 placeholder:text-stone-400 dark:placeholder:text-stone-500",
+                "composer-input flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-stone-800 dark:text-zinc-50 placeholder:text-stone-400 dark:placeholder:text-zinc-500",
                 "focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
                 "max-h-[56px] overflow-y-auto",
               )}
@@ -343,7 +343,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                   "h-9 w-9 shrink-0 transition-all rounded-full relative z-10",
                   isRecording
                     ? "bg-red-500 hover:bg-red-600 text-white animate-bounce-subtle"
-                    : "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-stone-300",
+                    : "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-zinc-100",
                 )}
                 aria-label={isRecording ? "Stop recording" : "Start voice input"}
               >
@@ -358,7 +358,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
               }}
               disabled={isStreaming || disabled}
               size="icon"
-              className="h-9 w-9 shrink-0 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-stone-300 rounded-full"
+              className="h-9 w-9 shrink-0 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-zinc-100 rounded-full"
               aria-label="Attach image"
             >
               <Paperclip className="w-4 h-4" />
@@ -370,7 +370,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                   variant="ghost"
                   size="icon"
                   disabled={isStreaming || disabled}
-                  className="h-9 w-9 shrink-0 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-stone-300 rounded-full overflow-hidden flex items-center justify-center p-0"
+                  className="h-9 w-9 shrink-0 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-zinc-100 rounded-full overflow-hidden flex items-center justify-center p-0"
                   aria-label="Select AI model"
                   onClick={playClickSound}
                 >
@@ -388,7 +388,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                   align="start"
                   side="top"
                   sideOffset={8}
-                  className="w-40 px-2 py-2 rounded-2xl z-[9999] bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-stone-800 dark:text-stone-200 shadow-md"
+                  className="w-40 px-2 py-2 rounded-2xl z-[9999] bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-stone-800 dark:text-zinc-50 shadow-md"
                 >
                   {AI_MODELS.map((model) => (
                     <DropdownMenuItem
@@ -398,8 +398,8 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                         onModelChange(model.id)
                       }}
                       className={cn(
-                        "flex items-center cursor-pointer gap-3 rounded-lg px-2 py-1.5 hover:bg-stone-50 dark:hover:bg-zinc-800 text-stone-700 dark:text-stone-300",
-                        selectedModel === model.id && "bg-stone-100 dark:bg-zinc-800 text-stone-900 dark:text-stone-100 font-medium",
+                        "flex items-center cursor-pointer gap-3 rounded-lg px-2 py-1.5 hover:bg-stone-50 dark:hover:bg-zinc-800 text-stone-700 dark:text-zinc-200",
+                        selectedModel === model.id && "bg-stone-100 dark:bg-zinc-800 text-stone-900 dark:text-zinc-50 font-medium",
                       )}
                     >
                       <Image
@@ -416,7 +416,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
               </DropdownMenuPortal>
             </DropdownMenu>
 
-            <span className="text-xs text-stone-400 dark:text-stone-500">{currentModel.name}</span>
+            <span className="composer-hint text-xs text-stone-400 dark:text-zinc-300">{currentModel.name}</span>
           </div>
         </div>
       </div>

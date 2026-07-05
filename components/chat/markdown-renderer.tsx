@@ -50,7 +50,7 @@ export function MarkdownRenderer({ content, className, isStreaming = false }: Ma
       const codeMatch = remaining.match(/^`([^`]+)`/)
       if (codeMatch) {
         elements.push(
-          <code key={keyIndex++} className="px-1.5 py-0.5 bg-stone-100 text-stone-700 rounded text-sm font-mono">
+          <code key={keyIndex++} className="px-1.5 py-0.5 bg-stone-100 dark:bg-zinc-800 text-stone-700 dark:text-zinc-100 rounded text-sm font-mono">
             {codeMatch[1]}
           </code>,
         )
@@ -83,7 +83,7 @@ export function MarkdownRenderer({ content, className, isStreaming = false }: Ma
             href={linkMatch[2]}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2 transition-colors"
+            className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 underline underline-offset-2 transition-colors"
           >
             {linkMatch[1]}
           </a>,
@@ -119,7 +119,7 @@ export function MarkdownRenderer({ content, className, isStreaming = false }: Ma
       const codeMatch = remaining.match(/^`([^`]+)`/)
       if (codeMatch) {
         elements.push(
-          <code key={keyIndex++} className="px-1.5 py-0.5 bg-stone-100 text-stone-700 rounded text-sm font-mono">
+          <code key={keyIndex++} className="px-1.5 py-0.5 bg-stone-100 dark:bg-zinc-800 text-stone-700 dark:text-zinc-100 rounded text-sm font-mono">
             {codeMatch[1]}
           </code>,
         )
@@ -170,7 +170,7 @@ export function MarkdownRenderer({ content, className, isStreaming = false }: Ma
             href={linkMatch[2]}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2 transition-colors"
+            className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 underline underline-offset-2 transition-colors"
           >
             {linkMatch[1]}
           </a>,
@@ -252,7 +252,7 @@ export function MarkdownRenderer({ content, className, isStreaming = false }: Ma
   }
 
   return (
-    <div className={cn("text-sm whitespace-pre-wrap break-words", className)}>
+    <div className={cn("markdown-content text-sm whitespace-pre-wrap break-words text-stone-800 dark:text-zinc-50", className)}>
       {renderContent(staticContent, false)}
       {renderContent(animatingContent, true)}
     </div>

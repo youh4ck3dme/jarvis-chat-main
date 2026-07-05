@@ -1,7 +1,8 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { User } from "lucide-react"
+import { User, Copy, Check, Volume2, Square } from "lucide-react"
 import Image from "next/image"
 import { AnimatedOrb } from "./animated-orb"
 import type { Message } from "./chat-shell"
@@ -19,6 +20,58 @@ function formatTime(date: Date): string {
 
 export function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
   const isUser = message.role === "user"
+  const [copied, setCopied] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+
+  // Stop speaking when component unmounts
+  useEffect(() => {
+    return () => {
+      if (isSpeaking) {
+        if (typeof window !== "undefined") {
+          window.speechSynthesis.cancel()
+        }
+      }
+    }
+  }, [isSpeaking])
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy text: ", err)
+    }
+  }
+
+  const handleSpeak = () => {
+    if (typeof window === "undefined") return
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+      return
+    }
+
+    window.speechSynthesis.cancel() // Stop any current synthesis
+
+    const utterance = new SpeechSynthesisUtterance(message.content)
+    // Simple Slovak language detection
+    const hasSlovakChars = /[áéíóúýčďľňťžšĺŕô]/i.test(message.content)
+    utterance.lang = hasSlovakChars ? "sk-SK" : "en-US"
+
+    utterance.onstart = () => {
+      setIsSpeaking(true)
+    }
+    utterance.onend = () => {
+      setIsSpeaking(false)
+    }
+    utterance.onerror = () => {
+      setIsSpeaking(false)
+    }
+
+    window.speechSynthesis.speak(utterance)
+  }
 
   return (
     <div
@@ -48,15 +101,15 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
       {/* Message content */}
       <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
         {/* Role label (optional, shown on larger screens) */}
-        <span className="text-xs text-stone-400 mb-1 hidden sm:block mt-2">{isUser ? "You" : "Assistant"}</span>
+        <span className="role-label text-xs text-stone-400 dark:text-zinc-300 mb-1 hidden sm:block mt-2">{isUser ? "You" : "Assistant"}</span>
 
         {/* Bubble */}
         <div
           className={cn(
             "rounded-2xl border-none overflow-hidden",
             isUser
-              ? "bg-white text-stone-800 border border-stone-200 rounded-br-md"
-              : "bg-transparent text-stone-800 rounded-bl-md",
+              ? "bg-white dark:bg-zinc-800 text-stone-800 dark:text-zinc-50 border border-stone-200 dark:border-zinc-700 rounded-br-md"
+              : "assistant-message bg-transparent text-stone-800 dark:text-zinc-50 rounded-bl-md",
           )}
           style={{
             boxShadow: isUser
@@ -85,7 +138,7 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
                     />
                   </div>
                 )}
-                <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                <p className="user-message-text text-sm whitespace-pre-wrap break-words">{message.content}</p>
               </div>
             ) : (
               <MarkdownRenderer content={message.content || " "} isStreaming={isStreaming} />
@@ -93,8 +146,39 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
           </div>
         </div>
 
-        {/* Timestamp */}
-        <span className="text-xs text-stone-400 mt-1">{formatTime(message.createdAt)}</span>
+        {/* Timestamp & Actions */}
+        <div className="message-meta flex items-center gap-3 mt-1 text-stone-400 dark:text-zinc-400">
+          <span className="text-xs">{formatTime(message.createdAt)}</span>
+          <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
+            <button
+              onClick={handleCopy}
+              className="p-1 hover:text-stone-700 dark:hover:text-zinc-100 rounded-md transition-colors"
+              title="Copy message"
+            >
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500 animate-in fade-in zoom-in duration-200" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+            {!isUser && message.content && (
+              <button
+                onClick={handleSpeak}
+                className={cn(
+                  "p-1 hover:text-stone-700 dark:hover:text-zinc-100 rounded-md transition-colors",
+                  isSpeaking && "text-emerald-600 dark:text-emerald-500"
+                )}
+                title={isSpeaking ? "Stop speaking" : "Speak message"}
+              >
+                {isSpeaking ? (
+                  <Square className="w-3.5 h-3.5 animate-pulse" fill="currentColor" />
+                ) : (
+                  <Volume2 className="w-3.5 h-3.5" />
+                )}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

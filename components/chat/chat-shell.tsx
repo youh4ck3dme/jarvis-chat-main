@@ -269,7 +269,7 @@ export function ChatShell() {
 
   return (
     <div
-      className="relative h-dvh bg-stone-50 dark:bg-zinc-950 transition-colors duration-300"
+      className="jarvis-chat relative h-dvh bg-stone-50 dark:bg-zinc-950 transition-colors duration-300"
       style={{
         boxShadow:
           "rgba(14, 63, 126, 0.04) 0px 0px 0px 1px, rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.04) 0px 6px 6px -3px, rgba(14, 63, 126, 0.04) 0px 12px 12px -6px, rgba(14, 63, 126, 0.04) 0px 24px 24px -12px",
@@ -279,7 +279,7 @@ export function ChatShell() {
         onClick={clearChat}
         variant="ghost"
         size="icon"
-        className="absolute top-4 left-4 z-20 h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-stone-300 border border-border/40 shadow-sm transition-colors"
+        className="absolute top-4 left-4 z-20 h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-zinc-100 border border-border/40 shadow-sm transition-colors"
         aria-label="Reset chat"
       >
         <MessageSquareDashed className="w-5 h-5" />
@@ -291,7 +291,7 @@ export function ChatShell() {
             onClick={() => setIsSettingsOpen(true)}
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-stone-300 border border-border/40 shadow-sm transition-colors"
+            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-zinc-100 border border-border/40 shadow-sm transition-colors"
             aria-label="Open settings"
           >
             <Settings className="w-5 h-5" />
@@ -301,7 +301,7 @@ export function ChatShell() {
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-stone-300 border border-border/40 shadow-sm transition-all duration-300"
+            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-zinc-100 border border-border/40 shadow-sm transition-all duration-300"
             aria-label="Toggle theme"
           >
             {resolvedTheme === "dark" ? (
@@ -328,7 +328,7 @@ export function ChatShell() {
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200 p-4">
           <div 
-            className="w-full max-w-md bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl relative flex flex-col gap-4 animate-in zoom-in-95 duration-200 text-stone-800 dark:text-stone-200"
+            className="w-full max-w-md bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl relative flex flex-col gap-4 animate-in zoom-in-95 duration-200 text-stone-800 dark:text-zinc-50"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center pb-2 border-b border-stone-100 dark:border-zinc-800">
@@ -346,21 +346,21 @@ export function ChatShell() {
               </Button>
             </div>
 
-            <p className="text-xs text-stone-500 dark:text-stone-400">
+            <p className="text-xs text-stone-500 dark:text-zinc-300">
               Leave a field empty to use the server key from Vercel Environment Variables. Custom keys are saved locally in your browser.
             </p>
 
             <div className="flex flex-col gap-4 py-2">
               {/* Mistral API Key */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-stone-600 dark:text-stone-400">Mistral API Key</label>
+                <label className="text-xs font-semibold text-stone-600 dark:text-zinc-200">Mistral API Key</label>
                 <div className="relative">
                   <input
                     type={showKeys.mistral ? "text" : "password"}
                     value={keys.mistral}
                     onChange={(e) => setKeys(prev => ({ ...prev, mistral: e.target.value }))}
                     placeholder="Enter Mistral API Key"
-                    className="w-full text-sm bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full text-sm text-stone-800 dark:text-zinc-50 placeholder:text-stone-400 dark:placeholder:text-zinc-500 bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <button
                     type="button"
@@ -374,14 +374,14 @@ export function ChatShell() {
 
               {/* Gemini API Key */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-stone-600 dark:text-stone-400">Gemini (Google) API Key</label>
+                <label className="text-xs font-semibold text-stone-600 dark:text-zinc-200">Gemini (Google) API Key</label>
                 <div className="relative">
                   <input
                     type={showKeys.google ? "text" : "password"}
                     value={keys.google}
                     onChange={(e) => setKeys(prev => ({ ...prev, google: e.target.value }))}
                     placeholder="Enter Gemini API Key"
-                    className="w-full text-sm bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full text-sm text-stone-800 dark:text-zinc-50 placeholder:text-stone-400 dark:placeholder:text-zinc-500 bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <button
                     type="button"
@@ -395,14 +395,14 @@ export function ChatShell() {
 
               {/* OpenAI API Key */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-stone-600 dark:text-stone-400">OpenAI API Key</label>
+                <label className="text-xs font-semibold text-stone-600 dark:text-zinc-200">OpenAI API Key</label>
                 <div className="relative">
                   <input
                     type={showKeys.openai ? "text" : "password"}
                     value={keys.openai}
                     onChange={(e) => setKeys(prev => ({ ...prev, openai: e.target.value }))}
                     placeholder="Enter OpenAI API Key"
-                    className="w-full text-sm bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full text-sm text-stone-800 dark:text-zinc-50 placeholder:text-stone-400 dark:placeholder:text-zinc-500 bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <button
                     type="button"
@@ -416,14 +416,14 @@ export function ChatShell() {
 
               {/* Anthropic API Key */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-stone-600 dark:text-stone-400">Anthropic API Key</label>
+                <label className="text-xs font-semibold text-stone-600 dark:text-zinc-200">Anthropic API Key</label>
                 <div className="relative">
                   <input
                     type={showKeys.anthropic ? "text" : "password"}
                     value={keys.anthropic}
                     onChange={(e) => setKeys(prev => ({ ...prev, anthropic: e.target.value }))}
                     placeholder="Enter Anthropic API Key"
-                    className="w-full text-sm bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full text-sm text-stone-800 dark:text-zinc-50 placeholder:text-stone-400 dark:placeholder:text-zinc-500 bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <button
                     type="button"
