@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Chat - AI Assistant",
-  description: "Chat with our AI assistant powered by Gemini",
+  description: "Chat with our AI assistant powered by Mistral, Gemini, GPT-4o, and Claude",
 }
 
 export default function ChatPage() {

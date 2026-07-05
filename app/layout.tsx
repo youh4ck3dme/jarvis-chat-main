@@ -10,7 +10,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "AI Chat Assistant",
-  description: "Chat with our AI assistant powered by Gemini",
+  description: "Chat with our AI assistant powered by Mistral, Gemini, GPT-4o, and Claude",
   generator: "v0.app",
   icons: {
     icon: [

@@ -3,6 +3,7 @@ import { createGoogle } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createMistral } from "@ai-sdk/mistral"
+import { getProviderFromModel, missingApiKeyMessage, resolveApiKey } from "@/lib/resolve-api-key"
 
 /**
  * POST /api/chat
@@ -28,43 +29,54 @@ export async function POST(req: Request) {
     const openAiKey = req.headers.get("x-openai-key")
     const anthropicKey = req.headers.get("x-anthropic-key")
 
-    const selectedModel = model || "google/gemini-2.0-flash-001"
+    const selectedModel = model || "mistral/mistral-large-latest"
+    const provider = getProviderFromModel(selectedModel)
+
+    if (!provider) {
+      return new Response(JSON.stringify({ error: `Unsupported provider for model: ${selectedModel}` }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
+
+    const headerKeys: Record<typeof provider, string | null> = {
+      google: googleKey,
+      openai: openAiKey,
+      anthropic: anthropicKey,
+      mistral: mistralKey,
+    }
+
+    const apiKey = resolveApiKey(headerKeys[provider], provider)
+
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: missingApiKeyMessage(provider) }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
 
     let modelInstance
 
-    if (selectedModel.startsWith("google/")) {
+    if (provider === "google") {
       const modelName = selectedModel.replace("google/", "")
-      const google = createGoogle({
-        apiKey: googleKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
-      })
+      const google = createGoogle({ apiKey })
       modelInstance = google(modelName)
-    } else if (selectedModel.startsWith("openai/")) {
+    } else if (provider === "openai") {
       const modelName = selectedModel.replace("openai/", "")
-      const openai = createOpenAI({
-        apiKey: openAiKey || process.env.OPENAI_API_KEY || "",
-      })
+      const openai = createOpenAI({ apiKey })
       modelInstance = openai(modelName)
-    } else if (selectedModel.startsWith("anthropic/")) {
+    } else if (provider === "anthropic") {
       let modelName = selectedModel.replace("anthropic/", "")
       // Map frontend alias to actual Anthropic model name
       if (modelName === "claude-sonnet-4") {
         modelName = "claude-3-5-sonnet-latest"
       }
-      const anthropic = createAnthropic({
-        apiKey: anthropicKey || process.env.ANTHROPIC_API_KEY || "",
-      })
+      const anthropic = createAnthropic({ apiKey })
       modelInstance = anthropic(modelName)
-    } else if (selectedModel.startsWith("mistral/")) {
-      const modelName = selectedModel.replace("mistral/", "")
-      const mistral = createMistral({
-        apiKey: mistralKey || process.env.MISTRAL_API_KEY || "",
-      })
-      modelInstance = mistral(modelName)
     } else {
-      return new Response(JSON.stringify({ error: `Unsupported provider for model: ${selectedModel}` }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      })
+      const modelName = selectedModel.replace("mistral/", "")
+      const mistral = createMistral({ apiKey })
+      modelInstance = mistral(modelName)
     }
 
     const lastIndex = messages.length - 1

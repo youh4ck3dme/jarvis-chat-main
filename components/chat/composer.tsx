@@ -17,9 +17,10 @@ import Image from "next/image"
 import { AnimatedOrb } from "./animated-orb"
 import { AudioWaveform } from "./audio-waveform"
 
-export type AIModel = "google/gemini-2.0-flash-001" | "openai/gpt-4o" | "anthropic/claude-sonnet-4"
+export type AIModel = "google/gemini-2.0-flash-001" | "openai/gpt-4o" | "anthropic/claude-sonnet-4" | "mistral/mistral-large-latest"
 
 export const AI_MODELS: { id: AIModel; name: string; icon: string }[] = [
+  { id: "mistral/mistral-large-latest", name: "Mistral", icon: "/images/mistral.svg" },
   { id: "google/gemini-2.0-flash-001", name: "Gemini", icon: "/images/google.webp" },
   { id: "openai/gpt-4o", name: "GPT-4o", icon: "/images/gpt.png" },
   { id: "anthropic/claude-sonnet-4", name: "Claude", icon: "/images/claude.svg" },
@@ -369,11 +370,17 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                   variant="ghost"
                   size="icon"
                   disabled={isStreaming || disabled}
-                  className="h-9 w-9 shrink-0 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-stone-300 rounded-full"
+                  className="h-9 w-9 shrink-0 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-stone-300 rounded-full overflow-hidden flex items-center justify-center p-0"
                   aria-label="Select AI model"
                   onClick={playClickSound}
                 >
-                  <Brain className="w-4 h-4" />
+                  <Image
+                    src={currentModel.icon}
+                    alt={currentModel.name}
+                    width={20}
+                    height={20}
+                    className="rounded-full object-contain w-5 h-5"
+                  />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuPortal>

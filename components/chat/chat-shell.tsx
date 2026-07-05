@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { MessageSquareDashed, Sun, Moon } from "lucide-react"
+import { MessageSquareDashed, Sun, Moon, Settings, X, Eye, EyeOff } from "lucide-react"
 import { useTheme } from "next-themes"
 import { MessageList } from "./message-list"
 import { Composer, type AIModel } from "./composer"
 import { Button } from "@/components/ui/button"
+import { isProviderAuthError } from "@/lib/resolve-api-key"
 
 // Data model for messages
 export interface Message {
@@ -16,13 +17,49 @@ export interface Message {
   imageData?: string
 }
 
-// localStorage key for persisting messages
+// localStorage keys
 const STORAGE_KEY = "chat-messages"
 const MODEL_STORAGE_KEY = "chat-selected-model"
+const MISTRAL_KEY_STORAGE = "settings-mistral-key"
+const GOOGLE_KEY_STORAGE = "settings-google-key"
+const OPENAI_KEY_STORAGE = "settings-openai-key"
+const ANTHROPIC_KEY_STORAGE = "settings-anthropic-key"
 
 // Generates a unique ID for messages
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+}
+
+function buildApiKeyHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {}
+  const mistral = localStorage.getItem(MISTRAL_KEY_STORAGE)?.trim()
+  const google = localStorage.getItem(GOOGLE_KEY_STORAGE)?.trim()
+  const openai = localStorage.getItem(OPENAI_KEY_STORAGE)?.trim()
+  const anthropic = localStorage.getItem(ANTHROPIC_KEY_STORAGE)?.trim()
+
+  if (mistral) headers["x-mistral-key"] = mistral
+  if (google) headers["x-google-key"] = google
+  if (openai) headers["x-openai-key"] = openai
+  if (anthropic) headers["x-anthropic-key"] = anthropic
+
+  return headers
+}
+
+async function readApiError(response: Response): Promise<string> {
+  const contentType = response.headers.get("content-type") || ""
+
+  if (contentType.includes("application/json")) {
+    try {
+      const data = await response.json()
+      if (typeof data?.error === "string" && data.error.trim()) {
+        return data.error
+      }
+    } catch {
+      // fall through to generic message
+    }
+  }
+
+  return `Request failed (${response.status})`
 }
 
 export function ChatShell() {
@@ -30,17 +67,32 @@ export function ChatShell() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [abortController, setAbortController] = useState<AbortController | null>(null)
-  const [selectedModel, setSelectedModel] = useState<AIModel>("google/gemini-2.0-flash-001")
+  const [selectedModel, setSelectedModel] = useState<AIModel>("mistral/mistral-large-latest")
   const [isLoaded, setIsLoaded] = useState(false)
   const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+
+  // Settings states
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [keys, setKeys] = useState({
+    mistral: "",
+    google: "",
+    openai: "",
+    anthropic: "",
+  })
+  const [showKeys, setShowKeys] = useState({
+    mistral: false,
+    google: false,
+    openai: false,
+    anthropic: false,
+  })
 
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Load messages from localStorage on mount
+  // Load state and keys from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -53,11 +105,22 @@ export function ChatShell() {
         setMessages(messagesWithDates)
       }
       const savedModel = localStorage.getItem(MODEL_STORAGE_KEY) as AIModel | null
-      if (savedModel) {
+      const googleKey = localStorage.getItem(GOOGLE_KEY_STORAGE)?.trim()
+      if (savedModel?.startsWith("google/") && !googleKey) {
+        setSelectedModel("mistral/mistral-large-latest")
+        localStorage.setItem(MODEL_STORAGE_KEY, "mistral/mistral-large-latest")
+      } else if (savedModel) {
         setSelectedModel(savedModel)
       }
+
+      setKeys({
+        mistral: localStorage.getItem(MISTRAL_KEY_STORAGE) || "",
+        google: localStorage.getItem(GOOGLE_KEY_STORAGE) || "",
+        openai: localStorage.getItem(OPENAI_KEY_STORAGE) || "",
+        anthropic: localStorage.getItem(ANTHROPIC_KEY_STORAGE) || "",
+      })
     } catch (e) {
-      console.error("Failed to load from localStorage:", e)
+      console.error("Failed to load settings:", e)
     } finally {
       setIsLoaded(true)
     }
@@ -76,6 +139,14 @@ export function ChatShell() {
     setSelectedModel(model)
     localStorage.setItem(MODEL_STORAGE_KEY, model)
   }, [])
+
+  const handleSaveSettings = useCallback(() => {
+    localStorage.setItem(MISTRAL_KEY_STORAGE, keys.mistral.trim())
+    localStorage.setItem(GOOGLE_KEY_STORAGE, keys.google.trim())
+    localStorage.setItem(OPENAI_KEY_STORAGE, keys.openai.trim())
+    localStorage.setItem(ANTHROPIC_KEY_STORAGE, keys.anthropic.trim())
+    setIsSettingsOpen(false)
+  }, [keys])
 
   // Send a message to the AI
   const sendMessage = useCallback(
@@ -111,6 +182,7 @@ export function ChatShell() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...buildApiKeyHeaders(),
           },
           body: JSON.stringify({
             messages: [...messages, userMessage].map((m) => ({
@@ -124,7 +196,7 @@ export function ChatShell() {
         })
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          throw new Error(await readApiError(response))
         }
 
         const reader = response.body?.getReader()
@@ -143,6 +215,10 @@ export function ChatShell() {
 
           const chunk = decoder.decode(value, { stream: true })
           accumulatedContent += chunk
+
+          if (isProviderAuthError(accumulatedContent)) {
+            throw new Error(accumulatedContent.trim())
+          }
 
           setMessages((prev) =>
             prev.map((msg) => (msg.id === assistantMessage.id ? { ...msg, content: accumulatedContent } : msg)),
@@ -210,19 +286,31 @@ export function ChatShell() {
       </Button>
 
       {mounted && (
-        <Button
-          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          variant="ghost"
-          size="icon"
-          className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-stone-300 border border-border/40 shadow-sm transition-all duration-300"
-          aria-label="Toggle theme"
-        >
-          {resolvedTheme === "dark" ? (
-            <Sun className="w-5 h-5 transition-transform duration-300 rotate-0 scale-100" />
-          ) : (
-            <Moon className="w-5 h-5 transition-transform duration-300 rotate-0 scale-100" />
-          )}
-        </Button>
+        <div className="absolute top-4 right-4 z-20 flex gap-2">
+          <Button
+            onClick={() => setIsSettingsOpen(true)}
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-stone-300 border border-border/40 shadow-sm transition-colors"
+            aria-label="Open settings"
+          >
+            <Settings className="w-5 h-5" />
+          </Button>
+
+          <Button
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-stone-300 border border-border/40 shadow-sm transition-all duration-300"
+            aria-label="Toggle theme"
+          >
+            {resolvedTheme === "dark" ? (
+              <Sun className="w-5 h-5 transition-transform duration-300 rotate-0 scale-100" />
+            ) : (
+              <Moon className="w-5 h-5 transition-transform duration-300 rotate-0 scale-100" />
+            )}
+          </Button>
+        </div>
       )}
 
       <MessageList messages={messages} isStreaming={isStreaming} error={error} onRetry={retry} isLoaded={isLoaded} />
@@ -235,6 +323,137 @@ export function ChatShell() {
         selectedModel={selectedModel}
         onModelChange={handleModelChange}
       />
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200 p-4">
+          <div 
+            className="w-full max-w-md bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl relative flex flex-col gap-4 animate-in zoom-in-95 duration-200 text-stone-800 dark:text-stone-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center pb-2 border-b border-stone-100 dark:border-zinc-800">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Settings className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
+                API Keys Configuration
+              </h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsSettingsOpen(false)}
+                className="h-8 w-8 rounded-full text-stone-500 hover:bg-stone-100 dark:hover:bg-zinc-800"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              Leave a field empty to use the server key from Vercel Environment Variables. Custom keys are saved locally in your browser.
+            </p>
+
+            <div className="flex flex-col gap-4 py-2">
+              {/* Mistral API Key */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-stone-600 dark:text-stone-400">Mistral API Key</label>
+                <div className="relative">
+                  <input
+                    type={showKeys.mistral ? "text" : "password"}
+                    value={keys.mistral}
+                    onChange={(e) => setKeys(prev => ({ ...prev, mistral: e.target.value }))}
+                    placeholder="Enter Mistral API Key"
+                    className="w-full text-sm bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKeys(prev => ({ ...prev, mistral: !prev.mistral }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                  >
+                    {showKeys.mistral ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Gemini API Key */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-stone-600 dark:text-stone-400">Gemini (Google) API Key</label>
+                <div className="relative">
+                  <input
+                    type={showKeys.google ? "text" : "password"}
+                    value={keys.google}
+                    onChange={(e) => setKeys(prev => ({ ...prev, google: e.target.value }))}
+                    placeholder="Enter Gemini API Key"
+                    className="w-full text-sm bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKeys(prev => ({ ...prev, google: !prev.google }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                  >
+                    {showKeys.google ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* OpenAI API Key */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-stone-600 dark:text-stone-400">OpenAI API Key</label>
+                <div className="relative">
+                  <input
+                    type={showKeys.openai ? "text" : "password"}
+                    value={keys.openai}
+                    onChange={(e) => setKeys(prev => ({ ...prev, openai: e.target.value }))}
+                    placeholder="Enter OpenAI API Key"
+                    className="w-full text-sm bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKeys(prev => ({ ...prev, openai: !prev.openai }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                  >
+                    {showKeys.openai ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Anthropic API Key */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-stone-600 dark:text-stone-400">Anthropic API Key</label>
+                <div className="relative">
+                  <input
+                    type={showKeys.anthropic ? "text" : "password"}
+                    value={keys.anthropic}
+                    onChange={(e) => setKeys(prev => ({ ...prev, anthropic: e.target.value }))}
+                    placeholder="Enter Anthropic API Key"
+                    className="w-full text-sm bg-stone-50 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800 rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKeys(prev => ({ ...prev, anthropic: !prev.anthropic }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                  >
+                    {showKeys.anthropic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-stone-100 dark:border-zinc-800">
+              <Button
+                variant="ghost"
+                onClick={() => setIsSettingsOpen(false)}
+                className="rounded-xl border border-stone-200 dark:border-zinc-800 hover:bg-stone-50 dark:hover:bg-zinc-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveSettings}
+                className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl"
+              >
+                Save Keys
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

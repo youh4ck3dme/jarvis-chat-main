@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const { streamTextMock } = vi.hoisted(() => ({
   streamTextMock: vi.fn(),
@@ -11,7 +11,17 @@ vi.mock("ai", () => ({
 import { POST } from "./route"
 
 describe("POST /api/chat", () => {
+  const originalEnv = process.env
+
   beforeEach(() => {
+    process.env = {
+      ...originalEnv,
+      OPENAI_API_KEY: "test-openai-key",
+      GEMINI_API_KEY: "test-google-key",
+      ANTHROPIC_API_KEY: "test-anthropic-key",
+      MISTRAL_API_KEY: "test-mistral-key",
+    }
+
     streamTextMock.mockReset()
     streamTextMock.mockReturnValue({
       toTextStreamResponse: () =>
@@ -20,6 +30,31 @@ describe("POST /api/chat", () => {
           headers: { "Content-Type": "text/plain; charset=utf-8" },
         }),
     })
+  })
+
+  afterEach(() => {
+    process.env = originalEnv
+  })
+
+  it("returns 401 when provider API key is missing", async () => {
+    delete process.env.MISTRAL_API_KEY
+
+    const response = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "mistral/mistral-large-latest",
+          messages: [{ role: "user", content: "Hello" }],
+        }),
+      }),
+    )
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({
+      error: expect.stringContaining("Mistral API key is missing"),
+    })
+    expect(streamTextMock).not.toHaveBeenCalled()
   })
 
   it("returns 400 when messages are missing", async () => {
@@ -76,7 +111,7 @@ describe("POST /api/chat", () => {
 
     expect(streamTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "openai/gpt-4o",
+        model: expect.any(Object),
         messages: [
           { role: "user", content: "Hello" },
           { role: "assistant", content: "Hi there" },
