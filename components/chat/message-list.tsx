@@ -17,15 +17,15 @@ interface MessageListProps {
 }
 
 const LAUNCH_SOUND_URL = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/launch-SUi0itAGHr1wtvdDYYG5bzFLsIYHtP.mp3"
-const INTRO_PLAYED_KEY = "jarvis-intro-last-played"
-const INTRO_COOLDOWN_MS = 60 * 60 * 1000 // 1 hour in milliseconds
+export const INTRO_PLAYED_KEY = "jarvis-intro-last-played"
+export const INTRO_COOLDOWN_MS = 60 * 60 * 1000 // 1 hour in milliseconds
 
 /**
  * Check if the intro sound should play:
  * - First visit ever → play
  * - Subsequent visits → only if 1+ hour has passed since last play
  */
-function shouldPlayIntro(): boolean {
+export function shouldPlayIntro(): boolean {
   try {
     const lastPlayed = localStorage.getItem(INTRO_PLAYED_KEY)
     if (!lastPlayed) return true // First visit ever
@@ -36,7 +36,7 @@ function shouldPlayIntro(): boolean {
   }
 }
 
-function markIntroPlayed(): void {
+export function markIntroPlayed(): void {
   try {
     localStorage.setItem(INTRO_PLAYED_KEY, Date.now().toString())
   } catch {
