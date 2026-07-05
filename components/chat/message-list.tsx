@@ -158,7 +158,7 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded }:
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="absolute inset-0 overflow-y-auto pt-16 pb-32 space-y-4 border-none px-6"
+      className="absolute inset-0 overflow-y-auto pt-16 pb-36 space-y-4 border-none px-4 md:px-6"
       role="log"
       aria-label="Chat messages"
       aria-live="polite"
@@ -166,10 +166,10 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded }:
       {/* Empty state */}
       {messages.length === 0 && !error && !isStreaming && (
         <div className="flex flex-col items-center justify-center h-full text-center">
-          <p className="text-2xl font-semibold text-gray-800 mb-2">
+          <p className="text-2xl font-semibold text-stone-800 dark:text-stone-100 mb-2">
             Hi, my name is Jarvis
           </p>
-          <p className="text-base text-gray-600">
+          <p className="text-base text-stone-600 dark:text-stone-400 px-4">
             Send a message to begin chatting with the AI assistant
           </p>
         </div>

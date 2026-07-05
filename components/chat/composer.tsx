@@ -200,15 +200,42 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
     setUploadedImage(null)
   }, [])
 
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile()
+          if (file) {
+            e.preventDefault()
+            playClickSound()
+            const reader = new FileReader()
+            reader.onload = (event) => {
+              setUploadedImage(event.target?.result as string)
+              setShowImageBounce(true)
+              setTimeout(() => setShowImageBounce(false), 400)
+            }
+            reader.readAsDataURL(file)
+            break
+          }
+        }
+      }
+    },
+    [playClickSound],
+  )
+
   const currentModel = AI_MODELS.find((m) => m.id === selectedModel) || AI_MODELS[0]
 
   return (
-    <div className={cn("fixed bottom-4 left-0 right-0 px-4 pointer-events-none z-10", hasAnimated && "composer-intro")}>
+    <div className={cn("fixed bottom-3 md:bottom-4 left-0 right-0 px-3 md:px-4 pointer-events-none z-10", hasAnimated && "composer-intro")}>
       <div className="relative max-w-2xl mx-auto pointer-events-auto">
         <div
           className={cn(
-            "flex flex-col gap-3 p-4 bg-white border-stone-200 transition-all duration-200 border-none border-0 overflow-hidden relative rounded-3xl",
-            "focus-within:border-stone-300 focus-within:ring-2 focus-within:ring-stone-200",
+            "flex flex-col gap-2 md:gap-3 p-3 md:p-4 bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 transition-all duration-200 overflow-hidden relative rounded-3xl",
+            "focus-within:border-stone-300 dark:focus-within:border-zinc-700 focus-within:ring-2 focus-within:ring-stone-200 dark:focus-within:ring-zinc-800",
           )}
           style={{
             boxShadow:
@@ -218,7 +245,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
           <div className="flex gap-2 items-center">
             {uploadedImage && (
               <div className={cn("relative shrink-0", showImageBounce && "image-bounce")}>
-                <div className="w-12 h-12 rounded-lg overflow-hidden border border-stone-200">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden border border-stone-200 dark:border-zinc-800">
                   <Image
                     src={uploadedImage || "/placeholder.svg"}
                     alt="Uploaded image"
@@ -229,7 +256,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                 </div>
                 <button
                   onClick={removeImage}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-stone-800 hover:bg-stone-900 text-white rounded-full flex items-center justify-center transition-colors"
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-stone-800 hover:bg-stone-900 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white rounded-full flex items-center justify-center transition-colors"
                   aria-label="Remove image"
                 >
                   <X className="w-3 h-3" />
@@ -245,11 +272,12 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                 handleInput()
               }}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder={isRecording ? "Listening..." : "Type a message... (Shift+Enter for new line)"}
               disabled={isStreaming || disabled}
               rows={1}
               className={cn(
-                "flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-stone-800 placeholder:text-stone-400",
+                "flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-stone-800 dark:text-stone-200 placeholder:text-stone-400 dark:placeholder:text-stone-500",
                 "focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
                 "max-h-[56px] overflow-y-auto",
               )}
@@ -314,7 +342,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                   "h-9 w-9 shrink-0 transition-all rounded-full relative z-10",
                   isRecording
                     ? "bg-red-500 hover:bg-red-600 text-white animate-bounce-subtle"
-                    : "bg-zinc-100 hover:bg-zinc-200 text-stone-700",
+                    : "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-stone-300",
                 )}
                 aria-label={isRecording ? "Stop recording" : "Start voice input"}
               >
@@ -329,19 +357,19 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
               }}
               disabled={isStreaming || disabled}
               size="icon"
-              className="h-9 w-9 shrink-0 bg-zinc-100 hover:bg-zinc-200 text-stone-700 rounded-full"
+              className="h-9 w-9 shrink-0 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-stone-300 rounded-full"
               aria-label="Attach image"
             >
               <Paperclip className="w-4 h-4" />
             </Button>
 
             <DropdownMenu>
-              <DropdownMenuTrigger className="bg-zinc-100" asChild>
+              <DropdownMenuTrigger className="bg-zinc-100 dark:bg-zinc-800" asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   disabled={isStreaming || disabled}
-                  className="h-9 w-9 shrink-0 bg-zinc-100 hover:bg-zinc-200 text-stone-700 rounded-full"
+                  className="h-9 w-9 shrink-0 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-700 dark:text-stone-300 rounded-full"
                   aria-label="Select AI model"
                   onClick={playClickSound}
                 >
@@ -353,7 +381,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                   align="start"
                   side="top"
                   sideOffset={8}
-                  className="w-40 px-2 py-2 rounded-2xl z-[9999]"
+                  className="w-40 px-2 py-2 rounded-2xl z-[9999] bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-stone-800 dark:text-stone-200 shadow-md"
                 >
                   {AI_MODELS.map((model) => (
                     <DropdownMenuItem
@@ -363,8 +391,8 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                         onModelChange(model.id)
                       }}
                       className={cn(
-                        "flex items-center cursor-pointer gap-3 rounded-lg",
-                        selectedModel === model.id && "bg-stone-100",
+                        "flex items-center cursor-pointer gap-3 rounded-lg px-2 py-1.5 hover:bg-stone-50 dark:hover:bg-zinc-800 text-stone-700 dark:text-stone-300",
+                        selectedModel === model.id && "bg-stone-100 dark:bg-zinc-800 text-stone-900 dark:text-stone-100 font-medium",
                       )}
                     >
                       <Image
@@ -381,7 +409,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
               </DropdownMenuPortal>
             </DropdownMenu>
 
-            <span className="text-xs text-stone-400">{currentModel.name}</span>
+            <span className="text-xs text-stone-400 dark:text-stone-500">{currentModel.name}</span>
           </div>
         </div>
       </div>

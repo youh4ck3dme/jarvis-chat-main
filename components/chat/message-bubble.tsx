@@ -1,11 +1,11 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import type { Message } from "./chat-shell"
 import { User } from "lucide-react"
-import { MarkdownRenderer } from "./markdown-renderer"
 import Image from "next/image"
 import { AnimatedOrb } from "./animated-orb"
+import type { Message } from "./chat-shell"
+import { MarkdownRenderer } from "./markdown-renderer"
 
 interface MessageBubbleProps {
   message: Message
