@@ -1,12 +1,20 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { MessageSquareDashed, Sun, Moon, Settings, X, Eye, EyeOff } from "lucide-react"
+import { MessageSquareDashed, Sun, Moon, Settings, X, Eye, EyeOff, Brain } from "lucide-react"
 import { useTheme } from "next-themes"
 import { MessageList } from "./message-list"
 import { Composer, type AIModel } from "./composer"
 import { Button } from "@/components/ui/button"
 import { isProviderAuthError } from "@/lib/resolve-api-key"
+import dynamic from 'next/dynamic';
+import { extractFromMessage, updateConversationSummary, clearConversationMemory, buildAICcontext } from "@/lib/memory"
+
+// Dynamic import to avoid SSR issues with IndexedDB
+const MemoryPanel = dynamic(
+  () => import('./memory-panel'),
+  { ssr: false }
+)
 
 // Data model for messages
 export interface Message {
@@ -71,6 +79,10 @@ export function ChatShell() {
   const [isLoaded, setIsLoaded] = useState(false)
   const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  
+  // Memory states - using a default conversation ID for this simple version
+  const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false)
+  const DEFAULT_CONVERSATION_ID = "default-conversation"
 
   // Settings states
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -178,6 +190,15 @@ export function ChatShell() {
       setAbortController(controller)
 
       try {
+        // Build memory-enhanced system prompt
+        let systemPrompt = "You are a helpful, friendly AI assistant. You provide clear, concise, and accurate responses.";
+        try {
+          const { systemPrompt: memorySystemPrompt } = await buildAICcontext(DEFAULT_CONVERSATION_ID);
+          systemPrompt = memorySystemPrompt;
+        } catch (contextError) {
+          console.warn('Failed to build memory context:', contextError);
+        }
+
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: {
@@ -191,6 +212,7 @@ export function ChatShell() {
               imageData: m.imageData,
             })),
             model: selectedModel,
+            system: systemPrompt,
           }),
           signal: controller.signal,
         })
@@ -223,6 +245,24 @@ export function ChatShell() {
           setMessages((prev) =>
             prev.map((msg) => (msg.id === assistantMessage.id ? { ...msg, content: accumulatedContent } : msg)),
           )
+        }
+
+        // Extract memory from user message and assistant response
+        try {
+          await extractFromMessage(DEFAULT_CONVERSATION_ID, userMessage, userMessage.id);
+          
+          if (accumulatedContent) {
+            await extractFromMessage(DEFAULT_CONVERSATION_ID, {
+              role: 'assistant',
+              content: accumulatedContent,
+            }, assistantMessage.id);
+            
+            // Update conversation summary
+            const allMessages = [...messages, userMessage, { ...assistantMessage, content: accumulatedContent }];
+            await updateConversationSummary(DEFAULT_CONVERSATION_ID, allMessages);
+          }
+        } catch (memoryError) {
+          console.warn('Failed to update memory:', memoryError);
         }
       } catch (e) {
         if (e instanceof Error && e.name === "AbortError") {
@@ -265,6 +305,10 @@ export function ChatShell() {
     setMessages([])
     setError(null)
     localStorage.removeItem(STORAGE_KEY)
+    // Clear memory for this conversation
+    clearConversationMemory(DEFAULT_CONVERSATION_ID).catch((err: unknown) => {
+      console.warn('Failed to clear memory:', err);
+    });
   }, [])
 
   return (
@@ -284,6 +328,15 @@ export function ChatShell() {
       >
         <MessageSquareDashed className="w-5 h-5" />
       </Button>
+      
+      {/* Memory Panel */}
+      {mounted && (
+        <MemoryPanel
+          conversationId={DEFAULT_CONVERSATION_ID}
+          isOpen={isMemoryPanelOpen}
+          onClose={() => setIsMemoryPanelOpen(false)}
+        />
+      )}
 
       {mounted && (
         <div className="absolute top-4 right-4 z-20 flex gap-2">
@@ -295,6 +348,16 @@ export function ChatShell() {
             aria-label="Open settings"
           >
             <Settings className="w-5 h-5" />
+          </Button>
+
+          <Button
+            onClick={() => setIsMemoryPanelOpen(!isMemoryPanelOpen)}
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-zinc-100 border border-border/40 shadow-sm transition-colors"
+            aria-label="Toggle memory panel"
+          >
+            <Brain className="w-5 h-5" />
           </Button>
 
           <Button
