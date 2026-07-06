@@ -101,6 +101,7 @@ describe("POST /api/chat", () => {
             { role: "user", content: "Hello" },
             { role: "assistant", content: "Hi there" },
           ],
+          system: "Custom persona prompt",
         }),
       }),
     )
@@ -116,6 +117,7 @@ describe("POST /api/chat", () => {
           { role: "user", content: "Hello" },
           { role: "assistant", content: "Hi there" },
         ],
+        system: "Custom persona prompt",
       }),
     )
   })

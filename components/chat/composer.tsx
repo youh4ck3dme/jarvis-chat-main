@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useCallback, type KeyboardEvent, useEffect } from "react"
-import { Square, Mic, MicOff, Brain, Paperclip, X } from "lucide-react"
+import { Square, Mic, MicOff, Brain, Paperclip, X, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -27,19 +27,26 @@ export const AI_MODELS: { id: AIModel; name: string; icon: string }[] = [
 ]
 
 interface ComposerProps {
-  onSend: (content: string, imageData?: string) => void
+  onSend: (content: string, attachment?: string, attachmentName?: string) => void
   onStop: () => void
   isStreaming: boolean
   disabled?: boolean
   selectedModel: AIModel
   onModelChange: (model: AIModel) => void
+  apiKeys?: {
+    mistral: string
+    google: string
+    openai: string
+    anthropic: string
+  }
 }
 
-export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel, onModelChange }: ComposerProps) {
+export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel, onModelChange, apiKeys }: ComposerProps) {
   const [value, setValue] = useState("")
   const [isRecording, setIsRecording] = useState(false)
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null)
-  const [showImageBounce, setShowImageBounce] = useState(false)
+  const [uploadedFile, setUploadedFile] = useState<string | null>(null)
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
+  const [showFileBounce, setShowFileBounce] = useState(false)
   const [hasAnimated, setHasAnimated] = useState(false)
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -151,22 +158,23 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
   }, [])
 
   const handleSend = useCallback(() => {
-    if ((!value.trim() && !uploadedImage) || isStreaming || disabled) return
+    if ((!value.trim() && !uploadedFile) || isStreaming || disabled) return
     playClickSound()
 
     if (isRecording && recognitionRef.current) {
       recognitionRef.current.stop()
       setIsRecording(false)
     }
-    onSend(value || "Describe this image", uploadedImage || undefined)
+    onSend(value || (uploadedFile?.startsWith("data:image/") ? "Describe this image" : "Analyze this document"), uploadedFile || undefined, uploadedFileName || undefined)
     setValue("")
-    setUploadedImage(null)
+    setUploadedFile(null)
+    setUploadedFileName(null)
     baseTextRef.current = ""
     finalTranscriptsRef.current = ""
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
     }
-  }, [value, uploadedImage, isStreaming, disabled, onSend, isRecording, playClickSound])
+  }, [value, uploadedFile, uploadedFileName, isStreaming, disabled, onSend, isRecording, playClickSound])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -183,12 +191,13 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
       playClickSound()
 
       const file = e.target.files?.[0]
-      if (file && file.type.startsWith("image/")) {
+      if (file && (file.type.startsWith("image/") || file.type === "application/pdf" || file.type === "text/plain")) {
         const reader = new FileReader()
         reader.onload = (event) => {
-          setUploadedImage(event.target?.result as string)
-          setShowImageBounce(true)
-          setTimeout(() => setShowImageBounce(false), 400)
+          setUploadedFile(event.target?.result as string)
+          setUploadedFileName(file.name)
+          setShowFileBounce(true)
+          setTimeout(() => setShowFileBounce(false), 400)
         }
         reader.readAsDataURL(file)
       }
@@ -197,8 +206,9 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
     [playClickSound],
   )
 
-  const removeImage = useCallback(() => {
-    setUploadedImage(null)
+  const removeFile = useCallback(() => {
+    setUploadedFile(null)
+    setUploadedFileName(null)
   }, [])
 
   const handlePaste = useCallback(
@@ -215,9 +225,10 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
             playClickSound()
             const reader = new FileReader()
             reader.onload = (event) => {
-              setUploadedImage(event.target?.result as string)
-              setShowImageBounce(true)
-              setTimeout(() => setShowImageBounce(false), 400)
+              setUploadedFile(event.target?.result as string)
+              setUploadedFileName(file.name)
+              setShowFileBounce(true)
+              setTimeout(() => setShowFileBounce(false), 400)
             }
             reader.readAsDataURL(file)
             break
@@ -244,21 +255,30 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
           }}
         >
           <div className="flex gap-2 items-center">
-            {uploadedImage && (
-              <div className={cn("relative shrink-0", showImageBounce && "image-bounce")}>
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden border border-stone-200 dark:border-zinc-800">
-                  <Image
-                    src={uploadedImage || "/placeholder.svg"}
-                    alt="Uploaded image"
-                    width={48}
-                    height={48}
-                    className="w-full h-full object-cover"
-                  />
+            {uploadedFile && (
+              <div className={cn("relative shrink-0", showFileBounce && "image-bounce")}>
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden border border-stone-200 dark:border-zinc-800 bg-stone-100 dark:bg-zinc-800 flex items-center justify-center">
+                  {uploadedFile.startsWith("data:image/") ? (
+                    <Image
+                      src={uploadedFile}
+                      alt="Uploaded image"
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-stone-500 w-full h-full p-1 text-center" title={uploadedFileName || "Document"}>
+                      <FileText className="w-4 h-4 mb-0.5 shrink-0" />
+                      <span className="text-[9px] font-medium uppercase truncate w-full">
+                        {uploadedFileName?.split('.').pop() || "DOC"}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <button
-                  onClick={removeImage}
+                  onClick={removeFile}
                   className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-stone-800 hover:bg-stone-900 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white rounded-full flex items-center justify-center transition-colors"
-                  aria-label="Remove image"
+                  aria-label="Remove attachment"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -310,10 +330,10 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
             ) : (
               <button
                 onClick={handleSend}
-                disabled={(!value.trim() && !uploadedImage) || disabled}
+                disabled={(!value.trim() && !uploadedFile) || disabled}
                 className={cn(
                   "relative h-9 w-9 shrink-0 transition-all rounded-full flex items-center justify-center",
-                  (!value.trim() && !uploadedImage) || disabled
+                  (!value.trim() && !uploadedFile) || disabled
                     ? "opacity-50 cursor-not-allowed"
                     : "cursor-pointer hover:scale-105",
                 )}
@@ -328,10 +348,10 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*, application/pdf, text/plain"
               onChange={handleFileSelect}
               className="hidden"
-              aria-label="Upload image"
+              aria-label="Upload file"
             />
 
             <div className="relative">
@@ -390,28 +410,43 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                   sideOffset={8}
                   className="w-40 px-2 py-2 rounded-2xl z-[9999] bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-stone-800 dark:text-zinc-50 shadow-md"
                 >
-                  {AI_MODELS.map((model) => (
-                    <DropdownMenuItem
-                      key={model.id}
-                      onClick={() => {
-                        playClickSound()
-                        onModelChange(model.id)
-                      }}
-                      className={cn(
-                        "flex items-center cursor-pointer gap-3 rounded-lg px-2 py-1.5 hover:bg-stone-50 dark:hover:bg-zinc-800 text-stone-700 dark:text-zinc-200",
-                        selectedModel === model.id && "bg-stone-100 dark:bg-zinc-800 text-stone-900 dark:text-zinc-50 font-medium",
-                      )}
-                    >
-                      <Image
-                        src={model.icon || "/placeholder.svg"}
-                        alt={model.name}
-                        width={20}
-                        height={20}
-                        className="rounded-sm object-contain w-4 h-4"
-                      />
-                      <span className="text-sm">{model.name}</span>
-                    </DropdownMenuItem>
-                  ))}
+                  {AI_MODELS.map((model) => {
+                    const modelProvider = model.id.split("/")[0] as "mistral" | "google" | "openai" | "anthropic"
+                    const hasKey = apiKeys ? apiKeys[modelProvider]?.trim() !== "" : false
+                    const hasAnyKey = apiKeys ? Object.values(apiKeys).some((k) => k.trim() !== "") : false
+                    const isDisabled = hasAnyKey && !hasKey
+
+                    return (
+                      <DropdownMenuItem
+                        key={model.id}
+                        disabled={isDisabled}
+                        onClick={(e) => {
+                          if (isDisabled) {
+                            e.preventDefault()
+                            return
+                          }
+                          playClickSound()
+                          onModelChange(model.id)
+                        }}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors",
+                          isDisabled 
+                            ? "opacity-40 cursor-not-allowed pointer-events-none grayscale" 
+                            : "cursor-pointer hover:bg-stone-50 dark:hover:bg-zinc-800 text-stone-700 dark:text-zinc-200",
+                          selectedModel === model.id && !isDisabled && "bg-stone-100 dark:bg-zinc-800 text-stone-900 dark:text-zinc-50 font-medium",
+                        )}
+                      >
+                        <Image
+                          src={model.icon || "/placeholder.svg"}
+                          alt={model.name}
+                          width={20}
+                          height={20}
+                          className={cn("rounded-sm object-contain w-4 h-4", isDisabled && "opacity-60")}
+                        />
+                        <span className="text-sm">{model.name}</span>
+                      </DropdownMenuItem>
+                    )
+                  })}
                 </DropdownMenuContent>
               </DropdownMenuPortal>
             </DropdownMenu>

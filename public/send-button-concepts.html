@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Send Button Concepts — Master Board</title>
+  <style>
+    @keyframes pulse-core { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1} 50%{transform:translate(-50%,-50%) scale(1.4);opacity:.7} }
+    @keyframes orbit { 0%{transform:rotate(0deg) translateX(28%) rotate(0deg)} 100%{transform:rotate(360deg) translateX(28%) rotate(-360deg)} }
+    @keyframes burst { 0%{transform:translate(-50%,-50%) scale(.6);opacity:.9} 100%{transform:translate(-50%,-50%) scale(2.2);opacity:0} }
+    @keyframes float-drop { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes dash { to { stroke-dashoffset: -20; } }
+    @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
+    @keyframes particle-drift { 0%{transform:translate(0,0);opacity:.9} 100%{transform:translate(var(--dx),var(--dy));opacity:0} }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      width: 1600px; height: 1000px;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: #0c0a09;
+      color: #fafaf9;
+      overflow: hidden;
+    }
+    .canvas {
+      width: 1600px; height: 1000px;
+      padding: 32px 36px 28px;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(244,114,182,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 90% 80%, rgba(156,163,255,.08) 0%, transparent 50%),
+        #0c0a09;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .top {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      padding-bottom: 16px;
+    }
+    .top h1 {
+      font-size: 32px; font-weight: 800; letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #fff 0%, #f472b6 50%, #9e9fef 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .top .sub { font-size: 13px; color: #78716c; margin-top: 4px; }
+    .badge-row { display: flex; gap: 8px; }
+    .badge {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      padding: 5px 12px; border-radius: 99px; border: 1px solid;
+    }
+    .b-pink { color: #f472b6; border-color: rgba(244,114,182,.3); background: rgba(244,114,182,.08); }
+    .b-purple { color: #c471ec; border-color: rgba(196,113,236,.3); background: rgba(196,113,236,.08); }
+    .b-cyan { color: #67e8f9; border-color: rgba(103,232,249,.3); background: rgba(103,232,249,.08); }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; flex: 1; }
+    .concept {
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 12px;
+      backdrop-filter: blur(20px);
+    }
+    .concept-head { display: flex; gap: 10px; align-items: flex-start; }
+    .num {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800;
+    }
+    .n1 { background: linear-gradient(135deg,#f472b6,#ef4444); }
+    .n2 { background: linear-gradient(135deg,#f472b6,#c471ec); }
+    .n3 { background: linear-gradient(135deg,#9e9fef,#67e8f9); }
+    .concept h2 { font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+    .concept .tagline { font-size: 11px; color: #a8a29e; line-height: 1.4; margin-top: 2px; }
+
+    .states-row {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px; flex: 1;
+    }
+    .state {
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.05);
+      border-radius: 14px;
+      padding: 10px 8px 8px;
+      display: flex; flex-direction: column; gap: 6px;
+      position: relative;
+    }
+    .state-label {
+      font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: #57534e; text-align: center;
+    }
+    .state-name {
+      font-size: 9px; font-weight: 600; color: #a8a29e; text-align: center;
+    }
+    .scene {
+      flex: 1; min-height: 130px;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      position: relative; padding-bottom: 4px;
+    }
+
+    /* Composer mini */
+    .bar {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .txt {
+      flex: 1; height: 22px; border-radius: 6px;
+      font-size: 8px; display: flex; align-items: center; padding: 0 8px;
+      color: #78716c;
+    }
+    .txt.filled { color: #d6d3d1; background: rgba(255,255,255,.03); }
+
+    /* Orb system */
+    .orb-wrap { position: relative; flex-shrink: 0; }
+    .orb {
+      border-radius: 50%; overflow: hidden; position: relative;
+      background: #cff1f4;
+      box-shadow: 0 0 20px rgba(244,114,182,.25), 0 4px 16px rgba(0,0,0,.4);
+    }
+    .orb-sm { width: 28px; height: 28px; }
+    .orb-md { width: 32px; height: 32px; }
+    .orb-lg { width: 36px; height: 36px; }
+    .orb-blur { position: absolute; inset: 0; filter: blur(3px); }
+    .dot { position: absolute; border-radius: 50%; top: 50%; left: 50%; }
+    .d1{width:42%;height:42%;background:#9e9fef;opacity:.9}
+    .d2{width:32%;height:32%;background:#c471ec;opacity:.85}
+    .d3{width:46%;height:46%;background:#9bc761;opacity:.9}
+    .d4{width:22%;height:22%;background:#ccd4f2;opacity:.8}
+    .d5{width:28%;height:28%;background:#f472b6;opacity:.85}
+    .gloss { position:absolute; inset:0; border-radius:50%;
+      background: linear-gradient(180deg,rgba(255,255,255,.5) 0%,transparent 55%); }
+
+    /* C1 states */
+    .collapse .dot { transform: translate(-50%,-50%) scale(.2) !important; top:50% !important; left:50% !important; }
+    .core { position:absolute; top:50%; left:50%; width:5px; height:5px;
+      background:#fff; border-radius:50%; transform:translate(-50%,-50%);
+      box-shadow: 0 0 8px #fff, 0 0 20px #f472b6, 0 0 40px #c471ec;
+      animation: pulse-core 1.2s ease-in-out infinite; z-index:5; }
+    .ring { position:absolute; top:50%; left:50%; border-radius:50%;
+      border: 1.5px solid rgba(244,114,182,.5); transform:translate(-50%,-50%);
+      animation: burst 1.8s ease-out infinite; }
+    .ring2 { width:48px;height:48px; animation-delay:.6s; border-color:rgba(196,113,236,.35); }
+    .ring1 { width:36px;height:36px; }
+    .msg-bubble {
+      position:absolute; top:8px; right:6px;
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1);
+      border-radius:10px 10px 10px 3px; padding:5px 8px;
+      font-size:7px; color:#e7e5e4;
+    }
+    .trail { position:absolute; pointer-events:none; }
+
+    /* C2 states */
+    .drop-only .orb { background: radial-gradient(circle at 40% 35%, #fda4d0, #f472b6); }
+    .drop-only .orb-blur { display:none; }
+    .drop-only .d5 { width:60%;height:60%;background:#f472b6;transform:translate(-50%,-50%); }
+    .growing .d5 { width:38%;height:38%; }
+    .flying-drop {
+      position:absolute; width:14px; height:14px; border-radius:50%;
+      background: radial-gradient(circle at 35% 30%, #fda4d0, #f472b6);
+      box-shadow: 0 0 12px rgba(244,114,182,.7);
+      animation: float-drop 1.5s ease-in-out infinite;
+    }
+    .char-meter {
+      position:absolute; top:6px; left:6px; right:6px; height:3px;
+      background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden;
+    }
+    .char-fill { height:100%; border-radius:99px;
+      background: linear-gradient(90deg,#f472b6,#c471ec);
+      background-size:200%; animation: shimmer 2s linear infinite; }
+
+    /* C3 states */
+    .constellation .orb { background: rgba(207,241,244,.15); box-shadow: 0 0 16px rgba(158,159,239,.3); }
+    .constellation .orb-blur { filter:none; }
+    .constellation .dot { width:6px !important; height:6px !important; filter:none; opacity:1 !important; }
+    .arr .p1{transform:translate(-50%,-25%)} .arr .p2{transform:translate(-78%,5%)}
+    .arr .p3{transform:translate(-22%,5%)} .arr .p4{transform:translate(-62%,42%)}
+    .arr .p5{transform:translate(-38%,42%)}
+    .scatter .p1{transform:translate(-90%,-60%);animation:particle-drift 2s ease-out infinite;--dx:20px;--dy:-15px}
+    .scatter .p2{transform:translate(-10%,-70%);animation:particle-drift 2s ease-out infinite .2s;--dx:-18px;--dy:-20px}
+    .scatter .p3{transform:translate(-50%,-10%);animation:particle-drift 2s ease-out infinite .4s;--dx:5px;--dy:-30px}
+    .scatter .p4{transform:translate(-80%,30%);animation:particle-drift 2s ease-out infinite .1s;--dx:25px;--dy:-10px}
+    .scatter .p5{transform:translate(-20%,40%);animation:particle-drift 2s ease-out infinite .3s;--dx:-22px;--dy:-18px}
+    .ai-avatar {
+      position:absolute; top:10px; left:50%; transform:translateX(-50%);
+      width:22px; height:22px; border-radius:50%;
+      background:#cff1f4; box-shadow:0 0 10px rgba(158,159,239,.5);
+      opacity:.6;
+    }
+
+    .flow {
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+      padding: 6px 0 2px;
+    }
+    .flow-step {
+      font-size: 7px; font-weight: 600; color: #57534e;
+      padding: 2px 6px; border-radius: 4px;
+      background: rgba(255,255,255,.04);
+    }
+    .flow-arrow { font-size: 8px; color: #44403c; }
+
+    .bottom-bar {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 20px; align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+    .palette { display: flex; gap: 16px; align-items: center; }
+    .pal-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #78716c; }
+    .pal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .timeline {
+      display: flex; gap: 6px; align-items: center;
+      font-size: 9px; color: #57534e;
+    }
+    .tl-pill {
+      padding: 4px 10px; border-radius: 6px;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06);
+      font-weight: 600;
+    }
+    .tl-pill.active { color: #f472b6; border-color: rgba(244,114,182,.25); background: rgba(244,114,182,.06); }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="top">
+      <div>
+        <h1>Send Button — 3 Brutálne Koncepty</h1>
+        <p class="sub">Jarvis Chat · AnimatedOrb · kompletný lifecycle: IDLE → TYPING → HOVER → CLICK → FLIGHT → LANDING</p>
+      </div>
+      <div class="badge-row">
+        <span class="badge b-pink">#f472b6 circle-5</span>
+        <span class="badge b-purple">5 orbiting particles</span>
+        <span class="badge b-cyan">zero SVG icons</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- CONCEPT 1 -->
+      <div class="concept">
+        <div class="concept-head">
+          <div class="num n1">01</div>
+          <div>
+            <h2>Singularity Launch</h2>
+            <p class="tagline">Gravitácia textu. 5 kruhov → biele jadro → explózia → správa sa rodí z tlačidla.</p>
+          </div>
+        </div>
+        <div class="states-row">
+          <div class="state">
+            <div class="state-label">State A</div>
+            <div class="state-name">IDLE — orbit</div>
+            <div class="scene">
+              <div class="bar">
+                <div class="txt">Type a message...</div>
+                <div class="orb-wrap"><div class="orb orb-sm orb-md"><div class="orb-blur"><div class="dot d1" style="transform:translate(-55%,-45%)"></div><div class="dot d2" style="transform:translate(-30%,-65%)"></div><div class="dot d3" style="transform:translate(-70%,-35%)"></div><div class="dot d4" style="transform:translate(-25%,-25%)"></div><div class="dot d5" style="transform:translate(-60%,-60%)"></div></div><div class="gloss"></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="state">
+            <div class="state-label">State B</div>
+            <div class="state-name">TYPING — collapse</div>
+            <div class="scene">
+              <div class="char-meter"><div class="char-fill" style="width:72%"></div></div>
+              <div class="bar">
+                <div class="txt filled">Ahoj Jarvis!</div>
+                <div class="orb-wrap">
+                  <div class="orb orb-md collapse"><div class="orb-blur"><div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div><div class="dot d4"></div><div class="dot d5"></div></div><div class="core"></div><div class="gloss"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="state">
+            <div class="state-label">State C</div>
+            <div class="state-name">CLICK — burst + birth</div>
+            <div class="scene">
+              <div class="msg-bubble">Ahoj Jarvis!</div>
+              <svg class="trail" style="top:28px;right:20px;width:50px;height:40px" viewBox="0 0 50 40"><path d="M5 35 Q25 15 45 5" stroke="#f472b6" stroke-width="1.2" fill="none" stroke-dasharray="4 3" style="animation:dash 1s linear infinite"/></svg>
+              <div class="bar">
+                <div class="txt" style="opacity:.3">...</div>
+                <div class="orb-wrap" style="width:36px;height:36px">
+                  <div class="ring ring1"></div><div class="ring ring2"></div>
+                  <div class="orb orb-md collapse"><div class="core" style="width:8px;height:8px"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flow">
+          <span class="flow-step">orbit 6s</span><span class="flow-arrow">→</span>
+          <span class="flow-step">collapse</span><span class="flow-arrow">→</span>
+          <span class="flow-step">singularity 50ms</span><span class="flow-arrow">→</span>
+          <span class="flow-step">burst 400ms</span><span class="flow-arrow">→</span>
+          <span class="flow-step">bubble birth</span>
+        </div>
+      </div>
+
+      <!-- CONCEPT 2 -->
+      <div class="concept">
+        <div class="concept-head">
+          <div class="num n2">02</div>
+          <div>
+            <h2>Living Typing Orb</h2>
+            <p class="tagline">Send neexistuje, kým nepíšeš. Ružová kvapka rastie s textom, odtrhne sa a letí nahor.</p>
+          </div>
+        </div>
+        <div class="states-row">
+          <div class="state">
+            <div class="state-label">State A</div>
+            <div class="state-name">EMPTY — žiadny orb</div>
+            <div class="scene">
+              <div class="bar">
+                <div class="txt">Type a message...</div>
+                <div style="width:28px;height:28px;border:1px dashed rgba(255,255,255,.08);border-radius:50%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="state">
+            <div class="state-label">State B</div>
+            <div class="state-name">GROWING — kvapka</div>
+            <div class="scene">
+              <div class="char-meter"><div class="char-fill" style="width:35%"></div></div>
+              <div class="bar">
+                <div class="txt filled">Hej</div>
+                <div class="orb-wrap drop-only"><div class="orb orb-sm"><div class="orb-blur"><div class="dot d5"></div></div><div class="gloss"></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="state">
+            <div class="state-label">State C</div>
+            <div class="state-name">DETACH — let k bublinke</div>
+            <div class="scene">
+              <div class="flying-drop" style="top:18px;right:24px"></div>
+              <div class="msg-bubble" style="top:4px;opacity:.5">Hej</div>
+              <svg class="trail" style="top:22px;right:18px;width:55px;height:50px" viewBox="0 0 55 50"><path d="M45 42 C35 28 20 18 8 6" stroke="#f472b6" stroke-width="1.5" fill="none" opacity=".6"/></svg>
+              <div class="bar">
+                <div class="txt filled">Hej</div>
+                <div style="width:28px;height:28px;border:1px dashed rgba(244,114,182,.2);border-radius:50%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flow">
+          <span class="flow-step">0 chars = void</span><span class="flow-arrow">→</span>
+          <span class="flow-step">1-20 = drop</span><span class="flow-arrow">→</span>
+          <span class="flow-step">21+ = full orb</span><span class="flow-arrow">→</span>
+          <span class="flow-step">detach</span><span class="flow-arrow">→</span>
+          <span class="flow-step">bezier flight</span>
+        </div>
+      </div>
+
+      <!-- CONCEPT 3 -->
+      <div class="concept">
+        <div class="concept-head">
+          <div class="num n3">03</div>
+          <div>
+            <h2>Magnetic Constellation</h2>
+            <p class="tagline">5 bodov = živá šípka bez ikonky. Hover = konštelácia. Click = particle burst → AI avatar.</p>
+          </div>
+        </div>
+        <div class="states-row">
+          <div class="state">
+            <div class="state-label">State A</div>
+            <div class="state-name">DRIFT — satelit spí</div>
+            <div class="scene">
+              <div class="bar">
+                <div class="txt filled">Odoslať?</div>
+                <div class="orb-wrap"><div class="orb orb-sm"><div class="orb-blur"><div class="dot d1" style="transform:translate(-55%,-45%)"></div><div class="dot d2" style="transform:translate(-30%,-65%)"></div><div class="dot d3" style="transform:translate(-70%,-35%)"></div><div class="dot d4" style="transform:translate(-25%,-25%)"></div><div class="dot d5" style="transform:translate(-60%,-60%)"></div></div><div class="gloss"></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="state">
+            <div class="state-label">State B</div>
+            <div class="state-name">HOVER — šípka ↗</div>
+            <div class="scene">
+              <div class="bar">
+                <div class="txt filled">Odoslať?</div>
+                <div class="orb-wrap constellation"><div class="orb orb-md arr"><div class="orb-blur"><div class="dot d1 p1"></div><div class="dot d2 p2"></div><div class="dot d5 p3"></div><div class="dot d3 p4"></div><div class="dot d4 p5"></div></div><div class="gloss"></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="state">
+            <div class="state-label">State C</div>
+            <div class="state-name">CLICK — burst → AI</div>
+            <div class="scene">
+              <div class="ai-avatar"></div>
+              <div class="orb-wrap constellation scatter" style="position:absolute;top:20px;right:20px;width:36px;height:36px">
+                <div class="dot d1 p1" style="position:relative;width:5px;height:5px;background:#9e9fef"></div>
+                <div class="dot d5 p2" style="position:relative;width:5px;height:5px;background:#f472b6"></div>
+                <div class="dot d2 p3" style="position:relative;width:5px;height:5px;background:#c471ec"></div>
+                <div class="dot d3 p4" style="position:relative;width:5px;height:5px;background:#9bc761"></div>
+                <div class="dot d4 p5" style="position:relative;width:5px;height:5px;background:#ccd4f2"></div>
+              </div>
+              <div class="bar" style="opacity:.4">
+                <div class="txt filled">Odoslať?</div>
+                <div style="width:32px;height:32px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flow">
+          <span class="flow-step">drift orbit</span><span class="flow-arrow">→</span>
+          <span class="flow-step">magnetize</span><span class="flow-arrow">→</span>
+          <span class="flow-step">arrow form</span><span class="flow-arrow">→</span>
+          <span class="flow-step">particle burst</span><span class="flow-arrow">→</span>
+          <span class="flow-step">merge → AI orb</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <div class="palette">
+        <span style="font-size:10px;font-weight:700;color:#57534e;letter-spacing:.08em">PALETA</span>
+        <div class="pal-item"><span class="pal-dot" style="background:#9e9fef"></span>circle-1 #9e9fef</div>
+        <div class="pal-item"><span class="pal-dot" style="background:#c471ec"></span>circle-2 #c471ec</div>
+        <div class="pal-item"><span class="pal-dot" style="background:#9bc761"></span>circle-3 #9bc761</div>
+        <div class="pal-item"><span class="pal-dot" style="background:#ccd4f2"></span>circle-4 #ccd4f2</div>
+        <div class="pal-item"><span class="pal-dot" style="background:#f472b6"></span>circle-5 #f472b6</div>
+        <div class="pal-item"><span class="pal-dot" style="background:#cff1f4;border:1px solid rgba(255,255,255,.1)"></span>bg #cff1f4</div>
+      </div>
+      <div class="timeline">
+        <span class="tl-pill active">IDLE</span><span class="flow-arrow">→</span>
+        <span class="tl-pill">TYPING</span><span class="flow-arrow">→</span>
+        <span class="tl-pill">HOVER</span><span class="flow-arrow">→</span>
+        <span class="tl-pill">CLICK</span><span class="flow-arrow">→</span>
+        <span class="tl-pill">FLIGHT</span><span class="flow-arrow">→</span>
+        <span class="tl-pill">LANDING</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

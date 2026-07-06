@@ -14,6 +14,8 @@ interface MessageListProps {
   error: string | null
   onRetry: () => void
   isLoaded: boolean // Added isLoaded prop to know when localStorage is loaded
+  onEditMessage?: (id: string, newContent: string) => void
+  onDeleteMessage?: (id: string) => void
 }
 
 const LAUNCH_SOUND_URL = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/launch-SUi0itAGHr1wtvdDYYG5bzFLsIYHtP.mp3"
@@ -44,7 +46,7 @@ export function markIntroPlayed(): void {
   }
 }
 
-export function MessageList({ messages, isStreaming, error, onRetry, isLoaded }: MessageListProps) {
+export function MessageList({ messages, isStreaming, error, onRetry, isLoaded, onEditMessage, onDeleteMessage }: MessageListProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const [autoScroll, setAutoScroll] = useState(true)
@@ -189,6 +191,8 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded }:
             key={message.id}
             message={message}
             isStreaming={isStreaming && message.role === "assistant" && message === lastMessage}
+            onEdit={onEditMessage}
+            onDelete={onDeleteMessage}
           />
         ))}
 

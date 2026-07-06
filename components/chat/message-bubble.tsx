@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { User, Copy, Check, Volume2, Square } from "lucide-react"
+import { User, Copy, Check, Volume2, Square, Trash2, FileText } from "lucide-react"
 import Image from "next/image"
 import { AnimatedOrb } from "./animated-orb"
 import type { Message } from "./chat-shell"
@@ -11,6 +11,8 @@ import { MarkdownRenderer } from "./markdown-renderer"
 interface MessageBubbleProps {
   message: Message
   isStreaming?: boolean
+  onEdit?: (id: string, newContent: string) => void
+  onDelete?: (id: string) => void
 }
 
 // Format time for display
@@ -18,10 +20,12 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 }
 
-export function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
+export function MessageBubble({ message, isStreaming = false, onEdit, onDelete }: MessageBubbleProps) {
   const isUser = message.role === "user"
   const [copied, setCopied] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState(message.content)
 
   // Stop speaking when component unmounts
   useEffect(() => {
@@ -138,7 +142,50 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
                     />
                   </div>
                 )}
-                <p className="user-message-text text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                {message.attachment && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-900 w-fit pr-4">
+                    <div className="w-8 h-8 flex items-center justify-center bg-stone-200 dark:bg-zinc-800 rounded">
+                      <FileText className="w-4 h-4 text-stone-500" />
+                    </div>
+                    <span className="text-xs font-medium text-stone-700 dark:text-zinc-300 max-w-[150px] truncate">
+                      {message.attachmentName || "Document"}
+                    </span>
+                  </div>
+                )}
+                {isEditing ? (
+                  <div className="flex flex-col gap-2 mt-1">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full min-w-[200px] min-h-[80px] p-2 text-sm text-stone-800 dark:text-zinc-100 bg-stone-50 dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500/50 resize-y"
+                      autoFocus
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => {
+                          setIsEditing(false);
+                          setEditContent(message.content);
+                        }}
+                        className="text-xs px-2 py-1 rounded bg-stone-200 dark:bg-zinc-700 hover:bg-stone-300 dark:hover:bg-zinc-600 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setIsEditing(false);
+                          if (onEdit && editContent.trim() !== message.content) {
+                            onEdit(message.id, editContent);
+                          }
+                        }}
+                        className="text-xs px-2 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                      >
+                        Save & Resend
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="user-message-text text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                )}
               </div>
             ) : (
               <MarkdownRenderer content={message.content || " "} isStreaming={isStreaming} />
@@ -161,6 +208,24 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
                 <Copy className="w-3.5 h-3.5" />
               )}
             </button>
+            {isUser && !isStreaming && onEdit && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-1 hover:text-stone-700 dark:hover:text-zinc-100 rounded-md transition-colors"
+                title="Edit message"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+              </button>
+            )}
+            {!isStreaming && onDelete && (
+              <button
+                onClick={() => onDelete(message.id)}
+                className="p-1 hover:text-red-500 rounded-md transition-colors"
+                title="Delete message"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
             {!isUser && message.content && (
               <button
                 onClick={handleSpeak}

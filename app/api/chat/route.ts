@@ -14,7 +14,7 @@ import { getProviderFromModel, missingApiKeyMessage, resolveApiKey } from "@/lib
  */
 export async function POST(req: Request) {
   try {
-    const { messages, model } = await req.json()
+    const { messages, model, system } = await req.json()
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "Invalid request: messages array required" }), {
@@ -81,8 +81,8 @@ export async function POST(req: Request) {
 
     const lastIndex = messages.length - 1
     const transformedMessages = messages.map(
-      (m: { role: string; content: string; imageData?: string }, index: number) => {
-        // Only process image for the last user message
+      (m: { role: string; content: string; imageData?: string; attachment?: string }, index: number) => {
+        // Only process image/file for the last user message
         const isLastUserMessage = index === lastIndex && m.role === "user"
 
         if (isLastUserMessage && m.imageData && m.imageData.startsWith("data:image/")) {
@@ -100,13 +100,30 @@ export async function POST(req: Request) {
               },
             ],
           }
+        } else if (isLastUserMessage && m.attachment && (m.attachment.startsWith("data:application/pdf") || m.attachment.startsWith("data:text/plain"))) {
+          const [prefix, base64Data] = m.attachment.split(",")
+          const mimeType = prefix.replace("data:", "").split(";")[0]
+          return {
+            role: m.role as "user" | "assistant",
+            content: [
+              {
+                type: "file" as const,
+                data: base64Data,
+                mimeType,
+              },
+              {
+                type: "text" as const,
+                text: m.content || "Analyze this document.",
+              },
+            ],
+          }
         }
 
         // For all other messages (history), use text only
-        // If there was an image, mention it in the text
+        // If there was an image or attachment, mention it in the text
         let textContent = m.content
-        if (m.imageData && !isLastUserMessage) {
-          textContent = m.content || "[User shared an image]"
+        if ((m.imageData || m.attachment) && !isLastUserMessage) {
+          textContent = m.content || (m.imageData ? "[User shared an image]" : "[User shared a document]")
         }
 
         return {
@@ -134,7 +151,7 @@ export async function POST(req: Request) {
     const result = streamText({
       model: modelInstance as any,
       messages: validMessages as any,
-      system: `You are a helpful, friendly AI assistant. You provide clear, concise, and accurate responses. 
+      system: system || `You are a helpful, friendly AI assistant. You provide clear, concise, and accurate responses. 
 When explaining code or technical concepts, use markdown formatting with code blocks where appropriate.
 Be conversational but professional. If you're unsure about something, say so honestly.
 When analyzing images, describe them in detail and answer any questions about them.`,

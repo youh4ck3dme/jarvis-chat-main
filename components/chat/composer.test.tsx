@@ -51,7 +51,7 @@ describe("Composer", () => {
     await user.type(screen.getByRole("textbox", { name: "Message input" }), "Hello composer")
     await user.click(screen.getByRole("button", { name: "Send message" }))
 
-    expect(onSend).toHaveBeenCalledWith("Hello composer", undefined)
+    expect(onSend).toHaveBeenCalledWith("Hello composer", undefined, undefined)
   })
 
   it("submits typed text when Enter is pressed", async () => {
@@ -64,7 +64,7 @@ describe("Composer", () => {
     await user.type(input, "Enter to send")
     await user.keyboard("{Enter}")
 
-    expect(onSend).toHaveBeenCalledWith("Enter to send", undefined)
+    expect(onSend).toHaveBeenCalledWith("Enter to send", undefined, undefined)
   })
 
   it("does not submit on Shift+Enter", async () => {
@@ -100,7 +100,7 @@ describe("Composer", () => {
 
     render(<Composer {...defaultProps} onSend={onSend} />)
 
-    const fileInput = screen.getByLabelText("Upload image") as HTMLInputElement
+    const fileInput = screen.getByLabelText("Upload file") as HTMLInputElement
     const file = new File(["fake"], "diagram.png", { type: "image/png" })
 
     await user.type(screen.getByRole("textbox", { name: "Message input" }), "Check this")
@@ -112,7 +112,7 @@ describe("Composer", () => {
 
     await user.click(screen.getByRole("button", { name: "Send message" }))
 
-    expect(onSend).toHaveBeenCalledWith("Check this", imageDataUrl)
+    expect(onSend).toHaveBeenCalledWith("Check this", imageDataUrl, "diagram.png")
     vi.unstubAllGlobals()
   })
 
