@@ -75,8 +75,8 @@
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -605,4 +605,61 @@
 .text-blur-intro-delay {
   animation: text-blur-intro 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
   opacity: 0;
+}
+
+@keyframes planner-scan {
+  0%,
+  100% {
+    transform: translateY(-10%);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(280%);
+    opacity: 1;
+  }
+}
+
+.planner-scan-beam {
+  animation: planner-scan 2.4s ease-in-out infinite;
+}
+
+@keyframes storyboard-card-pop {
+  0% {
+    transform: perspective(600px) rotateY(-8deg) scale(0.96);
+  }
+  100% {
+    transform: perspective(600px) rotateY(0deg) scale(1.05);
+  }
+}
+
+.storyboard-card-active {
+  animation: storyboard-card-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes orb-mind-orbit-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.orb-mind-orbit-ring {
+  animation: orb-mind-orbit-spin 24s linear infinite;
+}
+
+.orb-mind-node {
+  animation: orb-mind-node-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes orb-mind-node-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

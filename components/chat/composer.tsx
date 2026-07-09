@@ -3,28 +3,114 @@
 import type React from "react"
 
 import { useState, useRef, useCallback, type KeyboardEvent, useEffect } from "react"
-import { Square, Mic, MicOff, Brain, Paperclip, X, FileText } from "lucide-react"
+import {
+  Square,
+  Mic,
+  MicOff,
+  Paperclip,
+  X,
+  FileText,
+  Play,
+  Plus,
+  MoreHorizontal,
+  ChevronDown,
+  Wand2,
+  Code2,
+  Minimize2,
+  Eraser,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
+import { useIsMobile } from "@/components/ui/use-mobile"
+import { QUICK_PROMPTS, type QuickPromptKey } from "@/lib/chat/workspace-actions"
 import Image from "next/image"
 import { AnimatedOrb } from "./animated-orb"
 import { AudioWaveform } from "./audio-waveform"
 
-export type AIModel = "google/gemini-2.0-flash-001" | "openai/gpt-4o" | "anthropic/claude-sonnet-4" | "mistral/mistral-large-latest"
+export type AIModel =
+  | "google/gemini-2.0-flash-001"
+  | "mistral/mistral-small-latest"
+  | "mistral/mistral-large-latest"
+  | "openai/gpt-4o-mini"
+  | "openai/gpt-4o"
+  | "anthropic/claude-sonnet-4"
 
-export const AI_MODELS: { id: AIModel; name: string; icon: string }[] = [
-  { id: "mistral/mistral-large-latest", name: "Mistral", icon: "/images/mistral.svg" },
-  { id: "google/gemini-2.0-flash-001", name: "Gemini", icon: "/images/google.webp" },
-  { id: "openai/gpt-4o", name: "GPT-4o", icon: "/images/gpt.png" },
-  { id: "anthropic/claude-sonnet-4", name: "Claude", icon: "/images/claude.svg" },
+export type AIModelTier = "fast" | "quality"
+
+export const AI_MODELS: {
+  id: AIModel
+  name: string
+  icon: string
+  tier: AIModelTier
+  hint: string
+  requiresKey?: "google" | "openai" | "anthropic"
+}[] = [
+  {
+    id: "mistral/mistral-small-latest",
+    name: "Mistral Small",
+    icon: "/images/mistral.svg",
+    tier: "fast",
+    hint: "Rýchly — default (tvoj MISTRAL_API_KEY)",
+  },
+  {
+    id: "mistral/mistral-large-latest",
+    name: "Mistral Large",
+    icon: "/images/mistral.svg",
+    tier: "quality",
+    hint: "Kvalitnejší, pomalší",
+  },
+  {
+    id: "google/gemini-2.0-flash-001",
+    name: "Gemini Flash",
+    icon: "/images/google.webp",
+    tier: "fast",
+    hint: "Vyžaduje GEMINI_API_KEY v Settings",
+    requiresKey: "google",
+  },
+  {
+    id: "openai/gpt-4o-mini",
+    name: "GPT-4o Mini",
+    icon: "/images/gpt.png",
+    tier: "fast",
+    hint: "Vyžaduje OPENAI_API_KEY v Settings",
+    requiresKey: "openai",
+  },
+  {
+    id: "openai/gpt-4o",
+    name: "GPT-4o",
+    icon: "/images/gpt.png",
+    tier: "quality",
+    hint: "Vyžaduje OPENAI_API_KEY v Settings",
+    requiresKey: "openai",
+  },
+  {
+    id: "anthropic/claude-sonnet-4",
+    name: "Claude",
+    icon: "/images/claude.svg",
+    tier: "quality",
+    hint: "Vyžaduje ANTHROPIC_API_KEY v Settings",
+    requiresKey: "anthropic",
+  },
 ]
+
+/** Mistral works with server MISTRAL_API_KEY; others need a key in Settings or env. */
+export function isModelAvailable(
+  model: (typeof AI_MODELS)[number],
+  apiKeys?: { mistral: string; google: string; openai: string; anthropic: string },
+): boolean {
+  if (!model.requiresKey) return true
+  const key = apiKeys?.[model.requiresKey]?.trim()
+  return Boolean(key)
+}
 
 interface ComposerProps {
   onSend: (content: string, attachment?: string, attachmentName?: string) => void
@@ -39,9 +125,30 @@ interface ComposerProps {
     openai: string
     anthropic: string
   }
+  variant?: "default" | "workspace"
+  onPlayPreview?: () => void
+  showPlayButton?: boolean
+  hasArtifact?: boolean
+  onQuickSend?: (prompt: string) => void
+  enableBuilderQuickActions?: boolean
 }
 
-export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel, onModelChange, apiKeys }: ComposerProps) {
+export function Composer({
+  onSend,
+  onStop,
+  isStreaming,
+  disabled,
+  selectedModel,
+  onModelChange,
+  apiKeys,
+  variant = "default",
+  onPlayPreview,
+  showPlayButton = false,
+  hasArtifact = false,
+  onQuickSend,
+  enableBuilderQuickActions = false,
+}: ComposerProps) {
+  const isMobile = useIsMobile()
   const [value, setValue] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<string | null>(null)
@@ -157,6 +264,31 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
     }
   }, [])
 
+  const clearComposerInput = useCallback(() => {
+    setValue("")
+    setUploadedFile(null)
+    setUploadedFileName(null)
+    baseTextRef.current = ""
+    finalTranscriptsRef.current = ""
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"
+    }
+  }, [])
+
+  const handleQuickSend = useCallback(
+    (prompt: string) => {
+      if (isStreaming || disabled) return
+      playClickSound()
+      if (onQuickSend) {
+        onQuickSend(prompt)
+      } else {
+        onSend(prompt)
+      }
+      clearComposerInput()
+    },
+    [clearComposerInput, disabled, isStreaming, onQuickSend, onSend, playClickSound],
+  )
+
   const handleSend = useCallback(() => {
     if ((!value.trim() && !uploadedFile) || isStreaming || disabled) return
     playClickSound()
@@ -240,6 +372,283 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
   )
 
   const currentModel = AI_MODELS.find((m) => m.id === selectedModel) || AI_MODELS[0]
+  const isWorkspace = variant === "workspace"
+
+  if (isWorkspace) {
+    return (
+      <div className="pointer-events-auto">
+        <div className="flex items-center gap-2 rounded-2xl border border-[#2f2f2f] bg-[#1c1c1c] px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*, application/pdf, text/plain"
+            onChange={handleFileSelect}
+            className="hidden"
+            aria-label="Upload file"
+          />
+
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound()
+              fileInputRef.current?.click()
+            }}
+            disabled={isStreaming || disabled}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#777] transition-colors hover:bg-[#262626] hover:text-[#ddd] disabled:opacity-40"
+            aria-label="Add attachment"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                disabled={isStreaming || disabled}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#777] transition-colors hover:bg-[#262626] hover:text-[#ddd] disabled:opacity-40"
+                aria-label="More options"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              side="top"
+              sideOffset={8}
+              collisionPadding={12}
+              className="z-[9999] max-h-[min(70vh,420px)] w-56 overflow-y-auto rounded-xl border border-[#333] bg-[#1c1c1c] px-2 py-2 text-[#e8e8e8] shadow-xl"
+            >
+              {enableBuilderQuickActions && hasArtifact ? (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => handleQuickSend(QUICK_PROMPTS.completePage)}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                  >
+                    <Wand2 className="h-3.5 w-3.5 text-emerald-400" />
+                    Dokonči stránku
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleQuickSend(QUICK_PROMPTS.addScript)}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                  >
+                    <Code2 className="h-3.5 w-3.5 text-sky-400" />
+                    Pridaj script
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleQuickSend(QUICK_PROMPTS.simplify)}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                  >
+                    <Minimize2 className="h-3.5 w-3.5 text-amber-400" />
+                    Zjednoduš layout
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-[#333]" />
+                </>
+              ) : null}
+
+              {enableBuilderQuickActions ? (
+                <>
+                  <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#666]">
+                    Pridaj sekciu
+                  </DropdownMenuLabel>
+                  {(["addContact", "addPricing", "addFaq", "addFooter"] as QuickPromptKey[]).map(
+                    (key) => (
+                      <DropdownMenuItem
+                        key={key}
+                        onClick={() => handleQuickSend(QUICK_PROMPTS[key])}
+                        className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                      >
+                        <Plus className="h-3.5 w-3.5 text-[#888]" />
+                        {key === "addContact" && "Contact"}
+                        {key === "addPricing" && "Pricing"}
+                        {key === "addFaq" && "FAQ"}
+                        {key === "addFooter" && "Footer"}
+                      </DropdownMenuItem>
+                    ),
+                  )}
+                </>
+              ) : null}
+
+              {isMobile ? (
+                <>
+                  <DropdownMenuSeparator className="bg-[#333]" />
+                  <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#666]">
+                    Zmeniť model
+                  </DropdownMenuLabel>
+                  {AI_MODELS.map((model) => {
+                    const isDisabled = !isModelAvailable(model, apiKeys)
+                    return (
+                      <DropdownMenuItem
+                        key={model.id}
+                        disabled={isDisabled}
+                        onClick={() => {
+                          if (isDisabled) return
+                          playClickSound()
+                          onModelChange(model.id)
+                        }}
+                        className={cn(
+                          "cursor-pointer rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]",
+                          isDisabled && "opacity-40",
+                          selectedModel === model.id && !isDisabled && "bg-[#2a2a2a] font-medium",
+                        )}
+                      >
+                        {model.name}
+                      </DropdownMenuItem>
+                    )
+                  })}
+                </>
+              ) : null}
+
+              <DropdownMenuSeparator className="bg-[#333]" />
+              <DropdownMenuItem
+                onClick={() => {
+                  playClickSound()
+                  toggleRecording()
+                }}
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+              >
+                <Mic className="h-3.5 w-3.5" />
+                {isRecording ? "Zastaviť diktovanie" : "Hlasový vstup"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  playClickSound()
+                  clearComposerInput()
+                }}
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+              >
+                <Eraser className="h-3.5 w-3.5" />
+                Vymazať input
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value)
+              handleInput()
+            }}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            placeholder={isRecording ? "Listening..." : "Ask Jarvis..."}
+            disabled={isStreaming || disabled}
+            rows={1}
+            className={cn(
+              "composer-input min-h-[36px] max-h-[120px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-5 text-[#ececec]",
+              "placeholder:text-[#666] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+            )}
+            aria-label="Message input"
+          />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                disabled={isStreaming || disabled}
+                className="hidden h-8 shrink-0 items-center gap-1 rounded-lg border border-[#333] bg-[#222] px-2.5 text-[12px] font-medium text-[#ccc] transition-colors hover:bg-[#2a2a2a] disabled:opacity-40 sm:inline-flex"
+              >
+                Build
+                <ChevronDown className="h-3 w-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuContent
+                align="end"
+                side="top"
+                sideOffset={8}
+                className="z-[9999] w-44 rounded-xl border border-[#333] bg-[#1c1c1c] px-2 py-2 text-[#e8e8e8] shadow-xl"
+              >
+                {AI_MODELS.map((model) => {
+                  const isDisabled = !isModelAvailable(model, apiKeys)
+
+                  return (
+                    <DropdownMenuItem
+                      key={model.id}
+                      disabled={isDisabled}
+                      onClick={(e) => {
+                        if (isDisabled) {
+                          e.preventDefault()
+                          return
+                        }
+                        playClickSound()
+                        onModelChange(model.id)
+                      }}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px]",
+                        isDisabled && "pointer-events-none opacity-40",
+                        selectedModel === model.id && !isDisabled && "bg-[#2a2a2a] font-medium",
+                      )}
+                    >
+                      <Image src={model.icon || "/placeholder.svg"} alt={model.name} width={16} height={16} className="h-4 w-4 rounded-sm object-contain" />
+                      <span className="flex flex-col items-start leading-tight">
+                        <span>{model.name}{model.tier === "fast" ? " ⚡" : ""}</span>
+                        <span className="text-[10px] text-[#666]">{model.hint}</span>
+                      </span>
+                    </DropdownMenuItem>
+                  )
+                })}
+              </DropdownMenuContent>
+            </DropdownMenuPortal>
+          </DropdownMenu>
+
+          <button
+            type="button"
+            onClick={toggleRecording}
+            disabled={isStreaming || disabled}
+            className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+              isRecording
+                ? "bg-red-500/20 text-red-400"
+                : "text-[#888] hover:bg-[#262626] hover:text-[#ddd]",
+            )}
+            aria-label={isRecording ? "Stop recording" : "Start voice input"}
+          >
+            {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
+
+          {showPlayButton && onPlayPreview && (
+            <button
+              type="button"
+              onClick={onPlayPreview}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#3a3a3a] bg-[#222] text-[#ddd] transition-colors hover:bg-[#2a2a2a] hover:text-white"
+              aria-label="Open live preview"
+            >
+              <Play className="h-3.5 w-3.5 fill-current" />
+            </button>
+          )}
+
+          {isStreaming ? (
+            <button
+              onClick={() => {
+                playClickSound()
+                onStop()
+              }}
+              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              aria-label="Stop generating"
+            >
+              <AnimatedOrb size={32} variant="red" />
+              <Square className="absolute h-3.5 w-3.5 text-red-700" fill="currentColor" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={(!value.trim() && !uploadedFile) || disabled}
+              className={cn(
+                "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform",
+                (!value.trim() && !uploadedFile) || disabled
+                  ? "cursor-not-allowed opacity-40"
+                  : "hover:scale-105",
+              )}
+              aria-label="Send message"
+            >
+              <AnimatedOrb size={32} />
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={cn("fixed bottom-3 md:bottom-4 left-0 right-0 px-3 md:px-4 pointer-events-none z-10", hasAnimated && "composer-intro")}>
@@ -411,10 +820,7 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                   className="w-40 px-2 py-2 rounded-2xl z-[9999] bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-stone-800 dark:text-zinc-50 shadow-md"
                 >
                   {AI_MODELS.map((model) => {
-                    const modelProvider = model.id.split("/")[0] as "mistral" | "google" | "openai" | "anthropic"
-                    const hasKey = apiKeys ? apiKeys[modelProvider]?.trim() !== "" : false
-                    const hasAnyKey = apiKeys ? Object.values(apiKeys).some((k) => k.trim() !== "") : false
-                    const isDisabled = hasAnyKey && !hasKey
+                    const isDisabled = !isModelAvailable(model, apiKeys)
 
                     return (
                       <DropdownMenuItem
@@ -430,10 +836,10 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                         }}
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors",
-                          isDisabled 
-                            ? "opacity-40 cursor-not-allowed pointer-events-none grayscale" 
-                            : "cursor-pointer hover:bg-stone-50 dark:hover:bg-zinc-800 text-stone-700 dark:text-zinc-200",
-                          selectedModel === model.id && !isDisabled && "bg-stone-100 dark:bg-zinc-800 text-stone-900 dark:text-zinc-50 font-medium",
+                          isDisabled
+                            ? "pointer-events-none cursor-not-allowed opacity-40 grayscale"
+                            : "cursor-pointer text-stone-700 hover:bg-stone-50 dark:text-zinc-200 dark:hover:bg-zinc-800",
+                          selectedModel === model.id && !isDisabled && "bg-stone-100 font-medium text-stone-900 dark:bg-zinc-800 dark:text-zinc-50",
                         )}
                       >
                         <Image
@@ -443,7 +849,10 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
                           height={20}
                           className={cn("rounded-sm object-contain w-4 h-4", isDisabled && "opacity-60")}
                         />
-                        <span className="text-sm">{model.name}</span>
+                        <span className="text-sm">
+                          {model.name}
+                          {model.tier === "fast" ? " ⚡" : ""}
+                        </span>
                       </DropdownMenuItem>
                     )
                   })}
@@ -451,7 +860,9 @@ export function Composer({ onSend, onStop, isStreaming, disabled, selectedModel,
               </DropdownMenuPortal>
             </DropdownMenu>
 
-            <span className="composer-hint text-xs text-stone-400 dark:text-zinc-300">{currentModel.name}</span>
+            <span className="composer-hint text-xs text-stone-400 dark:text-zinc-300">
+              {currentModel.name}{currentModel.tier === "fast" ? " ⚡" : ""}
+            </span>
           </div>
         </div>
       </div>

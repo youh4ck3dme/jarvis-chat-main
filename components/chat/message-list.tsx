@@ -6,6 +6,8 @@ import type { Message } from "./chat-shell"
 import { TypingIndicator } from "./typing-indicator"
 import { AlertCircle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { JARVIS_STORY_OPENING } from "@/lib/chat/jarvis-story"
 import { AnimatedOrb } from "./animated-orb"
 
 interface MessageListProps {
@@ -13,9 +15,10 @@ interface MessageListProps {
   isStreaming: boolean
   error: string | null
   onRetry: () => void
-  isLoaded: boolean // Added isLoaded prop to know when localStorage is loaded
+  isLoaded: boolean
   onEditMessage?: (id: string, newContent: string) => void
   onDeleteMessage?: (id: string) => void
+  variant?: "default" | "workspace"
 }
 
 const LAUNCH_SOUND_URL = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/launch-SUi0itAGHr1wtvdDYYG5bzFLsIYHtP.mp3"
@@ -46,7 +49,36 @@ export function markIntroPlayed(): void {
   }
 }
 
-export function MessageList({ messages, isStreaming, error, onRetry, isLoaded, onEditMessage, onDeleteMessage }: MessageListProps) {
+function WorkspaceLanding({ className }: { className?: string }) {
+  return (
+    <div
+      data-testid="jarvis-empty-state"
+      className={`pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-4 text-center ${className ?? ""}`}
+    >
+      <p className="mb-3 text-[22px] font-semibold tracking-tight text-[#ececec]">
+        Hi, my name is Jarvis
+      </p>
+      <p className="max-w-md text-[14px] italic leading-7 text-[#8a8a9a]">
+        {JARVIS_STORY_OPENING}
+      </p>
+      <p className="mt-4 max-w-sm text-[13px] leading-6 text-[#555]">
+        Začni obyčajným rozhovorom — o chvíľu sa možno spýtam, čo by si chcel postaviť.
+      </p>
+    </div>
+  )
+}
+
+export function MessageList({
+  messages,
+  isStreaming,
+  error,
+  onRetry,
+  isLoaded,
+  onEditMessage,
+  onDeleteMessage,
+  variant = "default",
+}: MessageListProps) {
+  const isWorkspace = variant === "workspace"
   const containerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const [autoScroll, setAutoScroll] = useState(true)
@@ -56,8 +88,11 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded, o
   const lastScrollRef = useRef<number>(0)
   const hasPlayedIntroRef = useRef(false) // Track if intro has played in this session
 
+  const isEmptyLanding = messages.length === 0 && !error && !isStreaming
+  const showStaticWorkspaceLanding = isWorkspace && isEmptyLanding
+
   useEffect(() => {
-    if (!isLoaded) return // Wait for localStorage to load
+    if (!isLoaded || isWorkspace) return
 
     // Only animate if no messages were loaded (fresh start) AND cooldown has passed
     if (messages.length === 0 && !hasPlayedIntroRef.current && shouldPlayIntro()) {
@@ -82,11 +117,10 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded, o
         audioRef.current = null
       }
     }
-  }, [isLoaded, messages.length])
+  }, [isLoaded, isWorkspace, messages.length])
 
   useEffect(() => {
-    if (!containerRef.current) return
-    // Immediate scroll to bottom when messages change
+    if (!containerRef.current || messages.length === 0) return
     const container = containerRef.current
     container.scrollTop = container.scrollHeight
     setAutoScroll(true)
@@ -148,6 +182,14 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded, o
       lastMessage?.role === "user" ||
       (lastMessage?.role === "assistant" && lastMessage?.content === ""))
 
+  if (!isLoaded && isWorkspace) {
+    return (
+      <div className="absolute inset-0 overflow-hidden overscroll-none border-none pt-14 md:pt-14">
+        <WorkspaceLanding />
+      </div>
+    )
+  }
+
   if (!isLoaded) {
     return (
       <div className="absolute inset-0 flex items-center justify-center">
@@ -159,23 +201,34 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded, o
   return (
     <div
       ref={containerRef}
-      onScroll={handleScroll}
-      className="absolute inset-0 overflow-y-auto pt-16 pb-36 space-y-4 border-none px-4 md:px-6"
+      onScroll={showStaticWorkspaceLanding ? undefined : handleScroll}
+      className={
+        isWorkspace
+          ? cn(
+              "absolute inset-0 border-none",
+              showStaticWorkspaceLanding
+                ? "overflow-hidden overscroll-none"
+                : "space-y-3 overflow-y-auto px-4 pb-4 pt-14 md:px-5 [scrollbar-color:#333_transparent] [scrollbar-width:thin]",
+            )
+          : "absolute inset-0 overflow-y-auto space-y-4 border-none px-4 pb-36 pt-16 md:px-6"
+      }
       role="log"
       aria-label="Chat messages"
-      aria-live="polite"
+      aria-live={showStaticWorkspaceLanding ? "off" : "polite"}
     >
-      {/* Empty state */}
-      {messages.length === 0 && !error && !isStreaming && (
-        <div className="flex flex-col items-center justify-center h-full text-center">
-          <p className="text-2xl font-semibold text-stone-800 dark:text-zinc-50 mb-2">
+      {showStaticWorkspaceLanding ? <WorkspaceLanding /> : null}
+
+      {/* Empty state (default variant only) */}
+      {!isWorkspace && isEmptyLanding ? (
+        <div className="flex h-full flex-col items-center justify-center text-center">
+          <p className="mb-2 text-2xl font-semibold text-stone-800 dark:text-zinc-50">
             Hi, my name is Jarvis
           </p>
-          <p className="text-base text-stone-600 dark:text-zinc-300 px-4">
+          <p className="px-4 text-base text-stone-600 dark:text-zinc-300">
             Send a message to begin chatting with the AI assistant
           </p>
         </div>
-      )}
+      ) : null}
 
       {/* Messages */}
       {messages
@@ -226,8 +279,9 @@ export function MessageList({ messages, isStreaming, error, onRetry, isLoaded, o
         </div>
       )}
 
-      {/* Scroll anchor */}
-      <div ref={bottomRef} aria-hidden="true" className="h-20" />
+      {!showStaticWorkspaceLanding ? (
+        <div ref={bottomRef} aria-hidden="true" className="h-20" />
+      ) : null}
     </div>
   )
 }

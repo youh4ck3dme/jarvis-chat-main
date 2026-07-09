@@ -51,12 +51,15 @@ describe("MessageList", () => {
       createMessage({ id: "assistant-1", role: "assistant", content: "Hello from assistant" }),
     ]
 
-    render(<MessageList {...baseProps} messages={messages} />)
+    const { container } = render(<MessageList {...baseProps} messages={messages} />)
 
     expect(screen.getByText("Hello from user")).toBeInTheDocument()
     expect(screen.getByText("Hello from assistant")).toBeInTheDocument()
-    expect(screen.getByText("You", { hidden: true })).toBeInTheDocument()
-    expect(screen.getByText("Assistant", { hidden: true })).toBeInTheDocument()
+
+    const roleLabels = Array.from(container.querySelectorAll(".role-label")).map(
+      (node) => node.textContent,
+    )
+    expect(roleLabels).toEqual(["You", "Assistant"])
   })
 
   it("shows the empty state when there are no messages", () => {
@@ -73,9 +76,24 @@ describe("MessageList", () => {
     expect(screen.queryByText("Hi, my name is Jarvis")).not.toBeInTheDocument()
   })
 
+  it("keeps workspace landing static while history hydrates", () => {
+    render(<MessageList {...baseProps} messages={[]} isLoaded={false} variant="workspace" />)
+
+    expect(screen.getByTestId("jarvis-empty-state")).toBeInTheDocument()
+    expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument()
+    expect(screen.queryByTestId("animated-orb")).not.toBeInTheDocument()
+  })
+
+  it("does not play intro audio in workspace landing", () => {
+    render(<MessageList {...baseProps} messages={[]} variant="workspace" />)
+
+    expect(MockAudio.instances).toHaveLength(0)
+    expect(screen.getByTestId("jarvis-empty-state")).toBeInTheDocument()
+  })
+
   describe("intro autoplay cooldown", () => {
     it("plays intro audio on first visit and records jarvis-intro-last-played", () => {
-      render(<MessageList {...baseProps} messages={[]} />)
+      render(<MessageList {...baseProps} messages={[]} variant="default" />)
 
       expect(MockAudio.instances).toHaveLength(1)
       expect(MockAudio.instances[0]?.play).toHaveBeenCalledTimes(1)
@@ -86,7 +104,7 @@ describe("MessageList", () => {
       const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000
       localStorage.setItem(INTRO_PLAYED_KEY, String(thirtyMinutesAgo))
 
-      render(<MessageList {...baseProps} messages={[]} />)
+      render(<MessageList {...baseProps} messages={[]} variant="default" />)
 
       expect(MockAudio.instances).toHaveLength(0)
     })
@@ -95,7 +113,7 @@ describe("MessageList", () => {
       const twoHoursAgo = Date.now() - 2 * INTRO_COOLDOWN_MS
       localStorage.setItem(INTRO_PLAYED_KEY, String(twoHoursAgo))
 
-      render(<MessageList {...baseProps} messages={[]} />)
+      render(<MessageList {...baseProps} messages={[]} variant="default" />)
 
       expect(MockAudio.instances).toHaveLength(1)
       expect(MockAudio.instances[0]?.play).toHaveBeenCalledTimes(1)

@@ -1,14 +1,81 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { MessageSquareDashed, Sun, Moon, Settings, X, Eye, EyeOff, Brain } from "lucide-react"
-import { useTheme } from "next-themes"
-import { MessageList } from "./message-list"
-import { Composer, type AIModel } from "./composer"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { MessageSquareDashed, Settings, X, Eye, EyeOff } from "lucide-react"
+import dynamic from "next/dynamic"
+
+import { JarvisPreviewPanel } from "@/copied-from-visual-html/components/jarvis/jarvis-preview-panel"
+import { useThrottledValue } from "@/copied-from-visual-html/hooks/use-throttled-value"
+import { JARVIS_ADVISOR_SYSTEM_PROMPT } from "@/copied-from-visual-html/lib/jarvis-advisor-prompt"
+import {
+  extractJarvisHtmlArtifact,
+  prepareJarvisPreviewHtml,
+} from "@/copied-from-visual-html/lib/jarvis-artifacts"
+import { readExperienceHint, recordBuildEvaluation } from "@/lib/agents/build-experience"
+import type { BuildEvaluation, BuildTrace } from "@/types/build"
+import {
+  buildIncompleteHtmlError,
+  runBuildPipeline,
+  type PipelineChatMessage,
+} from "@/lib/chat/build-pipeline"
+import { BuildTelemetry } from "@/components/workspace/build-telemetry"
+import { WorkspaceFooter, type WorkspaceView } from "@/components/workspace/workspace-footer"
+import { WorkspaceHeader } from "@/components/workspace/workspace-header"
+import { WorkspaceMenuDrawer } from "@/components/workspace/workspace-menu-drawer"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { Button } from "@/components/ui/button"
-import { isProviderAuthError } from "@/lib/resolve-api-key"
-import dynamic from 'next/dynamic';
+import {
+  type JarvisMode,
+  JARVIS_CHAT_SYSTEM_PROMPT,
+  persistBuilderUnlocked,
+  persistJarvisMode,
+  readBuilderUnlocked,
+  readStoredJarvisMode,
+} from "@/lib/chat/jarvis-mode"
+import {
+  createNarrativeBeat,
+  detectBuildIntent,
+  JARVIS_BUILDER_LOCKED_HINT,
+  JARVIS_STORY_BUILD_INTENT,
+  JARVIS_STORY_BUILD_SUCCESS,
+  JARVIS_STORY_NUDGE,
+  JARVIS_STORY_NUDGE_DELAY_MS,
+  JARVIS_STORY_PLAN_READY,
+  markStoryNudgeShown,
+  readStoryNudgeShown,
+} from "@/lib/chat/jarvis-story"
+import type { BuildPlan } from "@/types/build"
+import { OrbMindMap } from "@/components/workspace/orb-mind-map"
+import { readApiErrorMessage } from "@/lib/api-response"
+import {
+  listBuildHistory,
+  saveBuildHistory,
+  type BuildHistoryRecord,
+} from "@/lib/build-history/build-history-store"
+import {
+  addNewSession,
+  deleteSession,
+  deserializeMessages,
+  getActiveSession,
+  loadChatSessionsState,
+  persistChatSessionsState,
+  switchActiveSession,
+  updateActiveSession,
+  type ChatSession,
+} from "@/lib/chat/chat-sessions"
+import {
+  exportChatAsJson,
+  readProjectName,
+  saveProjectName,
+} from "@/lib/chat/workspace-actions"
 import { extractFromMessage, updateConversationSummary, clearConversationMemory, buildAICcontext } from "@/lib/memory"
+import { DEFAULT_AI_MODEL, getDefaultAiModel } from "@/lib/default-model"
+import { isProviderAuthError } from "@/lib/resolve-api-key"
+
+export type ArtifactTab = "preview" | "code"
+
+import { MessageList } from "./message-list"
+import { AI_MODELS, isModelAvailable, type AIModel } from "./composer"
 
 // Dynamic import to avoid SSR issues with IndexedDB
 const MemoryPanel = dynamic(
@@ -23,10 +90,13 @@ export interface Message {
   content: string
   createdAt: Date
   imageData?: string
+  attachment?: string
+  attachmentName?: string
+  /** Scripted story beat — rendered as a quoted narrative line. */
+  narrative?: boolean
 }
 
 // localStorage keys
-const STORAGE_KEY = "chat-messages"
 const MODEL_STORAGE_KEY = "chat-selected-model"
 const MISTRAL_KEY_STORAGE = "settings-mistral-key"
 const GOOGLE_KEY_STORAGE = "settings-google-key"
@@ -36,6 +106,14 @@ const ANTHROPIC_KEY_STORAGE = "settings-anthropic-key"
 // Generates a unique ID for messages
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+}
+
+function toPipelineMessage(message: Pick<Message, "role" | "content" | "imageData">): PipelineChatMessage {
+  return {
+    role: message.role,
+    content: message.content,
+    imageData: message.imageData,
+  }
 }
 
 function buildApiKeyHeaders(): Record<string, string> {
@@ -59,8 +137,9 @@ async function readApiError(response: Response): Promise<string> {
   if (contentType.includes("application/json")) {
     try {
       const data = await response.json()
-      if (typeof data?.error === "string" && data.error.trim()) {
-        return data.error
+      const message = readApiErrorMessage(data)
+      if (message) {
+        return message
       }
     } catch {
       // fall through to generic message
@@ -75,14 +154,30 @@ export function ChatShell() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [abortController, setAbortController] = useState<AbortController | null>(null)
-  const [selectedModel, setSelectedModel] = useState<AIModel>("mistral/mistral-large-latest")
+  const [selectedModel, setSelectedModel] = useState<AIModel>(
+    () => getDefaultAiModel() as AIModel,
+  )
   const [isLoaded, setIsLoaded] = useState(false)
-  const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  
-  // Memory states - using a default conversation ID for this simple version
-  const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false)
-  const DEFAULT_CONVERSATION_ID = "default-conversation"
+  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("chat")
+  const [artifactTab, setArtifactTab] = useState<ArtifactTab>("preview")
+  const [isMobile, setIsMobile] = useState(false)
+  const [buildEvaluation, setBuildEvaluation] = useState<BuildEvaluation | null>(null)
+  const [buildTrace, setBuildTrace] = useState<BuildTrace | null>(null)
+  const [buildHistoryCount, setBuildHistoryCount] = useState(0)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMemoryOpen, setIsMemoryOpen] = useState(false)
+  const [projectName, setProjectName] = useState("Jarvis")
+  const [jarvisMode, setJarvisMode] = useState<JarvisMode>("chat")
+  const [builderUnlocked, setBuilderUnlocked] = useState(false)
+  const [pipelinePhase, setPipelinePhase] = useState<"planner" | null>(null)
+  const [plannerPlan, setPlannerPlan] = useState<BuildPlan | null>(null)
+  const [builderUnlockDialogOpen, setBuilderUnlockDialogOpen] = useState(false)
+  const pendingBuildPromptRef = useRef<string | null>(null)
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
+  const [memoryConversationId, setMemoryConversationId] = useState<string | null>(null)
+  const [memorySessionTitle, setMemorySessionTitle] = useState<string | null>(null)
 
   // Settings states
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -99,38 +194,105 @@ export function ChatShell() {
     anthropic: false,
   })
 
-  // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  useEffect(() => {
+    if (!mounted || !isLoaded || jarvisMode !== "chat" || isStreaming) return
+    if (readStoryNudgeShown()) return
+
+    const timer = window.setTimeout(() => {
+      if (readStoryNudgeShown()) return
+      markStoryNudgeShown()
+
+      const nudgeMessage: Message = {
+        id: generateId(),
+        role: "assistant",
+        content: JARVIS_STORY_NUDGE,
+        createdAt: new Date(),
+        narrative: true,
+      }
+
+      setMessages((prev) => {
+        if (prev.some((message) => message.content === JARVIS_STORY_NUDGE)) return prev
+        return [...prev, nudgeMessage]
+      })
+    }, JARVIS_STORY_NUDGE_DELAY_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [mounted, isLoaded, jarvisMode, isStreaming])
+
+  useEffect(() => {
+    if (!mounted) return
+    listBuildHistory(50).then((records) => setBuildHistoryCount(records.length))
+  }, [mounted])
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)")
+    const update = () => setIsMobile(media.matches)
+    update()
+    media.addEventListener("change", update)
+    return () => media.removeEventListener("change", update)
+  }, [])
+
+  const rawHtmlArtifact = useMemo(
+    () => extractJarvisHtmlArtifact(messages),
+    [messages],
+  )
+
+  const livePreviewHtml = useMemo(
+    () =>
+      rawHtmlArtifact
+        ? prepareJarvisPreviewHtml(rawHtmlArtifact, { streaming: isStreaming })
+        : null,
+    [rawHtmlArtifact, isStreaming],
+  )
+
+  const previewHtmlContent = useThrottledValue(livePreviewHtml, isStreaming ? 200 : 0)
+  const hasArtifact = Boolean(rawHtmlArtifact)
+
+  useEffect(() => {
+    if (isMobile && hasArtifact && isStreaming) {
+      setWorkspaceView("artifact")
+      setArtifactTab("preview")
+    }
+  }, [hasArtifact, isMobile, isStreaming])
+
+  const conversationId = activeSessionId ?? "default-conversation"
+
   // Load state and keys from localStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        const messagesWithDates = parsed.map((msg: Message) => ({
-          ...msg,
-          createdAt: new Date(msg.createdAt),
-        }))
-        setMessages(messagesWithDates)
-      }
-      const savedModel = localStorage.getItem(MODEL_STORAGE_KEY) as AIModel | null
-      const googleKey = localStorage.getItem(GOOGLE_KEY_STORAGE)?.trim()
-      if (savedModel?.startsWith("google/") && !googleKey) {
-        setSelectedModel("mistral/mistral-large-latest")
-        localStorage.setItem(MODEL_STORAGE_KEY, "mistral/mistral-large-latest")
-      } else if (savedModel) {
-        setSelectedModel(savedModel)
-      }
-
-      setKeys({
+      const sessionsState = loadChatSessionsState()
+      const activeSession = getActiveSession(sessionsState)
+      setActiveSessionId(activeSession.id)
+      setChatSessions(sessionsState.sessions)
+      setMessages(deserializeMessages(activeSession.messages))
+      setProjectName(activeSession.projectName || readProjectName())
+      const loadedKeys = {
         mistral: localStorage.getItem(MISTRAL_KEY_STORAGE) || "",
         google: localStorage.getItem(GOOGLE_KEY_STORAGE) || "",
         openai: localStorage.getItem(OPENAI_KEY_STORAGE) || "",
         anthropic: localStorage.getItem(ANTHROPIC_KEY_STORAGE) || "",
-      })
+      }
+      setKeys(loadedKeys)
+
+      setProjectName(readProjectName())
+
+      const unlocked = readBuilderUnlocked()
+      const storedMode = readStoredJarvisMode()
+      setBuilderUnlocked(unlocked)
+      setJarvisMode(storedMode === "builder" && unlocked ? "builder" : "chat")
+
+      const savedModel = localStorage.getItem(MODEL_STORAGE_KEY) as AIModel | null
+      const savedEntry = AI_MODELS.find((m) => m.id === savedModel)
+      if (savedModel && savedEntry && isModelAvailable(savedEntry, loadedKeys)) {
+        setSelectedModel(savedModel)
+      } else if (savedModel) {
+        setSelectedModel(DEFAULT_AI_MODEL)
+        localStorage.setItem(MODEL_STORAGE_KEY, DEFAULT_AI_MODEL)
+      }
     } catch (e) {
       console.error("Failed to load settings:", e)
     } finally {
@@ -138,18 +300,89 @@ export function ChatShell() {
     }
   }, [])
 
-  // Persist messages to localStorage whenever they change
+  // Persist active session whenever messages or project name change
   useEffect(() => {
+    if (!isLoaded || !activeSessionId) return
+
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+      const nextState = updateActiveSession(loadChatSessionsState(), {
+        messages,
+        projectName,
+      })
+      persistChatSessionsState(nextState)
+      setChatSessions(nextState.sessions)
     } catch (e) {
-      console.error("Failed to save messages to localStorage:", e)
+      console.error("Failed to save chat session:", e)
     }
-  }, [messages])
+  }, [messages, projectName, isLoaded, activeSessionId])
 
   const handleModelChange = useCallback((model: AIModel) => {
     setSelectedModel(model)
     localStorage.setItem(MODEL_STORAGE_KEY, model)
+  }, [])
+
+  const handleProjectNameChange = useCallback((name: string) => {
+    setProjectName(name)
+    saveProjectName(name)
+  }, [])
+
+  const handleJarvisModeChange = useCallback((mode: JarvisMode) => {
+    setJarvisMode(mode)
+    persistJarvisMode(mode)
+  }, [])
+
+  const sendMessageRef = useRef<
+    (content: string, attachment?: string, attachmentName?: string) => Promise<void>
+  >(async () => {})
+
+  const handleBuilderUnlock = useCallback(() => {
+    setBuilderUnlocked(true)
+    persistBuilderUnlocked(true)
+    setBuilderUnlockDialogOpen(false)
+    const pending = pendingBuildPromptRef.current
+    if (pending) {
+      pendingBuildPromptRef.current = null
+      setTimeout(() => {
+        void sendMessageRef.current(pending)
+      }, 150)
+    }
+  }, [])
+
+  const handleSelectBuildRecord = useCallback((record: BuildHistoryRecord) => {
+    setBuildTrace(record.trace)
+    setBuildEvaluation(record.evaluation)
+    setArtifactTab("preview")
+    setWorkspaceView("artifact")
+  }, [])
+
+  const handleFocusTelemetry = useCallback(() => {
+    setWorkspaceView("artifact")
+    setArtifactTab("preview")
+  }, [])
+
+  const handleExportChat = useCallback(() => {
+    exportChatAsJson(messages, projectName)
+  }, [messages, projectName])
+
+  const handleOpenMemory = useCallback(
+    (sessionId?: string) => {
+      const targetId = sessionId ?? activeSessionId ?? conversationId
+      const session = chatSessions.find((item) => item.id === targetId)
+      setMemoryConversationId(targetId)
+      setMemorySessionTitle(session?.title ?? null)
+      setIsMemoryOpen(true)
+    },
+    [activeSessionId, chatSessions, conversationId],
+  )
+
+  const handleCloseMemory = useCallback(() => {
+    setIsMemoryOpen(false)
+    setMemoryConversationId(null)
+    setMemorySessionTitle(null)
+  }, [])
+
+  const handleClearSessionMemory = useCallback(async (sessionId: string) => {
+    await clearConversationMemory(sessionId)
   }, [])
 
   const handleSaveSettings = useCallback(() => {
@@ -162,17 +395,50 @@ export function ChatShell() {
 
   // Send a message to the AI
   const sendMessage = useCallback(
-    async (content: string, imageData?: string) => {
-      if ((!content.trim() && !imageData) || isStreaming) return
+    async (content: string, attachment?: string, attachmentName?: string) => {
+      const imageData = attachment?.startsWith("data:image/") ? attachment : undefined
+      const fileAttachment = attachment && !imageData ? attachment : undefined
+      if ((!content.trim() && !attachment) || isStreaming) return
+
+      const trimmedContent = content.trim()
+      const buildIntent = detectBuildIntent(trimmedContent)
+
+      if (jarvisMode === "chat" && buildIntent && !builderUnlocked) {
+        pendingBuildPromptRef.current = trimmedContent
+        const lockedUserMessage: Message = {
+          id: generateId(),
+          role: "user",
+          content: trimmedContent || (attachment?.startsWith("data:image/") ? "Describe this image" : "Analyze this document"),
+          createdAt: new Date(),
+          imageData: attachment?.startsWith("data:image/") ? attachment : undefined,
+        }
+        const hintMessage = createNarrativeBeat(generateId(), JARVIS_BUILDER_LOCKED_HINT)
+        setMessages((prev) => [...prev, lockedUserMessage, hintMessage])
+        setBuilderUnlockDialogOpen(true)
+        return
+      }
+
+      const runBuilderPipeline =
+        jarvisMode === "builder" || (buildIntent && builderUnlocked)
+
+      if (runBuilderPipeline && jarvisMode === "chat" && buildIntent) {
+        setJarvisMode("builder")
+        persistJarvisMode("builder")
+      }
 
       setError(null)
+      setBuildEvaluation(null)
+      setBuildTrace(null)
+      setPlannerPlan(null)
 
       const userMessage: Message = {
         id: generateId(),
         role: "user",
-        content: content.trim() || "Describe this image",
+        content: content.trim() || (imageData ? "Describe this image" : "Analyze this document"),
         createdAt: new Date(),
         imageData,
+        attachment: fileAttachment,
+        attachmentName: fileAttachment ? attachmentName : undefined,
       }
 
       const assistantMessage: Message = {
@@ -182,22 +448,25 @@ export function ChatShell() {
         createdAt: new Date(),
       }
 
-      const newMessages = [...messages, userMessage, assistantMessage]
-      setMessages(newMessages)
+      const storyBeats: Message[] = []
+      if (runBuilderPipeline && buildIntent) {
+        storyBeats.push(createNarrativeBeat(generateId(), JARVIS_STORY_BUILD_INTENT))
+      }
+
+      let conversationHistory: Message[] = [...messages, userMessage, ...storyBeats]
+      let activeAssistantMessage = assistantMessage
+      setMessages([...conversationHistory, activeAssistantMessage])
       setIsStreaming(true)
 
       const controller = new AbortController()
       setAbortController(controller)
 
-      try {
-        // Build memory-enhanced system prompt
-        let systemPrompt = "You are a helpful, friendly AI assistant. You provide clear, concise, and accurate responses.";
-        try {
-          const { systemPrompt: memorySystemPrompt } = await buildAICcontext(DEFAULT_CONVERSATION_ID);
-          systemPrompt = memorySystemPrompt;
-        } catch (contextError) {
-          console.warn('Failed to build memory context:', contextError);
-        }
+      const streamAssistantReply = async (
+        history: PipelineChatMessage[],
+        assistantMsg: Message,
+        systemPrompt: string,
+      ): Promise<{ content: string; latencyMs: number }> => {
+        const builderStart = performance.now()
 
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -206,11 +475,7 @@ export function ChatShell() {
             ...buildApiKeyHeaders(),
           },
           body: JSON.stringify({
-            messages: [...messages, userMessage].map((m) => ({
-              role: m.role,
-              content: m.content,
-              imageData: m.imageData,
-            })),
+            messages: history,
             model: selectedModel,
             system: systemPrompt,
           }),
@@ -243,45 +508,250 @@ export function ChatShell() {
           }
 
           setMessages((prev) =>
-            prev.map((msg) => (msg.id === assistantMessage.id ? { ...msg, content: accumulatedContent } : msg)),
+            prev.map((msg) =>
+              msg.id === assistantMsg.id ? { ...msg, content: accumulatedContent } : msg,
+            ),
           )
         }
 
-        // Extract memory from user message and assistant response
+        return {
+          content: accumulatedContent,
+          latencyMs: Math.round(performance.now() - builderStart),
+        }
+      }
+
+      let roundUserMessage = userMessage
+
+      const persistRoundMemory = async (
+        currentUserMessage: Message,
+        assistantContent: string,
+        assistantId: string,
+      ) => {
         try {
-          await extractFromMessage(DEFAULT_CONVERSATION_ID, userMessage, userMessage.id);
-          
-          if (accumulatedContent) {
-            await extractFromMessage(DEFAULT_CONVERSATION_ID, {
-              role: 'assistant',
-              content: accumulatedContent,
-            }, assistantMessage.id);
-            
-            // Update conversation summary
-            const allMessages = [...messages, userMessage, { ...assistantMessage, content: accumulatedContent }];
-            await updateConversationSummary(DEFAULT_CONVERSATION_ID, allMessages);
+          await extractFromMessage(conversationId, currentUserMessage, currentUserMessage.id)
+
+          if (assistantContent) {
+            await extractFromMessage(
+              conversationId,
+              {
+                role: "assistant",
+                content: assistantContent,
+              },
+              assistantId,
+            )
+
+            await updateConversationSummary(conversationId, conversationHistory)
           }
         } catch (memoryError) {
-          console.warn('Failed to update memory:', memoryError);
+          console.warn("Failed to update memory:", memoryError)
+        }
+      }
+
+      try {
+        if (!runBuilderPipeline) {
+          let systemPrompt = JARVIS_CHAT_SYSTEM_PROMPT
+          try {
+            const { systemPrompt: memorySystemPrompt } = await buildAICcontext(conversationId)
+            if (memorySystemPrompt?.trim()) {
+              systemPrompt = `${JARVIS_CHAT_SYSTEM_PROMPT}\n\n## User context\n${memorySystemPrompt}`
+            }
+          } catch (contextError) {
+            console.warn("Failed to build memory context:", contextError)
+          }
+
+          const history = [...messages, userMessage].map(toPipelineMessage)
+          const { content } = await streamAssistantReply(
+            history,
+            activeAssistantMessage,
+            systemPrompt,
+          )
+          await persistRoundMemory(userMessage, content, activeAssistantMessage.id)
+        } else {
+        let systemPrompt = JARVIS_ADVISOR_SYSTEM_PROMPT
+        try {
+          const { systemPrompt: memorySystemPrompt } = await buildAICcontext(conversationId)
+          if (memorySystemPrompt?.trim()) {
+            systemPrompt = `${JARVIS_ADVISOR_SYSTEM_PROMPT}\n\n## User context\n${memorySystemPrompt}`
+          }
+        } catch (contextError) {
+          console.warn("Failed to build memory context:", contextError)
+        }
+
+        const pipelineResult = await runBuildPipeline({
+          priorHistory: messages.map(toPipelineMessage),
+          userMessage: toPipelineMessage(userMessage),
+          baseSystemPrompt: systemPrompt,
+          experienceHint: readExperienceHint(),
+          onPlannerStart: async () => {
+            setPlannerPlan(null)
+            setPipelinePhase("planner")
+            setWorkspaceView("artifact")
+            setArtifactTab("preview")
+          },
+          onPlannerComplete: async (planResult) => {
+            if (planResult?.plan) {
+              setPlannerPlan(planResult.plan)
+            }
+            setPipelinePhase(null)
+            setWorkspaceView("artifact")
+            setArtifactTab("preview")
+            setMessages((prev) => [
+              ...prev,
+              createNarrativeBeat(generateId(), JARVIS_STORY_PLAN_READY),
+            ])
+          },
+          fetchPlan: async (prompt, hint) => {
+            const planResponse = await fetch("/api/build/plan", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...buildApiKeyHeaders(),
+              },
+              body: JSON.stringify({
+                prompt,
+                experienceHint: hint,
+              }),
+              signal: controller.signal,
+            })
+
+            if (!planResponse.ok) {
+              return null
+            }
+
+            const payload = await planResponse.json()
+            return payload?.data ?? null
+          },
+          streamReply: (history, enrichedPrompt) =>
+            streamAssistantReply(history, activeAssistantMessage, enrichedPrompt),
+          onRefinementRound: async ({ refinementPrompt }) => {
+            const refineUserMessage: Message = {
+              id: generateId(),
+              role: "user",
+              content: refinementPrompt,
+              createdAt: new Date(),
+            }
+            const refineAssistantMessage: Message = {
+              id: generateId(),
+              role: "assistant",
+              content: "",
+              createdAt: new Date(),
+            }
+
+            conversationHistory = [...conversationHistory, refineUserMessage]
+            activeAssistantMessage = refineAssistantMessage
+            roundUserMessage = refineUserMessage
+            setMessages([...conversationHistory, refineAssistantMessage])
+          },
+          onRoundComplete: async (round) => {
+            const updatedAssistant = {
+              ...activeAssistantMessage,
+              content: round.assistantContent,
+            }
+
+            conversationHistory = conversationHistory.some(
+              (message) => message.id === activeAssistantMessage.id,
+            )
+              ? conversationHistory.map((message) =>
+                  message.id === activeAssistantMessage.id ? updatedAssistant : message,
+                )
+              : [...conversationHistory, updatedAssistant]
+
+            activeAssistantMessage = updatedAssistant
+            await persistRoundMemory(
+              roundUserMessage,
+              round.assistantContent,
+              activeAssistantMessage.id,
+            )
+          },
+        })
+
+        const { trace, evaluation, artifact, refinementRounds } = pipelineResult
+
+        setBuildTrace(trace)
+        setBuildEvaluation(artifact ? evaluation : null)
+
+        if (evaluation) {
+          recordBuildEvaluation(evaluation)
+        }
+
+        if (evaluation && artifact) {
+          const saved = await saveBuildHistory({
+            userPrompt: userMessage.content,
+            evaluation,
+            trace,
+            htmlChars: artifact.length,
+            planSummary: trace.phases.find((phase) => phase.phase === "planner")?.detail,
+          })
+          if (saved) {
+            setBuildHistoryCount((count) => Math.min(count + 1, 50))
+          }
+        }
+
+        if (artifact && evaluation && !evaluation.ok) {
+          setError(buildIncompleteHtmlError(evaluation, refinementRounds))
+        }
+
+        if (artifact && evaluation?.ok) {
+          setMessages((prev) => [
+            ...prev,
+            createNarrativeBeat(generateId(), JARVIS_STORY_BUILD_SUCCESS),
+          ])
+        }
         }
       } catch (e) {
         if (e instanceof Error && e.name === "AbortError") {
           setMessages((prev) =>
             prev.map((msg) =>
-              msg.id === assistantMessage.id ? { ...msg, content: msg.content || "[Cancelled]" } : msg,
+              msg.id === activeAssistantMessage.id
+                ? { ...msg, content: msg.content || "[Cancelled]" }
+                : msg,
             ),
           )
         } else {
           console.error("Error sending message:", e)
           setError(e instanceof Error ? e.message : "An error occurred")
-          setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessage.id))
+          setMessages((prev) => prev.filter((msg) => msg.id !== activeAssistantMessage.id))
         }
       } finally {
         setIsStreaming(false)
         setAbortController(null)
       }
     },
-    [messages, isStreaming, selectedModel],
+    [messages, isStreaming, selectedModel, jarvisMode, builderUnlocked, conversationId],
+  )
+
+  sendMessageRef.current = sendMessage
+
+  const handleQuickSend = useCallback(
+    (prompt: string) => {
+      void sendMessage(prompt)
+    },
+    [sendMessage],
+  )
+
+  const handleEditMessage = useCallback(
+    (id: string, newContent: string) => {
+      if (isStreaming) return
+
+      const index = messages.findIndex((message) => message.id === id)
+      if (index === -1) return
+
+      const trimmedContent = newContent.trim()
+      if (!trimmedContent) return
+
+      setMessages(messages.slice(0, index))
+      setError(null)
+      setTimeout(() => sendMessage(trimmedContent), 100)
+    },
+    [isStreaming, messages, sendMessage],
+  )
+
+  const handleDeleteMessage = useCallback(
+    (id: string) => {
+      if (isStreaming) return
+      setMessages((prev) => prev.filter((message) => message.id !== id))
+    },
+    [isStreaming],
   )
 
   const retry = useCallback(() => {
@@ -301,97 +771,243 @@ export function ChatShell() {
     }
   }, [abortController])
 
-  const clearChat = useCallback(() => {
-    setMessages([])
+  const resetWorkspaceUi = useCallback(() => {
     setError(null)
-    localStorage.removeItem(STORAGE_KEY)
-    // Clear memory for this conversation
-    clearConversationMemory(DEFAULT_CONVERSATION_ID).catch((err: unknown) => {
-      console.warn('Failed to clear memory:', err);
-    });
+    setBuildEvaluation(null)
+    setBuildTrace(null)
+    setPlannerPlan(null)
+    setPipelinePhase(null)
+    setWorkspaceView("chat")
+    setIsMenuOpen(false)
+    setIsMemoryOpen(false)
   }, [])
 
-  return (
-    <div
-      className="jarvis-chat relative h-dvh bg-stone-50 dark:bg-zinc-950 transition-colors duration-300"
-      style={{
-        boxShadow:
-          "rgba(14, 63, 126, 0.04) 0px 0px 0px 1px, rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.04) 0px 6px 6px -3px, rgba(14, 63, 126, 0.04) 0px 12px 12px -6px, rgba(14, 63, 126, 0.04) 0px 24px 24px -12px",
-      }}
-    >
-      <Button
-        onClick={clearChat}
-        variant="ghost"
-        size="icon"
-        className="absolute top-4 left-4 z-20 h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-zinc-100 border border-border/40 shadow-sm transition-colors"
-        aria-label="Reset chat"
-      >
-        <MessageSquareDashed className="w-5 h-5" />
-      </Button>
-      
-      {/* Memory Panel */}
-      {mounted && (
-        <MemoryPanel
-          conversationId={DEFAULT_CONVERSATION_ID}
-          isOpen={isMemoryPanelOpen}
-          onClose={() => setIsMemoryPanelOpen(false)}
+  const clearChat = useCallback(() => {
+    const currentState = loadChatSessionsState()
+    const nextState = addNewSession(currentState, projectName)
+    persistChatSessionsState(nextState)
+
+    const activeSession = getActiveSession(nextState)
+    setActiveSessionId(activeSession.id)
+    setChatSessions(nextState.sessions)
+    setMessages([])
+    resetWorkspaceUi()
+  }, [projectName, resetWorkspaceUi])
+
+  const handleSelectSession = useCallback(
+    (sessionId: string) => {
+      if (sessionId === activeSessionId || isStreaming) return
+
+      const currentState = loadChatSessionsState()
+      const nextState = switchActiveSession(currentState, sessionId)
+      if (!nextState) return
+
+      persistChatSessionsState(nextState)
+      const activeSession = getActiveSession(nextState)
+      setActiveSessionId(activeSession.id)
+      setChatSessions(nextState.sessions)
+      setMessages(deserializeMessages(activeSession.messages))
+      setProjectName(activeSession.projectName)
+      saveProjectName(activeSession.projectName)
+      resetWorkspaceUi()
+    },
+    [activeSessionId, isStreaming, resetWorkspaceUi],
+  )
+
+  const handleDeleteSession = useCallback(
+    (sessionId: string) => {
+      if (isStreaming) return
+
+      const currentState = loadChatSessionsState()
+      const { state: nextState } = deleteSession(currentState, sessionId)
+      persistChatSessionsState(nextState)
+
+      const activeSession = getActiveSession(nextState)
+      setActiveSessionId(activeSession.id)
+      setChatSessions(nextState.sessions)
+      setMessages(deserializeMessages(activeSession.messages))
+      setProjectName(activeSession.projectName)
+      saveProjectName(activeSession.projectName)
+      resetWorkspaceUi()
+
+      clearConversationMemory(sessionId).catch((err: unknown) => {
+        console.warn("Failed to clear session memory:", err)
+      })
+    },
+    [isStreaming, resetWorkspaceUi],
+  )
+
+  const handlePlayPreview = useCallback(() => {
+    setArtifactTab("preview")
+    setWorkspaceView("artifact")
+  }, [])
+
+  const showChatPanel = !isMobile || workspaceView === "chat"
+  const showArtifactPanel = !isMobile || workspaceView === "artifact"
+  const showBuildTelemetry =
+    hasArtifact || isStreaming || pipelinePhase === "planner" || Boolean(plannerPlan)
+
+  const artifactPanel = (
+    <div className="flex h-full min-h-0 flex-col bg-[#111111]">
+      {showBuildTelemetry ? (
+        <BuildTelemetry
+          buildTrace={buildTrace}
+          buildEvaluation={buildEvaluation}
+          htmlChars={rawHtmlArtifact?.length ?? 0}
+          isStreaming={isStreaming}
+          activePhase={pipelinePhase}
+          plannerPlan={plannerPlan}
+          collapsible={isMobile}
+          historyCount={buildHistoryCount}
         />
-      )}
+      ) : null}
+      <JarvisPreviewPanel
+        htmlContent={rawHtmlArtifact}
+        previewHtmlContent={previewHtmlContent}
+        isStreaming={isStreaming}
+        showSource={artifactTab === "code"}
+        showPreview={artifactTab === "preview"}
+        emptyPreview={
+          !rawHtmlArtifact ? (
+            <OrbMindMap
+              isPlanning={pipelinePhase === "planner"}
+              plan={plannerPlan}
+              isStreaming={isStreaming}
+            />
+          ) : undefined
+        }
+        className="min-h-0 flex-1"
+      />
+    </div>
+  )
 
-      {mounted && (
-        <div className="absolute top-4 right-4 z-20 flex gap-2">
-          <Button
-            onClick={() => setIsSettingsOpen(true)}
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-zinc-100 border border-border/40 shadow-sm transition-colors"
-            aria-label="Open settings"
-          >
-            <Settings className="w-5 h-5" />
-          </Button>
+  return (
+    <div className="jarvis-workspace flex h-dvh flex-col overflow-hidden bg-[#111111] text-[#e8e8e8]">
+      <WorkspaceHeader
+        projectName={projectName}
+        onProjectNameChange={handleProjectNameChange}
+        onOpenMenu={() => setIsMenuOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        jarvisMode={jarvisMode}
+        builderUnlocked={builderUnlocked}
+        onJarvisModeChange={handleJarvisModeChange}
+        onBuilderUnlock={handleBuilderUnlock}
+        builderUnlockDialogOpen={builderUnlockDialogOpen}
+        onBuilderUnlockDialogOpenChange={setBuilderUnlockDialogOpen}
+      />
 
-          <Button
-            onClick={() => setIsMemoryPanelOpen(!isMemoryPanelOpen)}
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-zinc-100 border border-border/40 shadow-sm transition-colors"
-            aria-label="Toggle memory panel"
-          >
-            <Brain className="w-5 h-5" />
-          </Button>
+      <WorkspaceMenuDrawer
+        open={isMenuOpen}
+        onOpenChange={setIsMenuOpen}
+        buildHistoryCount={buildHistoryCount}
+        chatSessions={chatSessions}
+        activeSessionId={activeSessionId}
+        onNewChat={clearChat}
+        onSelectSession={handleSelectSession}
+        onDeleteSession={handleDeleteSession}
+        onOpenMemory={handleOpenMemory}
+        onClearSessionMemory={handleClearSessionMemory}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onExportChat={handleExportChat}
+        onSelectBuildRecord={handleSelectBuildRecord}
+        onFocusTelemetry={handleFocusTelemetry}
+      />
 
-          <Button
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-stone-600 dark:text-zinc-100 border border-border/40 shadow-sm transition-all duration-300"
-            aria-label="Toggle theme"
-          >
-            {resolvedTheme === "dark" ? (
-              <Sun className="w-5 h-5 transition-transform duration-300 rotate-0 scale-100" />
-            ) : (
-              <Moon className="w-5 h-5 transition-transform duration-300 rotate-0 scale-100" />
+      {isMemoryOpen ? (
+        <MemoryPanel
+          conversationId={memoryConversationId ?? conversationId}
+          sessionTitle={memorySessionTitle}
+          isOpen={isMemoryOpen}
+          onClose={handleCloseMemory}
+        />
+      ) : null}
+
+      <div className="min-h-0 flex-1">
+        {isMobile ? (
+          <div className="h-full">
+            {showChatPanel && (
+              <div className="relative flex h-full flex-col">
+                <Button
+                  onClick={clearChat}
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-3 top-3 z-10 h-8 w-8 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:bg-[#222] hover:text-[#ddd]"
+                  aria-label="Reset chat"
+                >
+                  <MessageSquareDashed className="h-4 w-4" />
+                </Button>
+                <MessageList
+                  messages={messages}
+                  isStreaming={isStreaming}
+                  error={error}
+                  onRetry={retry}
+                  isLoaded={isLoaded}
+                  variant="workspace"
+                  onEditMessage={handleEditMessage}
+                  onDeleteMessage={handleDeleteMessage}
+                />
+              </div>
             )}
-          </Button>
-        </div>
-      )}
+            {showArtifactPanel && artifactPanel}
+          </div>
+        ) : (
+          <ResizablePanelGroup direction="horizontal" className="h-full">
+            <ResizablePanel defaultSize={42} minSize={28}>
+              <div className="relative flex h-full flex-col border-r border-[#2a2a2a] bg-[#111111]">
+                <Button
+                  onClick={clearChat}
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-3 top-3 z-10 h-8 w-8 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:bg-[#222] hover:text-[#ddd]"
+                  aria-label="Reset chat"
+                >
+                  <MessageSquareDashed className="h-4 w-4" />
+                </Button>
+                <MessageList
+                  messages={messages}
+                  isStreaming={isStreaming}
+                  error={error}
+                  onRetry={retry}
+                  isLoaded={isLoaded}
+                  variant="workspace"
+                  onEditMessage={handleEditMessage}
+                  onDeleteMessage={handleDeleteMessage}
+                />
+              </div>
+            </ResizablePanel>
 
-      <MessageList messages={messages} isStreaming={isStreaming} error={error} onRetry={retry} isLoaded={isLoaded} />
+            <ResizableHandle className="w-px bg-[#2a2a2a]" />
 
-      <Composer
+            <ResizablePanel defaultSize={58} minSize={32}>
+              {artifactPanel}
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        )}
+      </div>
+
+      <WorkspaceFooter
+        workspaceView={workspaceView}
+        onWorkspaceViewChange={setWorkspaceView}
+        artifactTab={artifactTab}
+        onArtifactTabChange={setArtifactTab}
+        hasArtifact={hasArtifact}
         onSend={sendMessage}
         onStop={stopStreaming}
         isStreaming={isStreaming}
         disabled={!!error}
         selectedModel={selectedModel}
         onModelChange={handleModelChange}
+        apiKeys={keys}
+        onPlayPreview={handlePlayPreview}
+        onQuickSend={jarvisMode === "builder" ? handleQuickSend : undefined}
+        enableBuilderQuickActions={jarvisMode === "builder"}
       />
 
       {/* Settings Modal */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200 p-4">
-          <div 
-            className="w-full max-w-md bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl relative flex flex-col gap-4 animate-in zoom-in-95 duration-200 text-stone-800 dark:text-zinc-50"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+          <div
+            className="relative flex w-full max-w-md flex-col gap-4 rounded-2xl border border-[#333] bg-[#1a1a1a] p-6 text-[#e8e8e8] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center pb-2 border-b border-stone-100 dark:border-zinc-800">

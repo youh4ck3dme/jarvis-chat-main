@@ -187,6 +187,10 @@ export function MessageBubble({ message, isStreaming = false, onEdit, onDelete }
                   <p className="user-message-text text-sm whitespace-pre-wrap break-words">{message.content}</p>
                 )}
               </div>
+            ) : message.narrative ? (
+              <p className="border-l-2 border-emerald-500/35 pl-3 text-sm italic leading-7 text-[#9a9aaa]">
+                {message.content}
+              </p>
             ) : (
               <MarkdownRenderer content={message.content || " "} isStreaming={isStreaming} />
             )}
