@@ -10,6 +10,10 @@
 # production
 /build
 
+# Next.js API routes under app/api/build (negate global gitignore)
+!app/api/build/
+!app/api/build/**
+
 # debug
 npm-debug.log*
 yarn-debug.log*

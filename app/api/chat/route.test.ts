@@ -52,6 +52,7 @@ describe("POST /api/chat", () => {
 
     expect(response.status).toBe(401)
     await expect(response.json()).resolves.toEqual({
+      success: false,
       error: expect.stringContaining("Mistral API key is missing"),
     })
     expect(streamTextMock).not.toHaveBeenCalled()
@@ -68,6 +69,7 @@ describe("POST /api/chat", () => {
 
     expect(response.status).toBe(400)
     await expect(response.json()).resolves.toEqual({
+      success: false,
       error: "Invalid request: messages array required",
     })
     expect(streamTextMock).not.toHaveBeenCalled()
@@ -86,6 +88,7 @@ describe("POST /api/chat", () => {
 
     expect(response.status).toBe(400)
     await expect(response.json()).resolves.toEqual({
+      success: false,
       error: "No valid messages to process",
     })
   })
@@ -173,6 +176,7 @@ describe("POST /api/chat", () => {
 
     expect(response.status).toBe(500)
     await expect(response.json()).resolves.toEqual({
+      success: false,
       error: "Gateway unavailable",
     })
   })

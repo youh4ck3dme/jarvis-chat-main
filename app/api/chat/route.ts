@@ -3,6 +3,9 @@ import { createGoogle } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createMistral } from "@ai-sdk/mistral"
+import { jsonError } from "@/lib/api-response"
+import "@/lib/env"
+import { getDefaultAiModel } from "@/lib/default-model"
 import { getProviderFromModel, missingApiKeyMessage, resolveApiKey } from "@/lib/resolve-api-key"
 
 /**
@@ -17,10 +20,7 @@ export async function POST(req: Request) {
     const { messages, model, system } = await req.json()
 
     if (!messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: "Invalid request: messages array required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      })
+      return jsonError("Invalid request: messages array required", 400)
     }
 
     // Get API keys from headers
@@ -29,14 +29,11 @@ export async function POST(req: Request) {
     const openAiKey = req.headers.get("x-openai-key")
     const anthropicKey = req.headers.get("x-anthropic-key")
 
-    const selectedModel = model || "mistral/mistral-large-latest"
+    const selectedModel = model || getDefaultAiModel()
     const provider = getProviderFromModel(selectedModel)
 
     if (!provider) {
-      return new Response(JSON.stringify({ error: `Unsupported provider for model: ${selectedModel}` }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      })
+      return jsonError(`Unsupported provider for model: ${selectedModel}`, 400)
     }
 
     const headerKeys: Record<typeof provider, string | null> = {
@@ -49,10 +46,7 @@ export async function POST(req: Request) {
     const apiKey = resolveApiKey(headerKeys[provider], provider)
 
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: missingApiKeyMessage(provider) }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      })
+      return jsonError(missingApiKeyMessage(provider), 401)
     }
 
     let modelInstance
@@ -142,10 +136,7 @@ export async function POST(req: Request) {
     })
 
     if (validMessages.length === 0) {
-      return new Response(JSON.stringify({ error: "No valid messages to process" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      })
+      return jsonError("No valid messages to process", 400)
     }
 
     const result = streamText({
@@ -161,11 +152,6 @@ When analyzing images, describe them in detail and answer any questions about th
   } catch (error) {
     console.error("Chat API error:", error)
 
-    return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "An unexpected error occurred",
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
-    )
+    return jsonError(error instanceof Error ? error.message : "An unexpected error occurred", 500)
   }
 }
