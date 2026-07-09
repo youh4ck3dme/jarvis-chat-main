@@ -18,6 +18,25 @@ describe("POST /api/builder/unlock", () => {
     process.env = originalEnv
   })
 
+  it("returns 503 when BUILDER_UNLOCK_PASSWORD is not configured in production", async () => {
+    process.env = {
+      ...originalEnv,
+      MISTRAL_API_KEY: "test-mistral-key",
+      NODE_ENV: "production",
+    }
+    delete process.env.BUILDER_UNLOCK_PASSWORD
+
+    const response = await POST(
+      new Request("http://localhost/api/builder/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: "2366" }),
+      }),
+    )
+
+    expect(response.status).toBe(503)
+  })
+
   it("returns 400 when password is missing", async () => {
     const response = await POST(
       new Request("http://localhost/api/builder/unlock", {

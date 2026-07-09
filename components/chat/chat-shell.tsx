@@ -174,6 +174,7 @@ export function ChatShell() {
   const [plannerPlan, setPlannerPlan] = useState<BuildPlan | null>(null)
   const [builderUnlockDialogOpen, setBuilderUnlockDialogOpen] = useState(false)
   const pendingBuildPromptRef = useRef<string | null>(null)
+  const resumeAfterUnlockRef = useRef(false)
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const [memoryConversationId, setMemoryConversationId] = useState<string | null>(null)
@@ -252,12 +253,14 @@ export function ChatShell() {
   const previewHtmlContent = useThrottledValue(livePreviewHtml, isStreaming ? 200 : 0)
   const hasArtifact = Boolean(rawHtmlArtifact)
 
+  const isBuildActive =
+    isStreaming || pipelinePhase === "planner" || Boolean(plannerPlan) || hasArtifact
+
   useEffect(() => {
-    if (isMobile && hasArtifact && isStreaming) {
-      setWorkspaceView("artifact")
-      setArtifactTab("preview")
-    }
-  }, [hasArtifact, isMobile, isStreaming])
+    if (!isMobile || !isBuildActive) return
+    setWorkspaceView("artifact")
+    setArtifactTab("preview")
+  }, [hasArtifact, isBuildActive, isMobile])
 
   const conversationId = activeSessionId ?? "default-conversation"
 
@@ -342,6 +345,7 @@ export function ChatShell() {
     const pending = pendingBuildPromptRef.current
     if (pending) {
       pendingBuildPromptRef.current = null
+      resumeAfterUnlockRef.current = true
       setTimeout(() => {
         void sendMessageRef.current(pending)
       }, 150)
@@ -431,15 +435,34 @@ export function ChatShell() {
       setBuildTrace(null)
       setPlannerPlan(null)
 
-      const userMessage: Message = {
-        id: generateId(),
-        role: "user",
-        content: content.trim() || (imageData ? "Describe this image" : "Analyze this document"),
-        createdAt: new Date(),
-        imageData,
-        attachment: fileAttachment,
-        attachmentName: fileAttachment ? attachmentName : undefined,
+      const isResumeAfterUnlock = resumeAfterUnlockRef.current
+      if (isResumeAfterUnlock) {
+        resumeAfterUnlockRef.current = false
       }
+
+      const existingLockedUserMessage =
+        isResumeAfterUnlock
+          ? [...messages]
+              .reverse()
+              .find(
+                (message) =>
+                  message.role === "user" &&
+                  message.content.trim() === trimmedContent &&
+                  !message.narrative,
+              )
+          : undefined
+
+      const userMessage: Message =
+        existingLockedUserMessage ??
+        ({
+          id: generateId(),
+          role: "user",
+          content: content.trim() || (imageData ? "Describe this image" : "Analyze this document"),
+          createdAt: new Date(),
+          imageData,
+          attachment: fileAttachment,
+          attachmentName: fileAttachment ? attachmentName : undefined,
+        } satisfies Message)
 
       const assistantMessage: Message = {
         id: generateId(),
@@ -453,7 +476,10 @@ export function ChatShell() {
         storyBeats.push(createNarrativeBeat(generateId(), JARVIS_STORY_BUILD_INTENT))
       }
 
-      let conversationHistory: Message[] = [...messages, userMessage, ...storyBeats]
+      const baseHistory = existingLockedUserMessage
+        ? messages
+        : [...messages, userMessage]
+      let conversationHistory: Message[] = [...baseHistory, ...storyBeats]
       let activeAssistantMessage = assistantMessage
       setMessages([...conversationHistory, activeAssistantMessage])
       setIsStreaming(true)
@@ -844,8 +870,7 @@ export function ChatShell() {
 
   const showChatPanel = !isMobile || workspaceView === "chat"
   const showArtifactPanel = !isMobile || workspaceView === "artifact"
-  const showBuildTelemetry =
-    hasArtifact || isStreaming || pipelinePhase === "planner" || Boolean(plannerPlan)
+  const showBuildTelemetry = isBuildActive
 
   const artifactPanel = (
     <div className="flex h-full min-h-0 flex-col bg-[#111111]">
@@ -931,7 +956,7 @@ export function ChatShell() {
                   onClick={clearChat}
                   variant="ghost"
                   size="icon"
-                  className="absolute left-3 top-3 z-10 h-8 w-8 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:bg-[#222] hover:text-[#ddd]"
+                  className="absolute left-3 top-3 z-10 h-11 w-11 min-h-11 min-w-11 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:bg-[#222] hover:text-[#ddd] sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
                   aria-label="Reset chat"
                 >
                   <MessageSquareDashed className="h-4 w-4" />
@@ -958,7 +983,7 @@ export function ChatShell() {
                   onClick={clearChat}
                   variant="ghost"
                   size="icon"
-                  className="absolute left-3 top-3 z-10 h-8 w-8 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:bg-[#222] hover:text-[#ddd]"
+                  className="absolute left-3 top-3 z-10 h-11 w-11 min-h-11 min-w-11 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:bg-[#222] hover:text-[#ddd] sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
                   aria-label="Reset chat"
                 >
                   <MessageSquareDashed className="h-4 w-4" />
@@ -991,6 +1016,7 @@ export function ChatShell() {
         artifactTab={artifactTab}
         onArtifactTabChange={setArtifactTab}
         hasArtifact={hasArtifact}
+        showArtifactWorkspace={isBuildActive}
         onSend={sendMessage}
         onStop={stopStreaming}
         isStreaming={isStreaming}

@@ -64,7 +64,8 @@ JSON routes use a unified envelope via `lib/api-response.ts`:
 
 `lib/env.ts` validates `MISTRAL_API_KEY` (required) and optional `DEFAULT_AI_MODEL`, `NEXT_PUBLIC_DEFAULT_AI_MODEL`, `BLOB_READ_WRITE_TOKEN`, `PORT`, `BUILDER_UNLOCK_PASSWORD`.
 
-Client-side Builder unlock uses `NEXT_PUBLIC_BUILDER_UNLOCK_PASSWORD` or `lib/builder-unlock.ts` dev fallback (`2366`).
+Builder unlock uses `POST /api/builder/unlock` with server-only `BUILDER_UNLOCK_PASSWORD` (Vercel env).
+Local dev falls back to `2366` when unset; production returns `503` without the env var.
 
 ## Story → Build handoff
 

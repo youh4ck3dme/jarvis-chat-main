@@ -15,6 +15,8 @@ interface WorkspaceFooterProps {
   artifactTab: ArtifactTab
   onArtifactTabChange: (tab: ArtifactTab) => void
   hasArtifact: boolean
+  /** Show Preview/Code tabs during planner/stream even before HTML exists */
+  showArtifactWorkspace?: boolean
   onSend: (content: string, attachment?: string, attachmentName?: string) => void
   onStop: () => void
   isStreaming: boolean
@@ -38,6 +40,7 @@ export function WorkspaceFooter({
   artifactTab,
   onArtifactTabChange,
   hasArtifact,
+  showArtifactWorkspace = false,
   onSend,
   onStop,
   isStreaming,
@@ -59,7 +62,7 @@ export function WorkspaceFooter({
           type="button"
           onClick={() => onWorkspaceViewChange("chat")}
           className={cn(
-            "inline-flex h-8 items-center gap-1 rounded-full border px-3 text-[13px] font-medium transition-colors",
+            "inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-[13px] font-medium transition-colors sm:min-h-8",
             workspaceView === "chat"
               ? "border-[#3a3a3a] bg-[#222] text-[#f0f0f0]"
               : "border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:border-[#333] hover:text-[#ccc]",
@@ -70,7 +73,7 @@ export function WorkspaceFooter({
           Chat
         </button>
 
-        {hasArtifact && (
+        {(hasArtifact || showArtifactWorkspace) && (
           <div className="ml-1 flex items-center rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] p-0.5">
             <button
               type="button"
@@ -79,7 +82,7 @@ export function WorkspaceFooter({
                 onWorkspaceViewChange("artifact")
               }}
               className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors",
+                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors sm:min-h-7",
                 artifactTab === "preview" && workspaceView === "artifact"
                   ? "bg-[#2a2a2a] text-[#f0f0f0]"
                   : "text-[#777] hover:text-[#bbb]",
@@ -95,7 +98,7 @@ export function WorkspaceFooter({
                 onWorkspaceViewChange("artifact")
               }}
               className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors",
+                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors sm:min-h-7",
                 artifactTab === "code" && workspaceView === "artifact"
                   ? "bg-[#2a2a2a] text-[#f0f0f0]"
                   : "text-[#777] hover:text-[#bbb]",
@@ -107,11 +110,11 @@ export function WorkspaceFooter({
           </div>
         )}
 
-        {hasArtifact && workspaceView === "artifact" && (
+        {(hasArtifact || showArtifactWorkspace) && workspaceView === "artifact" && (
           <button
             type="button"
             onClick={onPlayPreview}
-            className="ml-auto hidden h-8 w-8 items-center justify-center rounded-full border border-[#333] bg-[#1a1a1a] text-[#ccc] transition-colors hover:bg-[#222] hover:text-white md:hidden"
+            className="ml-auto flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-[#333] bg-[#1a1a1a] text-[#ccc] transition-colors hover:bg-[#222] hover:text-white sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8 md:hidden"
             aria-label="Run preview"
           >
             <Play className="h-3.5 w-3.5 fill-current" />

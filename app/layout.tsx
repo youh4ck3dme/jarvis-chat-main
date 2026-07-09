@@ -12,9 +12,17 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "AI Chat Assistant",
-  description: "Chat with our AI assistant powered by Mistral, Gemini, GPT-4o, and Claude",
-  generator: "v0.app",
+  title: "Jarvis",
+  description: "Jarvis — chat a Builder workspace s live HTML preview. Optimalizované pre iPhone.",
+  applicationName: "Jarvis",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Jarvis",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: [
       {

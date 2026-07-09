@@ -1,18 +1,27 @@
-/** Dev-only fallback when BUILDER_UNLOCK_PASSWORD is not configured. */
+/** Dev-only fallback when BUILDER_UNLOCK_PASSWORD is not configured locally. */
 export const DEV_BUILDER_PASSWORD_FALLBACK = "2366";
 
-export function resolveBuilderPassword(): string {
+export function isDevelopmentRuntime(): boolean {
+  return process.env.NODE_ENV === "development";
+}
+
+export function resolveBuilderPassword(): string | null {
   const fromServer = process.env.BUILDER_UNLOCK_PASSWORD?.trim();
   if (fromServer) return fromServer;
 
-  if (process.env.NODE_ENV === "development") {
+  if (isDevelopmentRuntime()) {
     return DEV_BUILDER_PASSWORD_FALLBACK;
   }
 
-  return DEV_BUILDER_PASSWORD_FALLBACK;
+  return null;
+}
+
+export function isBuilderUnlockConfigured(): boolean {
+  return resolveBuilderPassword() !== null;
 }
 
 export function isBuilderPasswordValid(password: string): boolean {
   const expected = resolveBuilderPassword();
+  if (!expected) return false;
   return password.trim() === expected;
 }

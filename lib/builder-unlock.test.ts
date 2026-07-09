@@ -15,8 +15,10 @@ describe("builder-unlock", () => {
       NODE_ENV: "production",
     }
 
-    const { resolveBuilderPassword, isBuilderPasswordValid } = await import("./builder-unlock")
+    const { resolveBuilderPassword, isBuilderPasswordValid, isBuilderUnlockConfigured } =
+      await import("./builder-unlock")
     expect(resolveBuilderPassword()).toBe("server-secret")
+    expect(isBuilderUnlockConfigured()).toBe(true)
     expect(isBuilderPasswordValid("server-secret")).toBe(true)
     expect(isBuilderPasswordValid("wrong")).toBe(false)
   })
@@ -27,5 +29,16 @@ describe("builder-unlock", () => {
 
     const { resolveBuilderPassword, DEV_BUILDER_PASSWORD_FALLBACK } = await import("./builder-unlock")
     expect(resolveBuilderPassword()).toBe(DEV_BUILDER_PASSWORD_FALLBACK)
+  })
+
+  it("returns null in production when env is unset", async () => {
+    process.env = { ...originalEnv, NODE_ENV: "production" }
+    delete process.env.BUILDER_UNLOCK_PASSWORD
+
+    const { resolveBuilderPassword, isBuilderUnlockConfigured, isBuilderPasswordValid } =
+      await import("./builder-unlock")
+    expect(resolveBuilderPassword()).toBeNull()
+    expect(isBuilderUnlockConfigured()).toBe(false)
+    expect(isBuilderPasswordValid("2366")).toBe(false)
   })
 })
