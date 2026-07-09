@@ -1,0 +1,141 @@
+"use client"
+
+import { ChevronLeft, Code2, Eye, Play } from "lucide-react"
+
+import { Composer, type AIModel } from "@/components/chat/composer"
+import { cn } from "@/lib/utils"
+
+import type { ArtifactTab } from "@/components/chat/chat-shell"
+
+export type WorkspaceView = "chat" | "artifact"
+
+interface WorkspaceFooterProps {
+  workspaceView: WorkspaceView
+  onWorkspaceViewChange: (view: WorkspaceView) => void
+  artifactTab: ArtifactTab
+  onArtifactTabChange: (tab: ArtifactTab) => void
+  hasArtifact: boolean
+  onSend: (content: string, attachment?: string, attachmentName?: string) => void
+  onStop: () => void
+  isStreaming: boolean
+  disabled?: boolean
+  selectedModel: AIModel
+  onModelChange: (model: AIModel) => void
+  apiKeys?: {
+    mistral: string
+    google: string
+    openai: string
+    anthropic: string
+  }
+  onPlayPreview: () => void
+  onQuickSend?: (prompt: string) => void
+  enableBuilderQuickActions?: boolean
+}
+
+export function WorkspaceFooter({
+  workspaceView,
+  onWorkspaceViewChange,
+  artifactTab,
+  onArtifactTabChange,
+  hasArtifact,
+  onSend,
+  onStop,
+  isStreaming,
+  disabled,
+  selectedModel,
+  onModelChange,
+  apiKeys,
+  onPlayPreview,
+  onQuickSend,
+  enableBuilderQuickActions = false,
+}: WorkspaceFooterProps) {
+  return (
+    <footer
+      className="shrink-0 border-t border-[#2a2a2a] bg-[#111111] pb-[env(safe-area-inset-bottom)]"
+      data-testid="workspace-footer"
+    >
+      <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[#222] px-2 py-2 sm:gap-2 sm:px-3 md:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <button
+          type="button"
+          onClick={() => onWorkspaceViewChange("chat")}
+          className={cn(
+            "inline-flex h-8 items-center gap-1 rounded-full border px-3 text-[13px] font-medium transition-colors",
+            workspaceView === "chat"
+              ? "border-[#3a3a3a] bg-[#222] text-[#f0f0f0]"
+              : "border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:border-[#333] hover:text-[#ccc]",
+          )}
+          aria-label="Back to chat"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+          Chat
+        </button>
+
+        {hasArtifact && (
+          <div className="ml-1 flex items-center rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] p-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                onArtifactTabChange("preview")
+                onWorkspaceViewChange("artifact")
+              }}
+              className={cn(
+                "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors",
+                artifactTab === "preview" && workspaceView === "artifact"
+                  ? "bg-[#2a2a2a] text-[#f0f0f0]"
+                  : "text-[#777] hover:text-[#bbb]",
+              )}
+            >
+              <Eye className="h-3.5 w-3.5 shrink-0" />
+              <span className="max-[420px]:hidden sm:inline">Live </span>Preview
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onArtifactTabChange("code")
+                onWorkspaceViewChange("artifact")
+              }}
+              className={cn(
+                "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors",
+                artifactTab === "code" && workspaceView === "artifact"
+                  ? "bg-[#2a2a2a] text-[#f0f0f0]"
+                  : "text-[#777] hover:text-[#bbb]",
+              )}
+            >
+              <Code2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="max-[420px]:hidden sm:inline">Generated </span>Code
+            </button>
+          </div>
+        )}
+
+        {hasArtifact && workspaceView === "artifact" && (
+          <button
+            type="button"
+            onClick={onPlayPreview}
+            className="ml-auto hidden h-8 w-8 items-center justify-center rounded-full border border-[#333] bg-[#1a1a1a] text-[#ccc] transition-colors hover:bg-[#222] hover:text-white md:hidden"
+            aria-label="Run preview"
+          >
+            <Play className="h-3.5 w-3.5 fill-current" />
+          </button>
+        )}
+      </div>
+
+      <div className="relative px-3 py-3 md:px-4">
+        <Composer
+          variant="workspace"
+          onSend={onSend}
+          onStop={onStop}
+          isStreaming={isStreaming}
+          disabled={disabled}
+          selectedModel={selectedModel}
+          onModelChange={onModelChange}
+          apiKeys={apiKeys}
+          onPlayPreview={onPlayPreview}
+          showPlayButton={hasArtifact}
+          hasArtifact={hasArtifact}
+          onQuickSend={onQuickSend}
+          enableBuilderQuickActions={enableBuilderQuickActions}
+        />
+      </div>
+    </footer>
+  )
+}
