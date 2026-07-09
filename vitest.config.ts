@@ -7,9 +7,29 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
+    exclude: ["**/node_modules/**", "**/e2e/**"],
     globals: false,
     clearMocks: true,
     restoreMocks: true,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "text-summary"],
+      include: [
+        "lib/agents/**/*.ts",
+        "lib/build-history/**/*.ts",
+        "lib/chat/**/*.ts",
+        "lib/api-response.ts",
+        "lib/resolve-api-key.ts",
+        "lib/default-model.ts",
+      ],
+      exclude: ["**/*.test.ts", "**/*.test.tsx", "**/__fixtures__/**"],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 75,
+        statements: 80,
+      },
+    },
   },
   resolve: {
     alias: {

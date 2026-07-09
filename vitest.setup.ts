@@ -1,5 +1,9 @@
+import "fake-indexeddb/auto"
+
 import "@testing-library/jest-dom/vitest"
 import { beforeEach, vi } from "vitest"
+
+process.env.MISTRAL_API_KEY ??= "test-mistral-key"
 
 class MockAudio {
   static instances: MockAudio[] = []
