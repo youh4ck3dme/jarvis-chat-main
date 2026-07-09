@@ -275,7 +275,7 @@ export async function extractMemoryWithAI(
         },
       ],
       temperature: 0.1, // Low temperature for more deterministic results
-      maxTokens: 4000,
+      maxOutputTokens: 4000,
     });
 
     // Get full response

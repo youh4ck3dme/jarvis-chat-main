@@ -6,6 +6,7 @@
 export * from './types';
 export * from './extractor';
 export * from './context-builder';
+export * from './session-memory-summary';
 
 // Memory store exports (lazy-initialized to avoid SSR issues)
 export { default as JarvisMemoryStore, getMemoryStore } from './memory-store';
