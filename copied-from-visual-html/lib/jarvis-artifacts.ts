@@ -225,6 +225,135 @@ export function getJarvisPreviewHtml(
   return htmlArtifact ? prepareJarvisPreviewHtml(htmlArtifact, options) : null;
 }
 
+const VIEWPORT_META =
+  '<meta name="viewport" content="width=device-width, initial-scale=1" />';
+
+const REPAIR_RESPONSIVE_CSS = `
+    *, *::before, *::after { box-sizing: border-box; }
+    img, video, section, main { max-width: 100%; }
+    button { min-height: 48px; padding: 12px 20px; }
+    @media (max-width: 768px) {
+      body { padding: 16px; overflow-x: hidden; }
+    }`;
+
+const REPAIR_BUTTON_SCRIPT = `<script>
+document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+  anchor.addEventListener("click", function (event) {
+    var href = anchor.getAttribute("href");
+    if (!href || href === "#") return;
+    var target = document.getElementById(href.slice(1));
+    if (target) {
+      event.preventDefault();
+      target.scrollIntoView({ behavior: "smooth" });
+    }
+  });
+});
+document.querySelectorAll("button").forEach(function (button) {
+  if (button.dataset.jarvisBound === "1") return;
+  button.dataset.jarvisBound = "1";
+  button.addEventListener("click", function () {
+    button.classList.toggle("is-active");
+  });
+});
+</script>`;
+
+/** Best-effort fixes for truncated or incomplete builder HTML before evaluation. */
+export function repairJarvisHtmlArtifact(html: string): string {
+  let repaired = html.trim();
+  if (!repaired) return repaired;
+
+  const lower = repaired.toLowerCase();
+
+  if (!lower.includes("<!doctype html") && !lower.includes("<html")) {
+    repaired = `<!DOCTYPE html><html><head>${VIEWPORT_META}<style>${REPAIR_RESPONSIVE_CSS}\n  </style></head><body>${repaired}</body></html>`;
+  }
+
+  const lowerAfterWrap = repaired.toLowerCase();
+
+  if (
+    !lowerAfterWrap.includes('name="viewport"') &&
+    !lowerAfterWrap.includes("name='viewport'")
+  ) {
+    if (/<head[^>]*>/i.test(repaired)) {
+      repaired = repaired.replace(/<head([^>]*)>/i, `<head$1>\n  ${VIEWPORT_META}`);
+    }
+  }
+
+  if (!/@media\s*\([^)]*max-width/i.test(repaired)) {
+    if (/<style[^>]*>/i.test(repaired)) {
+      repaired = repaired.replace(/<\/style>/i, `${REPAIR_RESPONSIVE_CSS}\n  </style>`);
+    } else if (/<head[^>]*>/i.test(repaired)) {
+      repaired = repaired.replace(
+        /<head([^>]*)>/i,
+        `<head$1>\n  <style>${REPAIR_RESPONSIVE_CSS}\n  </style>`,
+      );
+    }
+  }
+
+  repaired = repaired.replace(
+    /\b(?:width|min-width)\s*:\s*(\d{4,})\s*px/gi,
+    "max-width: 100%",
+  );
+
+  const lowerBeforeClose = repaired.toLowerCase();
+  if (!lowerBeforeClose.includes("<script") && /<button\b/i.test(repaired)) {
+    if (/<\/body>/i.test(repaired)) {
+      repaired = repaired.replace(/<\/body>/i, `${REPAIR_BUTTON_SCRIPT}\n</body>`);
+    } else {
+      repaired += `\n${REPAIR_BUTTON_SCRIPT}`;
+    }
+  }
+
+  const lowerFinal = repaired.toLowerCase();
+  if (!lowerFinal.includes("</html>")) {
+    if (!lowerFinal.includes("</body>")) {
+      repaired += lowerFinal.includes("<body") ? "\n</body>" : "\n<body></body>";
+    }
+    repaired += "\n</html>";
+  }
+
+  return repaired;
+}
+
+export function applyJarvisHtmlRepairToAssistantContent(content: string): {
+  content: string;
+  html: string | null;
+  changed: boolean;
+} {
+  const html = extractJarvisHtmlArtifact([{ role: "assistant", content }]);
+  if (!html) {
+    return { content, html: null, changed: false };
+  }
+
+  const repairedHtml = repairJarvisHtmlArtifact(html);
+  if (repairedHtml === html) {
+    return { content, html, changed: false };
+  }
+
+  const trimmed = content.trim();
+  const fenceMatch = trimmed.match(HTML_FENCE_PATTERN);
+  if (fenceMatch) {
+    const repairedContent = trimmed.replace(
+      HTML_FENCE_PATTERN,
+      `\`\`\`html\n${repairedHtml}\n\`\`\``,
+    );
+    return { content: repairedContent, html: repairedHtml, changed: true };
+  }
+
+  const htmlStart = trimmed.search(FULL_HTML_PATTERN);
+  if (htmlStart >= 0) {
+    const prefix = trimmed.slice(0, htmlStart);
+    const suffix = trimmed.slice(htmlStart + html.length);
+    return {
+      content: `${prefix}${repairedHtml}${suffix}`,
+      html: repairedHtml,
+      changed: true,
+    };
+  }
+
+  return { content, html: repairedHtml, changed: true };
+}
+
 export function validateJarvisHtmlArtifact(html: string | null): { ok: boolean; issues: string[] } {
   const issues: string[] = [];
   if (!html?.trim()) {

@@ -1,9 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  evaluateMobileReadiness,
+} from "@/lib/agents/build-mobile-validator";
+import { evaluateBuildArtifact } from "@/lib/agents/build-evaluator";
+
+import {
+  applyJarvisHtmlRepairToAssistantContent,
   extractJarvisHtmlArtifact,
   prepareJarvisPreviewHtml,
+  repairJarvisHtmlArtifact,
   safeSanitizeHtml,
+  validateJarvisHtmlArtifact,
 } from "./jarvis-artifacts";
 
 describe("jarvis-artifacts", () => {
@@ -39,5 +47,35 @@ describe("jarvis-artifacts", () => {
     const streaming = prepareJarvisPreviewHtml("<main>Partial", { streaming: true });
     expect(streaming).toContain("Partial");
     expect(streaming).toContain("script-src 'unsafe-inline'");
+  });
+
+  it("repairs truncated builder HTML with script, closing tags and mobile CSS", () => {
+    const truncated = `<!DOCTYPE html>
+<html>
+<head><style>body { margin: 0; width: 1200px; }</style></head>
+<body>
+  <section id="hero"><button>Start</button></section>`;
+
+    const repaired = repairJarvisHtmlArtifact(truncated);
+
+    expect(repaired.toLowerCase()).toContain("</html>");
+    expect(repaired.toLowerCase()).toContain("<script");
+    expect(repaired).toMatch(/@media\s*\([^)]*max-width/i);
+    expect(repaired).toContain('name="viewport"');
+    expect(repaired).not.toMatch(/width:\s*1200px/i);
+
+    expect(validateJarvisHtmlArtifact(repaired).ok).toBe(true);
+    expect(evaluateBuildArtifact(repaired).ok).toBe(true);
+    expect(evaluateMobileReadiness(repaired).ok).toBe(true);
+  });
+
+  it("rewrites fenced assistant content when repair changes the artifact", () => {
+    const assistantContent = "```html\n<section><button>Go</button></section>\n```";
+    const result = applyJarvisHtmlRepairToAssistantContent(assistantContent);
+
+    expect(result.changed).toBe(true);
+    expect(result.content).toContain("```html");
+    expect(result.content.toLowerCase()).toContain("</html>");
+    expect(result.content.toLowerCase()).toContain("<script");
   });
 });

@@ -46,8 +46,8 @@ describe("build-pipeline-simulation", () => {
 
     expect(steps).toHaveLength(3)
     expect(refinementRounds).toBe(2)
-    expect(steps[0]?.refinementPrompt).toContain("Dokonči HTML dokument")
-    expect(steps[1]?.refinementPrompt).toContain("Dokonči HTML dokument")
+    expect(steps[0]?.refinementPrompt).toContain("Dokonči")
+    expect(steps[1]?.refinementPrompt).toContain("Dokonči")
     expect(final.refinementPrompt).toBeNull()
     expect(final.evaluation.shouldRefine).toBe(true)
   })

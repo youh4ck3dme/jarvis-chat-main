@@ -1,3 +1,4 @@
+import { applyJarvisHtmlRepairToAssistantContent } from "@/copied-from-visual-html/lib/jarvis-artifacts"
 import { formatPlanForSystemPrompt } from "@/lib/agents/build-plan-utils"
 import {
   createEmptyBuildTrace,
@@ -58,6 +59,11 @@ export type BuildPipelineResult = {
   completedRounds: BuildPipelineRound[]
 }
 
+function normalizeAssistantStreamContent(content: string): string {
+  const repaired = applyJarvisHtmlRepairToAssistantContent(content)
+  return repaired.changed ? repaired.content : content
+}
+
 export function buildIncompleteHtmlError(
   evaluation: BuildEvaluation,
   refinementRounds: number,
@@ -101,10 +107,14 @@ export async function runBuildPipeline(input: BuildPipelineInput): Promise<Build
     systemPrompt,
   )
 
-  conversationHistory = [...conversationHistory, { role: "assistant", content: initialContent }]
+  const normalizedInitialContent = normalizeAssistantStreamContent(initialContent)
+  conversationHistory = [
+    ...conversationHistory,
+    { role: "assistant", content: normalizedInitialContent },
+  ]
   const initialRound: BuildPipelineRound = {
     userMessage: roundUserMessage,
-    assistantContent: initialContent,
+    assistantContent: normalizedInitialContent,
   }
   completedRounds.push(initialRound)
   await input.onRoundComplete?.(initialRound)
@@ -146,10 +156,14 @@ export async function runBuildPipeline(input: BuildPipelineInput): Promise<Build
       systemPrompt,
     )
 
-    conversationHistory = [...conversationHistory, { role: "assistant", content: refinedContent }]
+    const normalizedRefinedContent = normalizeAssistantStreamContent(refinedContent)
+    conversationHistory = [
+      ...conversationHistory,
+      { role: "assistant", content: normalizedRefinedContent },
+    ]
     const refineRound: BuildPipelineRound = {
       userMessage: refineUserMessage,
-      assistantContent: refinedContent,
+      assistantContent: normalizedRefinedContent,
     }
     completedRounds.push(refineRound)
     await input.onRoundComplete?.(refineRound)

@@ -52,6 +52,8 @@ export function formatPlanForSystemPrompt(plan: BuildPlan, experienceHint?: stri
     JSON.stringify(plan, null, 2),
     "Honor the plan sections, CTA label, primary color, and language.",
     "Deliver one complete ```html artifact with inline CSS and inline <script> for every button.",
+    "Mobile minimum: viewport meta, @media (max-width: 768px), max-width: 100% (no horizontal scroll at 420px), buttons min 44px tall.",
+    "Never truncate — close </body></html> and the ```html fence only after the document is finished.",
   ]
 
   if (experienceHint?.trim()) {

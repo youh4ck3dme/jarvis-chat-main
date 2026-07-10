@@ -41,7 +41,11 @@ export function buildRefinementPrompt(issues: string[]): string {
       issue.includes("overflow"),
   )
 
-  if (hasMobileIssue && !hasStructuralIssue) {
+  if (hasStructuralIssue && hasMobileIssue) {
+    return `Dokonči a oprav HTML dokument. Chýba: ${issueList}. Pridaj funkčný inline <script> pre všetky buttony, @media (max-width: 768px), viewport meta, max-width: 100% na mobile (420px) a uzavri </html>.`
+  }
+
+  if (hasMobileIssue) {
     return `Oprav responzivitu pre mobile (420px šírka, iPhone). Chýba: ${issueList}. Pridaj @media (max-width: 768px), viewport meta a touch-friendly buttony (min 44px). Uzavri </html>.`
   }
 

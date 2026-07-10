@@ -19,7 +19,7 @@ describe("build-orchestrator", () => {
 
     expect(result.evaluation.shouldRefine).toBe(true)
     expect(result.evaluation.issues).toContain("Dokument je useknutý — chýba </html>")
-    expect(result.refinementPrompt).toContain("Dokonči HTML dokument")
+    expect(result.refinementPrompt).toContain("Dokonči")
     expect(result.refinementPrompt).toContain("</html>")
     expect(result.trace.phases.some((phase) => phase.phase === "evaluator")).toBe(true)
     expect(result.trace.phases.some((phase) => phase.phase === "refine")).toBe(true)
@@ -77,6 +77,19 @@ describe("build-orchestrator", () => {
     const prompt = buildRefinementPrompt(["Chýba <script>", "Dokument je useknutý — chýba </html>"])
 
     expect(prompt).toContain("Chýba <script>")
+    expect(prompt).toContain("inline <script>")
+    expect(prompt).toContain("</html>")
+  })
+
+  it("builds combined structural and mobile refinement prompt", () => {
+    const prompt = buildRefinementPrompt([
+      "Dokument je useknutý — chýba </html>",
+      "Missing @media (max-width) responsive block",
+      "Fixed width may overflow mobile viewport (420px)",
+    ])
+
+    expect(prompt).toContain("@media (max-width: 768px)")
+    expect(prompt).toContain("420px")
     expect(prompt).toContain("inline <script>")
     expect(prompt).toContain("</html>")
   })

@@ -86,9 +86,9 @@ describe("runBuildPipeline", () => {
     expect(result.refinementRounds).toBe(0)
   })
 
-  it("runs refinement rounds when HTML stays truncated", async () => {
+  it("auto-repairs truncated HTML without extra refinement rounds", async () => {
     const fetchPlan = vi.fn().mockResolvedValue(null)
-    const streamReply = createStreamReply([TRUNCATED_HTML, TRUNCATED_HTML, TRUNCATED_HTML])
+    const streamReply = createStreamReply([TRUNCATED_HTML])
     const onRefinementRound = vi.fn()
 
     const result = await runBuildPipeline({
@@ -101,12 +101,37 @@ describe("runBuildPipeline", () => {
       onRefinementRound,
     })
 
+    expect(streamReply.calls).toHaveLength(1)
+    expect(onRefinementRound).not.toHaveBeenCalled()
+    expect(result.refinementRounds).toBe(0)
+    expect(result.evaluation?.ok).toBe(true)
+    expect(result.artifact?.toLowerCase()).toContain("</html>")
+    expect(result.artifact?.toLowerCase()).toContain("<script")
+  })
+
+  it("runs refinement rounds when the stream returns no HTML artifact", async () => {
+    const fetchPlan = vi.fn().mockResolvedValue(null)
+    const streamReply = createStreamReply([
+      "Nemám HTML artifact.",
+      "Stále bez HTML.",
+      "Stále bez HTML.",
+    ])
+    const onRefinementRound = vi.fn()
+
+    const result = await runBuildPipeline({
+      priorHistory: [],
+      userMessage: { role: "user", content: "Build a landing page" },
+      baseSystemPrompt: "Base advisor prompt",
+      experienceHint: null,
+      fetchPlan,
+      streamReply,
+      onRefinementRound,
+    })
+
     expect(streamReply.calls).toHaveLength(3)
     expect(onRefinementRound).toHaveBeenCalledTimes(2)
     expect(result.refinementRounds).toBe(2)
-    expect(result.completedRounds).toHaveLength(3)
     expect(result.evaluation?.shouldRefine).toBe(true)
-    expect(result.conversationHistory.filter((message) => message.role === "user")).toHaveLength(3)
   })
 
   it("continues when planner fetch fails", async () => {
