@@ -307,7 +307,7 @@ export async function extractMemoryWithAI(
         return normalized;
       }
     } catch (e) {
-      Logger.warn('Failed to parse AI extraction response, falling back to lightweight', e);
+      Logger.warn('Failed to parse AI extraction response, falling back to lightweight', { error: String(e) });
     }
 
     // Fallback

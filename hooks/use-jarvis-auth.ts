@@ -28,7 +28,7 @@ export function useJarvisAuth() {
         try {
           await migrateDeviceDataToUserAccount();
         } catch (error) {
-          Logger.warn("Device-to-user migration failed:", error);
+          Logger.warn("Device-to-user migration failed", { error: String(error) });
         }
       }
     });

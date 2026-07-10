@@ -114,7 +114,7 @@ export async function saveBuildHistory(input: SaveBuildHistoryInput): Promise<Bu
     await trimBuildHistoryForSession(input.sessionId, MAX_RECORDS_PER_SESSION)
     return record
   } catch (error) {
-    Logger.warn("Failed to save build history:", error)
+    Logger.warn("Failed to save build history", { error: String(error) })
     return null
   }
 }
@@ -159,7 +159,7 @@ export async function listBuildHistory(
 
     return records
   } catch (error) {
-    Logger.warn("Failed to list build history:", error)
+    Logger.warn("Failed to list build history", { error: String(error) })
     return []
   }
 }
@@ -185,7 +185,7 @@ export async function countBuildHistory(sessionId?: string): Promise<number> {
 
     return count
   } catch (error) {
-    Logger.warn("Failed to count build history:", error)
+    Logger.warn("Failed to count build history", { error: String(error) })
     return 0
   }
 }
@@ -242,7 +242,7 @@ export async function clearBuildHistory(): Promise<void> {
       request.onsuccess = () => resolve()
     })
   } catch (error) {
-    Logger.warn("Failed to clear build history:", error)
+    Logger.warn("Failed to clear build history", { error: String(error) })
   }
 }
 
@@ -279,6 +279,6 @@ export async function clearBuildHistoryForSession(sessionId: string): Promise<vo
         reject(transaction.error ?? new Error("Failed to clear session build history"))
     })
   } catch (error) {
-    Logger.warn("Failed to clear session build history:", error)
+    Logger.warn("Failed to clear session build history", { error: String(error) })
   }
 }
