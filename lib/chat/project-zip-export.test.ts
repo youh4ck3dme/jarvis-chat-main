@@ -2,6 +2,7 @@ import { unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 
 import type { ChatSessionsState } from "./chat-sessions";
+import { parseJarvisBackup } from "./jarvis-backup";
 import {
   buildProjectZipArchive,
   buildProjectZipFilename,
@@ -77,5 +78,23 @@ describe("project-zip-export", () => {
 
     const html = new TextDecoder().decode(entries["latest-build.html"]);
     expect(html).toContain("Coffee");
+  });
+
+  it("embeds a backup.json importable via parseJarvisBackup", () => {
+    const archive = buildProjectZipArchive({
+      sessions: sessionsState,
+      memory: { conversations: [], userProfile: null },
+      buildHistory: [],
+      projectName: "Coffee Shop",
+      syncKey: "device-roundtrip",
+    });
+
+    const entries = unzipSync(archive);
+    const backupRaw = JSON.parse(new TextDecoder().decode(entries["backup.json"]));
+
+    const parsed = parseJarvisBackup(backupRaw);
+    expect(parsed.sessions.activeSessionId).toBe("session-1");
+    expect(parsed.sessions.sessions[0]?.projectName).toBe("Coffee Shop");
+    expect(parsed.syncKey).toBe("device-roundtrip");
   });
 });
