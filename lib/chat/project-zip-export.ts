@@ -152,7 +152,7 @@ export function buildProjectZipArchive(input: JarvisProjectZipInput): Uint8Array
 export function downloadZipArchive(filename: string, archive: Uint8Array): void {
   if (typeof window === "undefined") return;
 
-  const blob = new Blob([archive], { type: "application/zip" });
+  const blob = new Blob([new Uint8Array(archive)], { type: "application/zip" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
