@@ -3,6 +3,7 @@ name: Desktop Agent
 on:
   pull_request:
     paths:
+      - ".github/workflows/desktop-agent.yml"
       - "desktop-agent/**"
       - "shared/**"
       - "lib/desktop-agent/**"
@@ -10,6 +11,7 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/workflows/desktop-agent.yml"
       - "desktop-agent/**"
       - "shared/**"
       - "lib/desktop-agent/**"
