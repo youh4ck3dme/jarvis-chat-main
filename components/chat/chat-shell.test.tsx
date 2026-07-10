@@ -34,6 +34,24 @@ function createStreamResponse(content: string): Response {
   })
 }
 
+function createChunkedStreamResponse(content: string, chunkSize = 24): Response {
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream({
+    async start(controller) {
+      for (let offset = 0; offset < content.length; offset += chunkSize) {
+        controller.enqueue(encoder.encode(content.slice(offset, offset + chunkSize)))
+        await Promise.resolve()
+      }
+      controller.close()
+    },
+  })
+
+  return new Response(stream, {
+    status: 200,
+    headers: { "Content-Type": "text/plain" },
+  })
+}
+
 vi.mock("next/dynamic", () => ({
   default: () => {
     const MemoryPanel = () => <div data-testid="memory-panel" />
@@ -321,6 +339,60 @@ describe("ChatShell", () => {
     })
 
     expect(screen.getByTestId("jarvis-preview")).toBeInTheDocument()
+    },
+    15000,
+  )
+
+  it(
+    "builder mode: survives many stream chunks without update-depth errors",
+    async () => {
+      localStorage.setItem("jarvis-builder-unlocked", "true")
+      localStorage.setItem("jarvis-mode", "builder")
+
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+
+      fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+        const url = String(input)
+
+        if (url.includes("/api/build/plan")) {
+          return new Response(JSON.stringify({ success: true, data: samplePlan }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          })
+        }
+
+        if (url.includes("/api/chat")) {
+          return createChunkedStreamResponse(COMPLETE_HTML, 16)
+        }
+
+        return new Response("Not found", { status: 404 })
+      })
+
+      const user = userEvent.setup()
+      render(<ChatShell />)
+
+      await waitFor(() => {
+        expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
+      })
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Message input" }), {
+        target: { value: "Build a landing page" },
+      })
+      await user.click(screen.getByRole("button", { name: "Send message" }))
+
+      await waitFor(
+        () => {
+          expect(screen.getByText(/section id="hero"/i)).toBeInTheDocument()
+        },
+        { timeout: 10000 },
+      )
+
+      const depthErrors = consoleError.mock.calls.filter(([message]) =>
+        String(message).includes("Maximum update depth exceeded"),
+      )
+      expect(depthErrors).toHaveLength(0)
+
+      consoleError.mockRestore()
     },
     15000,
   )

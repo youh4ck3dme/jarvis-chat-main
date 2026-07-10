@@ -10,7 +10,7 @@ export function useThrottledValue<T>(value: T, delayMs: number): T {
 
   useEffect(() => {
     if (delayMs <= 0) {
-      setThrottled(value);
+      setThrottled((current) => (Object.is(current, value) ? current : value));
       return;
     }
 

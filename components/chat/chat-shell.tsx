@@ -174,6 +174,10 @@ async function readApiError(response: Response): Promise<string> {
 
 export function ChatShell() {
   const [messages, setMessages] = useState<Message[]>([])
+  const messagesRef = useRef<Message[]>([])
+  const streamAssistantIdRef = useRef<string | null>(null)
+  const streamContentRef = useRef("")
+  const streamFlushRafRef = useRef<number | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [abortController, setAbortController] = useState<AbortController | null>(null)
@@ -300,6 +304,41 @@ export function ChatShell() {
 
   const conversationId = activeSessionId ?? "default-conversation"
 
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
+  const flushStreamingAssistantMessage = useCallback(() => {
+    const assistantId = streamAssistantIdRef.current
+    if (!assistantId) return
+
+    const nextContent = streamContentRef.current
+    setMessages((prev) => {
+      const target = prev.find((msg) => msg.id === assistantId)
+      if (!target || target.content === nextContent) return prev
+      return prev.map((msg) =>
+        msg.id === assistantId ? { ...msg, content: nextContent } : msg,
+      )
+    })
+  }, [])
+
+  const scheduleStreamingAssistantFlush = useCallback(() => {
+    if (streamFlushRafRef.current !== null) return
+    streamFlushRafRef.current = requestAnimationFrame(() => {
+      streamFlushRafRef.current = null
+      flushStreamingAssistantMessage()
+    })
+  }, [flushStreamingAssistantMessage])
+
+  const clearStreamingAssistantFlush = useCallback(() => {
+    if (streamFlushRafRef.current !== null) {
+      cancelAnimationFrame(streamFlushRafRef.current)
+      streamFlushRafRef.current = null
+    }
+    streamAssistantIdRef.current = null
+    streamContentRef.current = ""
+  }, [])
+
   // Load state and keys from localStorage on mount
   useEffect(() => {
     try {
@@ -339,9 +378,9 @@ export function ChatShell() {
     }
   }, [])
 
-  // Persist active session whenever messages or project name change
+  // Persist active session whenever messages or project name change (skip during stream ticks)
   useEffect(() => {
-    if (!isLoaded || !activeSessionId) return
+    if (!isLoaded || !activeSessionId || isStreaming) return
 
     try {
       const nextState = updateActiveSession(loadChatSessionsState(), {
@@ -353,7 +392,7 @@ export function ChatShell() {
     } catch (e) {
       console.error("Failed to save chat session:", e)
     }
-  }, [messages, projectName, isLoaded, activeSessionId])
+  }, [messages, projectName, isLoaded, activeSessionId, isStreaming])
 
   useEffect(() => {
     if (!isLoaded) return
@@ -388,7 +427,7 @@ export function ChatShell() {
   }, [isLoaded, isAuthenticated])
 
   useEffect(() => {
-    if (!isLoaded || !cloudSyncActive || !activeSessionId) return
+    if (!isLoaded || !cloudSyncActive || !activeSessionId || isStreaming) return
 
     if (syncPushTimerRef.current) {
       clearTimeout(syncPushTimerRef.current)
@@ -414,7 +453,7 @@ export function ChatShell() {
         clearTimeout(syncPushTimerRef.current)
       }
     }
-  }, [messages, projectName, chatSessions, isLoaded, cloudSyncActive, activeSessionId])
+  }, [messages, projectName, chatSessions, isLoaded, cloudSyncActive, activeSessionId, isStreaming])
 
   const handleModelChange = useCallback((model: AIModel) => {
     setSelectedModel(model)
@@ -552,9 +591,11 @@ export function ChatShell() {
         resumeAfterUnlockRef.current = false
       }
 
+      const currentMessages = messagesRef.current
+
       const existingLockedUserMessage =
         isResumeAfterUnlock
-          ? [...messages]
+          ? [...currentMessages]
               .reverse()
               .find(
                 (message) =>
@@ -589,8 +630,8 @@ export function ChatShell() {
       }
 
       const baseHistory = existingLockedUserMessage
-        ? messages
-        : [...messages, userMessage]
+        ? currentMessages
+        : [...currentMessages, userMessage]
       let conversationHistory: Message[] = [...baseHistory, ...storyBeats]
       let activeAssistantMessage = assistantMessage
       setMessages([...conversationHistory, activeAssistantMessage])
@@ -605,6 +646,8 @@ export function ChatShell() {
         systemPrompt: string,
       ): Promise<{ content: string; latencyMs: number }> => {
         const builderStart = performance.now()
+        streamAssistantIdRef.current = assistantMsg.id
+        streamContentRef.current = ""
 
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -645,12 +688,15 @@ export function ChatShell() {
             throw new Error(accumulatedContent.trim())
           }
 
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsg.id ? { ...msg, content: accumulatedContent } : msg,
-            ),
-          )
+          streamContentRef.current = accumulatedContent
+          scheduleStreamingAssistantFlush()
         }
+
+        if (streamFlushRafRef.current !== null) {
+          cancelAnimationFrame(streamFlushRafRef.current)
+          streamFlushRafRef.current = null
+        }
+        flushStreamingAssistantMessage()
 
         return {
           content: accumulatedContent,
@@ -716,7 +762,7 @@ export function ChatShell() {
         }
 
         const pipelineResult = await runBuildPipeline({
-          priorHistory: messages.map(toPipelineMessage),
+          priorHistory: messagesRef.current.map(toPipelineMessage),
           userMessage: toPipelineMessage(userMessage),
           baseSystemPrompt: systemPrompt,
           experienceHint: readExperienceHint(),
@@ -852,11 +898,21 @@ export function ChatShell() {
           setMessages((prev) => prev.filter((msg) => msg.id !== activeAssistantMessage.id))
         }
       } finally {
+        clearStreamingAssistantFlush()
         setIsStreaming(false)
         setAbortController(null)
       }
     },
-    [messages, isStreaming, selectedModel, jarvisMode, builderUnlocked, conversationId],
+    [
+      isStreaming,
+      selectedModel,
+      jarvisMode,
+      builderUnlocked,
+      conversationId,
+      scheduleStreamingAssistantFlush,
+      flushStreamingAssistantMessage,
+      clearStreamingAssistantFlush,
+    ],
   )
 
   sendMessageRef.current = sendMessage
