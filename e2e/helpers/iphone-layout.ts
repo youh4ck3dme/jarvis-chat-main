@@ -33,6 +33,15 @@ export async function gotoIphoneChatEmptyState(page: Page): Promise<void> {
   await page.setViewportSize(IPHONE_17_AIR_VIEWPORT)
   await page.goto("/chat")
   await page.waitForSelector('[data-testid="jarvis-empty-state"]', { timeout: 30_000 })
+  await page.waitForFunction(
+    () => {
+      const emptyState = document.querySelector('[data-testid="jarvis-empty-state"]')
+      if (!emptyState) return false
+      return emptyState.getBoundingClientRect().width >= 400
+    },
+    undefined,
+    { timeout: 15_000 },
+  )
 }
 
 export async function collectIphoneLayoutMetrics(page: Page): Promise<IphoneLayoutMetrics> {

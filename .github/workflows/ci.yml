@@ -38,6 +38,7 @@ jobs:
     env:
       MISTRAL_API_KEY: ci-placeholder-key
       BUILDER_UNLOCK_PASSWORD: ${{ secrets.BUILDER_UNLOCK_PASSWORD }}
+      BUILDER_UNLOCK_RATE_LIMIT_DISABLED: "true"
 
     steps:
       - uses: actions/checkout@v4

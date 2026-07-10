@@ -30,7 +30,7 @@ test.describe("UX polish (P17)", () => {
 
     await page.evaluate(() => {
       const footer = document.querySelector('[data-testid="workspace-footer"]')
-      const dropTarget = footer?.querySelector(".rounded-2xl")
+      const dropTarget = footer?.querySelector(".pointer-events-auto")
       if (!dropTarget) return
 
       const event = new Event("dragenter", { bubbles: true })
