@@ -227,6 +227,51 @@ describe("ChatShell", () => {
     )
   })
 
+  it("chat mode on mobile stays in chat view for casual messages", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      (query: string) =>
+        ({
+          matches: query.includes("767"),
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        }) as MediaQueryList,
+    )
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      if (String(input).includes("/api/chat")) {
+        await new Promise((resolve) => setTimeout(resolve, 80))
+        return createStreamResponse("Ahoj! Ako ti môžem pomôcť?")
+      }
+      return new Response("Not found", { status: 404 })
+    })
+
+    const user = userEvent.setup()
+    render(<ChatShell />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Message input" }), {
+      target: { value: "ahoj" },
+    })
+    await user.click(screen.getByRole("button", { name: "Send message" }))
+
+    expect(screen.queryByRole("button", { name: /Live Preview/i })).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(screen.getByText("Ahoj! Ako ti môžem pomôcť?")).toBeInTheDocument()
+    })
+
+    expect(screen.queryByRole("button", { name: /Live Preview/i })).not.toBeInTheDocument()
+  })
+
   it(
     "builder mode: sends a message and streams assistant HTML through the build pipeline",
     async () => {

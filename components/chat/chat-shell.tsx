@@ -254,7 +254,8 @@ export function ChatShell() {
   const hasArtifact = Boolean(rawHtmlArtifact)
 
   const isBuildActive =
-    isStreaming || pipelinePhase === "planner" || Boolean(plannerPlan) || hasArtifact
+    jarvisMode === "builder" &&
+    (isStreaming || pipelinePhase === "planner" || Boolean(plannerPlan) || hasArtifact)
 
   useEffect(() => {
     if (!isMobile || !isBuildActive) return
@@ -897,7 +898,7 @@ export function ChatShell() {
             <OrbMindMap
               isPlanning={pipelinePhase === "planner"}
               plan={plannerPlan}
-              isStreaming={isStreaming}
+              isStreaming={isBuildActive && isStreaming}
             />
           ) : undefined
         }
