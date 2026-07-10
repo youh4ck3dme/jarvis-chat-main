@@ -1,20 +1,9 @@
 # Jarvis — Dokumentácia
 
+**Hlavný dokument:** [`../README.md`](../README.md) (README + Developer Guide v jednom)  
+**Developer shortcut:** [`../developer.md`](../developer.md)  
 **Produkcia:** https://jarvis-ten-omega.vercel.app/chat  
 **Repozitár:** https://github.com/youh4ck3dme/jarvis-chat-main
-
----
-
-## Rýchly štart
-
-```bash
-cd /Users/erikbabcan/HUB/JARVIS/jarvis-chat-main
-cp .env.example .env.local   # doplň MISTRAL_API_KEY
-pnpm install
-pnpm dev                     # http://127.0.0.1:3141/chat
-```
-
-Builder heslo (lokálne): `23513900` (ak `BUILDER_UNLOCK_PASSWORD` nie je v `.env.local`)
 
 ---
 

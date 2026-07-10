@@ -1,0 +1,126 @@
+{
+  "projectName": "JARVIS",
+  "projectDescription": "Jarvis chat + Builder + Desktop Voice Agent — monorepo backlog (auto-sync from scripts/linear-backlog.json)",
+  "issues": [
+    {
+      "title": "[DONE] P1–P21 Foundation — chat, builder, sessions, memory, CI",
+      "priority": 4,
+      "labels": ["done", "web"],
+      "description": "## Hotové\n- Build pipeline, orchestrátor, telemetry, multi-session chat\n- Server-side builder unlock (`23513900`)\n- iPhone 17 Air QA, PWA, CI (test → e2e → build → lint)\n- Story nudge, lokálne zvuky, export ZIP/backup\n- Supabase auth + session/memory cloud sync\n- 260+ Vitest, 15+ Playwright E2E\n\n**Produkcia:** https://jarvis-ten-omega.vercel.app/chat"
+    },
+    {
+      "title": "[DONE] P21 Desktop Voice Agent — Gemini Live + 18 macOS tools",
+      "priority": 4,
+      "labels": ["done", "desktop"],
+      "description": "## Hotové\n- PyQt6 UI, FastAPI health `:8765`, web bridge badge + voice panel\n- `shared/tool-manifest.json` (18 tools vrátane `agent_task`)\n- Desktop auth export → `~/.jarvis/desktop-auth.json`\n- Memory sync E2E (local + Vercel)\n- `pnpm desktop:setup|run|stack|health`"
+    },
+    {
+      "title": "[DONE] Builder stream fix — Maximum update depth exceeded",
+      "priority": 2,
+      "labels": ["done", "web", "bug"],
+      "description": "## Oprava\n- RAF-throttled `setMessages` počas streamu\n- Skip persist/cloud sync počas `isStreaming`\n- `messagesRef` v `sendMessage` deps\n- Regresný test multi-chunk builder stream\n\n**Commit:** `880aa65`"
+    },
+    {
+      "title": "[DONE] HTML auto-repair — useknutý dokument, script, @media",
+      "priority": 2,
+      "labels": ["done", "web", "builder"],
+      "description": "## Oprava\n- `repairJarvisHtmlArtifact()` po každom stream round\n- Doplní `</html>`, `<script>`, viewport, `@media`, touch sizing\n- Kombinovaný refinement prompt (structural + mobile)\n\n**Commit:** `8618624`"
+    },
+    {
+      "title": "[DONE] Iron Man JARVIS voice — Schedar + Daniel + EN/SK alternation",
+      "priority": 2,
+      "labels": ["done", "desktop"],
+      "description": "## Finálny hlas\n- Gemini Live: **Schedar** (even, calm)\n- macOS TTS: **Daniel** (British)\n- Každé druhé slovo EN/SK v audio odpovediach\n- `pnpm desktop:voice-smoke`\n\n**Commit:** `2054119`"
+    },
+    {
+      "title": "[DONE] macOS JARVIS.app — spustenie z Applications/Dock",
+      "priority": 3,
+      "labels": ["done", "desktop"],
+      "description": "## Hotové\n- `pnpm desktop:app` → `~/Applications/JARVIS.app`\n- Ikona `jarvis-desktop-icon.png` → `.icns`\n- Launcher používa `.venv/bin/python` (nie systémový Python)\n- `desktop-agent/run.sh`"
+    },
+    {
+      "title": "[TODO] JARVIS ikony — commit + deploy na Vercel",
+      "priority": 2,
+      "labels": ["backlog", "web", "design"],
+      "description": "## Stav\n- Lokálne vygenerované: `public/icons/jarvis-mobile-*`, `jarvis-desktop-*`\n- `pnpm icons:generate`\n- **Ešte necommitnuté** na `main` / produkcia bez nových ikon\n\n## Kroky\n1. `pnpm icons:generate`\n2. Commit `public/icons/`, `site.webmanifest`, `layout.tsx`\n3. Push → overiť PWA na iPhone"
+    },
+    {
+      "title": "[TODO] Dedikovaný Supabase projekt pre Jarvis",
+      "priority": 3,
+      "labels": ["backlog", "infra"],
+      "description": "Free tier limit 2 projekty. Vytvoriť/samostatný Supabase projekt pre produkčný Jarvis memory + auth sync."
+    },
+    {
+      "title": "[TODO] OAuth providers — Google / GitHub",
+      "priority": 3,
+      "labels": ["backlog", "web", "auth"],
+      "description": "Okrem magic linku pridať OAuth do `JarvisAuthPanel` + Supabase provider config."
+    },
+    {
+      "title": "[TODO] Globálny memory search naprieč sessions",
+      "priority": 3,
+      "labels": ["backlog", "web", "memory"],
+      "description": "Full-text / semantic search cez IndexedDB entries + cloud sync index."
+    },
+    {
+      "title": "[TODO] Real-device E2E — BrowserStack / Safari remote",
+      "priority": 4,
+      "labels": ["backlog", "qa"],
+      "description": "Playwright JSON layout snapshot je cross-platform; chýba real iPhone Safari automation."
+    },
+    {
+      "title": "[TODO] Batch eval / continuous monitoring (Foundry pattern)",
+      "priority": 4,
+      "labels": ["backlog", "ops", "ai"],
+      "description": "Continuous eval builder output quality, prompt optimizer, trace → dataset."
+    },
+    {
+      "title": "[TODO] Desktop — PyQt6 setup overlay: Mistral namiesto OpenRouter",
+      "priority": 2,
+      "labels": ["backlog", "desktop", "tech-debt"],
+      "description": "`ui.py` setup stále ukladá `openrouter_api_key`. Prepojiť na Mistral z `api_keys.json`."
+    },
+    {
+      "title": "[TODO] Voice panel viditeľnosť bez cloud sync env",
+      "priority": 3,
+      "labels": ["backlog", "web", "desktop"],
+      "description": "Desktop UI v menu len pri `cloudSyncEnabled`. Zobraziť badge/panel aj bez Supabase (offline health only)."
+    },
+    {
+      "title": "[TODO] Auth export — refresh_token + auto-renew JWT",
+      "priority": 2,
+      "labels": ["backlog", "auth", "desktop"],
+      "description": "Po expirácii JWT treba znova exportovať `desktop-auth.json`. Pridať refresh flow."
+    },
+    {
+      "title": "[TODO] Vercel Preview — GEMINI_API_KEY + builder env",
+      "priority": 3,
+      "labels": ["backlog", "ops"],
+      "description": "Preview deployments nemusia mať rovnaké env ako Production. Audit cez `pnpm audit:vercel-env:full`."
+    },
+    {
+      "title": "[TODO] /api/desktop-agent/status — použiť v health-client",
+      "priority": 4,
+      "labels": ["backlog", "web", "tech-debt"],
+      "description": "API route existuje ale web poll ide priamo na `:8765/health`. Zjednotiť alebo odstrániť mŕtvy kód."
+    },
+    {
+      "title": "[OPS] Mesačný Vercel env audit",
+      "priority": 3,
+      "labels": ["ops", "recurring"],
+      "description": "```bash\npnpm audit:vercel-env:full\n```\nWorkflow: `.github/workflows/vercel-env-audit.yml`"
+    },
+    {
+      "title": "[OPS] Týždenný Mistral smoke",
+      "priority": 3,
+      "labels": ["ops", "recurring"],
+      "description": "```bash\npnpm smoke:mistral\n```\nWorkflow: `.github/workflows/mistral-smoke.yml`"
+    },
+    {
+      "title": "[DOC] README + Developer guide — single source of truth",
+      "priority": 2,
+      "labels": ["done", "docs"],
+      "description": "Kompletný `README.md` + `developer.md` redirect. Linear sync: `pnpm linear:sync`."
+    }
+  ]
+}
