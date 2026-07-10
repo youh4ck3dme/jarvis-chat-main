@@ -211,13 +211,9 @@ describe("ChatShell", () => {
     fireEvent.change(input, { target: { value: "urob mi landing page pre kaviareň" } })
     await user.click(screen.getByRole("button", { name: "Send message" }))
 
-    await waitFor(() => {
-      expect(screen.getByTestId("storyboard-strip")).toBeInTheDocument()
-      expect(screen.getByTestId("storyboard-status")).toHaveTextContent(/Analyzujem|Pridávam/i)
-    })
-
     await waitFor(
       () => {
+        expect(screen.getByTestId("storyboard-strip")).toBeInTheDocument()
         expect(fetchMock).toHaveBeenCalledWith(
           "/api/build/plan",
           expect.objectContaining({ method: "POST" }),

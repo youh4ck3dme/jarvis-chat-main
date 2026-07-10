@@ -13,7 +13,7 @@
     "test:integrity": "vitest run tests/integrity",
     "test:iphone": "vitest run tests/responsive/iphone-17-air.test.tsx",
     "test:e2e": "playwright test",
-    "test:e2e:iphone": "playwright test e2e/iphone-17-air.spec.ts e2e/iphone-build-handoff.spec.ts e2e/attachments-menu.spec.ts e2e/project-zip-menu.spec.ts",
+    "test:e2e:iphone": "playwright test e2e/iphone-17-air.spec.ts e2e/iphone-build-handoff.spec.ts e2e/attachments-menu.spec.ts e2e/project-zip-menu.spec.ts e2e/ux-polish.spec.ts",
     "test:all": "pnpm test && pnpm test:e2e:iphone"
   },
   "dependencies": {
