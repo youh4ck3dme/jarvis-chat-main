@@ -12,6 +12,8 @@ git push origin main
 
 GitHub Actions → Vercel auto-deploy na https://jarvis-ten-omega.vercel.app
 
+**Mesačný ops audit:** workflow `vercel-env-audit.yml` (`pnpm audit:vercel-env`) — manifest + live sondy + voliteľný `VERCEL_TOKEN`.
+
 ### Manuálny
 
 ```bash

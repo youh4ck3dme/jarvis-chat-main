@@ -44,6 +44,12 @@
 - [x] CI/E2E/playwright používajú nové heslo
 - [x] Dev fallback: `DEV_BUILDER_PASSWORD_FALLBACK` v `lib/builder-unlock.ts`
 
+### P20 — Vercel env audit (P1 Ops)
+- [x] `lib/ops/vercel-env-manifest.ts` + `lib/ops/vercel-env-audit.ts`
+- [x] `pnpm audit:vercel-env` + `.github/workflows/vercel-env-audit.yml` (mesačne)
+- [x] Live sondy: builder unlock, Supabase status, legacy heslo `2366`
+- [ ] **Preview:** doplniť `MISTRAL_API_KEY` + model defaults (nájdené auditom — manuálne vo Vercel UI)
+
 ### P19 — Playwright layout snapshot (cross-platform)
 - [x] JSON layout metrics snapshot namiesto pixel PNG (žiadny darwin/linux drift)
 - [x] `e2e/helpers/iphone-layout.ts` + `e2e/iphone-layout-snapshot.spec.ts`
@@ -79,7 +85,7 @@
 ## 🔧 Backlog — opravy (priorita)
 
 ### P1 — Ops
-- [ ] Rotácia / audit Vercel env premenných (periodický)
+- [x] Rotácia / audit Vercel env premenných (periodický) — `pnpm audit:vercel-env` + workflow mesačne
 - [x] Redeploy produkcie po zmene hesla — overené: `223513900` OK, `2366` zamietnuté
 
 ### P2 — UX
@@ -108,7 +114,8 @@
 
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
-pnpm test                   # 228 Vitest
+pnpm audit:vercel-env       # Vercel env audit (ops)
+pnpm test                   # 235 Vitest
 pnpm test:e2e:iphone        # 15 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build

@@ -80,21 +80,47 @@ Ak chýbajú → server použije env z Vercel.
 
 ---
 
+## Periodický audit Vercel env (P1 Ops)
+
+Manifest: `lib/ops/vercel-env-manifest.ts`  
+Audit logika: `lib/ops/vercel-env-audit.ts`
+
+```bash
+# Lokálne (live produkčné sondy + .env.example)
+pnpm audit:vercel-env
+
+# S aktuálnym Vercel stavom (CLI JSON export)
+vercel env list --format json 2>/dev/null | awk '/^\{/,0' > /tmp/vercel-env.json
+pnpm audit:vercel-env -- --vercel-env-json /tmp/vercel-env.json
+
+# CI / API (bez CLI)
+VERCEL_TOKEN=... pnpm audit:vercel-env
+```
+
+GitHub Actions: `.github/workflows/vercel-env-audit.yml` — **1× mesačne** + `workflow_dispatch`.  
+Secret: `VERCEL_TOKEN` (voliteľné, pre remote matrix audit).
+
+Audit kontroluje:
+- povinné kľúče per `production` / `preview` / `development`
+- Supabase bundle (ak je čiastočne nastavený)
+- zakázané `NEXT_PUBLIC_*` secrety
+- live sondy: builder unlock `401` (nie `503`), legacy heslo `2366` zamietnuté
+
+---
+
 ## Vercel — aktuálny stav (júl 2026)
 
 | Premenná | Production | Development | Preview |
 |----------|------------|-------------|---------|
-| `MISTRAL_API_KEY` | ✅ | ✅ | — |
-| `DEFAULT_AI_MODEL` | ✅ | ✅ | — |
-| `NEXT_PUBLIC_DEFAULT_AI_MODEL` | ✅ | ✅ | — |
-| `BUILDER_UNLOCK_PASSWORD` | ✅ | ✅ | ⚠️ odporúčané doplniť |
+| `MISTRAL_API_KEY` | ✅ | ✅ | ⚠️ doplniť |
+| `DEFAULT_AI_MODEL` | ✅ | ✅ | ⚠️ doplniť |
+| `NEXT_PUBLIC_DEFAULT_AI_MODEL` | ✅ | ✅ | ⚠️ doplniť |
+| `BUILDER_UNLOCK_PASSWORD` | ✅ | ✅ | ✅ |
+| Supabase sync/auth | ✅ | ✅ | ✅ |
 
 ---
 
 ## Čo Jarvis NEPOUŽÍVA
 
-- `NEXT_PUBLIC_SUPABASE_URL` — žiadny Supabase
 - `NEXT_PUBLIC_BUILDER_UNLOCK_PASSWORD` — odstránené (bezpečnostný dôvod)
 - Postgres / Redis connection strings
-
-`supabase status` v `jarvis-chat-main` zlyhá — projekt nemá `supabase/` priečinok.
