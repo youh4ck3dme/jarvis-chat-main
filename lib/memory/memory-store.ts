@@ -839,6 +839,22 @@ export function getMemoryStore(): JarvisMemoryStore {
   return memoryStoreInstance;
 }
 
+export function resetMemoryStoreForTests(): void {
+  memoryStoreInstance = null;
+}
+
+export async function deleteMemoryDatabaseForTests(): Promise<void> {
+  resetMemoryStoreForTests();
+  if (typeof indexedDB === "undefined") return;
+
+  await new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(DB_NAME);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => resolve();
+  });
+}
+
 // Don't export memoryStore at module level to avoid SSR issues
 // export const memoryStore = getMemoryStore();
 

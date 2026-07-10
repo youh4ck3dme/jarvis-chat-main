@@ -70,6 +70,7 @@ import {
   pullSessionsFromCloud,
   pushSessionsToCloud,
 } from "@/lib/chat/session-sync"
+import { mergeMemoryFromCloud, pullMemoryFromCloud, pushMemoryToCloud } from "@/lib/memory/memory-sync"
 import {
   exportChatAsJson,
   readProjectName,
@@ -352,6 +353,9 @@ export function ChatShell() {
           setProjectName(activeSession.projectName)
           saveProjectName(activeSession.projectName)
         }
+
+        const remoteMemory = await pullMemoryFromCloud()
+        await mergeMemoryFromCloud(remoteMemory)
       } catch (syncError) {
         console.warn("Session sync pull failed:", syncError)
       }
@@ -367,12 +371,16 @@ export function ChatShell() {
 
     syncPushTimerRef.current = setTimeout(() => {
       const state = loadChatSessionsState()
-      void pushSessionsToCloud(state, deletedSessionIdsRef.current)
+      const conversationIds = state.sessions.map((session) => session.id)
+      void Promise.all([
+        pushSessionsToCloud(state, deletedSessionIdsRef.current),
+        pushMemoryToCloud(conversationIds),
+      ])
         .then(() => {
           deletedSessionIdsRef.current = []
         })
         .catch((syncError: unknown) => {
-          console.warn("Session sync push failed:", syncError)
+          console.warn("Cloud sync push failed:", syncError)
         })
     }, 2000)
 

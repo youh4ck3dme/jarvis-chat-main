@@ -250,7 +250,7 @@ export function WorkspaceMenuDrawer({
                       Cloud sync aktívny
                     </span>
                     <span className="mt-0.5 block text-[11px] leading-relaxed text-emerald-200/70">
-                      Konverzácie sa synchronizujú cez Supabase (device key)
+                      Konverzácie aj pamäť sa synchronizujú cez Supabase (device key)
                     </span>
                   </span>
                 </div>

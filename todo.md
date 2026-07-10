@@ -8,7 +8,7 @@
 
 ---
 
-## ✅ Hotové (Prompt 1–16)
+## ✅ Hotové (Prompt 1–17)
 
 ### P1 — Foundation
 - [x] `lib/env.ts` — Zod validácia env
@@ -83,6 +83,13 @@
 - [x] Auto pull on load + debounced push (2s) keď je Supabase nakonfigurovaný
 - [x] Vitest **170/170**, E2E iPhone **8/8**
 
+### P13 — Supabase ops + memory cloud sync (Prompt 17)
+- [x] Vercel env: `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (Production, Preview, Development)
+- [x] Supabase projekt: `googlabuilder-project` (`qytsiddrksybwpqldjfj`) — tabuľky sessions + memory
+- [x] `POST/GET /api/memory/sync` — pamäť per conversation + user profile
+- [x] Auto pull/push pamäte spolu so sessions (debounce 2s)
+- [x] Backup roundtrip test: export browser A → import browser B
+
 ---
 
 ## ⚠️ Známe limitácie (nie bugy, ale treba vedieť)
@@ -121,7 +128,7 @@
 ## 🚀 Backlog — nové features (voliteľné)
 
 - [ ] Supabase auth (multi-device pod jedným účtom namiesto device key)
-- [ ] Sync pamäte (IndexedDB) do cloudu — zatiaľ len sessions
+- [ ] Dedikovaný Supabase projekt pre Jarvis (free tier limit 2 projekty)
 - [ ] Globálny memory search naprieč sessions
 - [ ] Real-device E2E (BrowserStack / Safari remote)
 - [ ] Rate limiting na `/api/builder/unlock`
@@ -133,7 +140,7 @@
 
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
-pnpm test                   # 170 Vitest
+pnpm test                   # 174 Vitest
 pnpm test:e2e:iphone        # 8 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build
