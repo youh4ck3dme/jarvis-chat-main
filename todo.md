@@ -63,7 +63,7 @@
 
 ### P1 — Ops
 - [ ] Rotácia / audit Vercel env premenných (periodický)
-- [ ] Redeploy produkcie po zmene hesla (ak staré heslo ešte funguje)
+- [x] Redeploy produkcie po zmene hesla — overené: `223513900` OK, `2366` zamietnuté
 
 ### P2 — UX
 - [ ] História buildov per-session
