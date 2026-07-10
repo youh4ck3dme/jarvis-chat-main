@@ -159,6 +159,102 @@ describe("POST /api/chat", () => {
     )
   })
 
+  it("transforms pdf and html attachments for the latest user message", async () => {
+    const html = "<!doctype html><html><body><h1>Demo</h1></body></html>"
+    const htmlAttachment = `data:text/html;base64,${btoa(html)}`
+
+    await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "user",
+              content: "Review",
+              attachment: htmlAttachment,
+              attachmentName: "landing.html",
+            },
+            { role: "assistant", content: "ok" },
+            {
+              role: "user",
+              content: "Summarize",
+              attachment: "data:application/pdf;base64,ZmFrZQ==",
+            },
+          ],
+        }),
+      }),
+    )
+
+    expect(streamTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          { role: "user", content: "Review" },
+          { role: "assistant", content: "ok" },
+          {
+            role: "user",
+            content: [
+              { type: "file", data: "ZmFrZQ==", mimeType: "application/pdf" },
+              { type: "text", text: "Summarize" },
+            ],
+          },
+        ],
+      }),
+    )
+  })
+
+  it("inlines only the latest html attachment with full document content", async () => {
+    const html = "<!doctype html><html><body><h1>Demo</h1></body></html>"
+    const attachment = `data:text/html;base64,${btoa(html)}`
+
+    await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "user",
+              content: "Review",
+              attachment,
+              attachmentName: "landing.html",
+            },
+          ],
+        }),
+      }),
+    )
+
+    expect(streamTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          {
+            role: "user",
+            content: expect.stringContaining("[Attached HTML file: landing.html]"),
+          },
+        ],
+      }),
+    )
+    expect(streamTextMock.mock.calls[0]?.[0].messages[0].content).toContain("<h1>Demo</h1>")
+  })
+
+  it("injects attachment system guidance when no custom system prompt is provided", async () => {
+    await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: "Hello" }],
+        }),
+      }),
+    )
+
+    expect(streamTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: expect.stringContaining("Attachments & file formats"),
+      }),
+    )
+  })
+
   it("returns 500 when streamText throws", async () => {
     streamTextMock.mockImplementation(() => {
       throw new Error("Gateway unavailable")

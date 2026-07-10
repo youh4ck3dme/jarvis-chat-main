@@ -7,48 +7,64 @@ import {
   resolveSupabaseServerConfig,
 } from "./config";
 
+function testEnv(values: Partial<NodeJS.ProcessEnv>): NodeJS.ProcessEnv {
+  return { NODE_ENV: "test", ...values } as NodeJS.ProcessEnv;
+}
+
 describe("supabase config", () => {
   it("returns null when env is incomplete", () => {
     expect(
-      resolveSupabaseServerConfig({
-        SUPABASE_URL: "https://example.supabase.co",
-      }),
+      resolveSupabaseServerConfig(
+        testEnv({
+          SUPABASE_URL: "https://example.supabase.co",
+        }),
+      ),
     ).toBeNull();
-    expect(isSupabaseSyncConfigured({})).toBe(false);
+    expect(isSupabaseSyncConfigured(testEnv({}))).toBe(false);
   });
 
   it("resolves server config when url and service role are set", () => {
-    const config = resolveSupabaseServerConfig({
-      SUPABASE_URL: "https://example.supabase.co",
-      SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
-    });
+    const config = resolveSupabaseServerConfig(
+      testEnv({
+        SUPABASE_URL: "https://example.supabase.co",
+        SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
+      }),
+    );
 
     expect(config).toEqual({
       url: "https://example.supabase.co",
       serviceRoleKey: "service-role-key",
     });
-    expect(isSupabaseSyncConfigured({
-      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
-      SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
-    })).toBe(true);
+    expect(
+      isSupabaseSyncConfigured(
+        testEnv({
+          NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+          SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
+        }),
+      ),
+    ).toBe(true);
   });
 
   it("resolves public auth config when anon key is set", () => {
-    const config = resolveSupabasePublicConfig({
-      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
-    });
+    const config = resolveSupabasePublicConfig(
+      testEnv({
+        NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
+      }),
+    );
 
     expect(config).toEqual({
       url: "https://example.supabase.co",
       anonKey: "anon-key",
     });
     expect(
-      isSupabaseAuthConfigured({
-        SUPABASE_URL: "https://example.supabase.co",
-        SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
-      }),
+      isSupabaseAuthConfigured(
+        testEnv({
+          SUPABASE_URL: "https://example.supabase.co",
+          SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
+        }),
+      ),
     ).toBe(true);
   });
 });
