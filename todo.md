@@ -36,7 +36,7 @@
 - [x] `lib/chat/jarvis-attachments.ts` — HEIC→JPEG, MIME routing, system prompt
 - [x] Composer accept všetkých formátov; API multimodal pre image/PDF, inline HTML
 - [x] Export tlačidlá v assistant správach (HTML/PNG/PDF)
-- [x] Testy: **216** unit + **11** E2E
+- [x] Testy: **216** unit + **14** E2E (`e2e/ux-polish.spec.ts`)
 
 ### P16 — Ops & bezpečnosť (Prompt A)
 - [x] Builder heslo zmenené z `2366` → **`223513900`**
@@ -48,7 +48,7 @@
 - [x] História buildov per-session (IndexedDB `sessionId`, max 50 na chat)
 - [x] Drag & drop + hromadný upload príloh (max 10, batch send queue)
 - [x] Jasnejší copy v menu: nový chat ≠ vymazanie pamäte
-- [x] Testy: **216** unit + **11** E2E
+- [x] Testy: **216** unit + **14** E2E (`e2e/ux-polish.spec.ts`)
 
 ---
 
@@ -98,7 +98,7 @@
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
 pnpm test                   # 216 Vitest
-pnpm test:e2e:iphone        # 11 Playwright
+pnpm test:e2e:iphone        # 14 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build
 ```
