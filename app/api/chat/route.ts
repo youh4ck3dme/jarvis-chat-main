@@ -4,6 +4,7 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createMistral } from "@ai-sdk/mistral"
 import { jsonError } from "@/lib/api-response"
+import { Logger } from "@/lib/logger"
 import { transformMessagesForChatApi } from "@/lib/chat/chat-attachment-payload"
 import { JARVIS_ATTACHMENT_SYSTEM_PROMPT } from "@/lib/chat/jarvis-attachments"
 import "@/lib/env"
@@ -104,7 +105,7 @@ ${JARVIS_ATTACHMENT_SYSTEM_PROMPT}`,
 
     return result.toTextStreamResponse()
   } catch (error) {
-    console.error("Chat API error:", error)
+    Logger.error("Chat API error", error)
 
     return jsonError(error instanceof Error ? error.message : "An unexpected error occurred", 500)
   }

@@ -2,6 +2,7 @@ import { jsonError, jsonSuccess } from "@/lib/api-response";
 import { checkBuilderUnlockRateLimit } from "@/lib/builder-unlock-rate-limit";
 import { isBuilderPasswordValid, isBuilderUnlockConfigured } from "@/lib/builder-unlock";
 import { ApiErrorCode } from "@/lib/error-codes";
+import { Logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
 
     return jsonSuccess({ unlocked: true }, 200);
   } catch (error) {
-    console.error("Builder unlock API error:", error);
+    Logger.error("Builder unlock API error", error);
     return jsonError(error instanceof Error ? error.message : "An unexpected error occurred", 500);
   }
 }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { jsonError, jsonSuccess } from "@/lib/api-response";
+import { Logger } from "@/lib/logger";
 import type { ChatSession } from "@/lib/chat/chat-sessions";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import { isSupabaseSyncConfigured } from "@/lib/supabase/config";
@@ -62,7 +63,7 @@ export async function GET(req: Request) {
     .order("updated_at", { ascending: false });
 
   if (error) {
-    console.error("Session sync pull error:", error);
+    Logger.error("Session sync pull error", error);
     return jsonError("Nepodarilo sa načítať sessions zo Supabase.", 500);
   }
 
@@ -112,7 +113,7 @@ export async function POST(req: Request) {
       .upsert(rows, { onConflict: "sync_key,session_id" });
 
     if (upsertError) {
-      console.error("Session sync push error:", upsertError);
+      Logger.error("Session sync push error", upsertError);
       return jsonError("Nepodarilo sa uložiť sessions do Supabase.", 500);
     }
   }
@@ -126,7 +127,7 @@ export async function POST(req: Request) {
       .in("session_id", body.deletedSessionIds);
 
     if (deleteError) {
-      console.error("Session sync delete error:", deleteError);
+      Logger.error("Session sync delete error", deleteError);
       return jsonError("Nepodarilo sa označiť zmazané sessions v Supabase.", 500);
     }
   }

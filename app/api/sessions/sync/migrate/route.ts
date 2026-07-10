@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { jsonError, jsonSuccess } from "@/lib/api-response";
+import { Logger } from "@/lib/logger";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import { isSupabaseSyncConfigured } from "@/lib/supabase/config";
 import { verifyRequestAuth } from "@/lib/supabase/verify-request-auth";
@@ -98,7 +99,7 @@ export async function POST(req: Request) {
       .upsert(sessionUpserts, { onConflict: "sync_key,session_id" });
 
     if (error) {
-      console.error("Session migration error:", error);
+      Logger.error("Session migration error", error);
       return jsonError("Nepodarilo sa migrovať sessions.", 500);
     }
   }
@@ -148,7 +149,7 @@ export async function POST(req: Request) {
       .upsert(memoryUpserts, { onConflict: "sync_key,conversation_id" });
 
     if (error) {
-      console.error("Memory migration error:", error);
+      Logger.error("Memory migration error", error);
       return jsonError("Nepodarilo sa migrovať pamäť.", 500);
     }
   }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { jsonError, jsonSuccess } from "@/lib/api-response";
+import { Logger } from "@/lib/logger";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import { isSupabaseSyncConfigured } from "@/lib/supabase/config";
 import { verifyRequestAuth } from "@/lib/supabase/verify-request-auth";
@@ -57,7 +58,7 @@ export async function GET(req: Request) {
   ]);
 
   if (error || profileError) {
-    console.error("Memory sync pull error:", error ?? profileError);
+    Logger.error("Memory sync pull error", error ?? profileError);
     return jsonError("Nepodarilo sa načítať pamäť zo Supabase.", 500);
   }
 
@@ -114,7 +115,7 @@ export async function POST(req: Request) {
       .upsert(rows, { onConflict: "sync_key,conversation_id" });
 
     if (upsertError) {
-      console.error("Memory sync push error:", upsertError);
+      Logger.error("Memory sync push error", upsertError);
       return jsonError("Nepodarilo sa uložiť pamäť do Supabase.", 500);
     }
   }
@@ -130,7 +131,7 @@ export async function POST(req: Request) {
     );
 
     if (profileError) {
-      console.error("Memory profile sync error:", profileError);
+      Logger.error("Memory profile sync error", profileError);
       return jsonError("Nepodarilo sa uložiť user profile do Supabase.", 500);
     }
   }

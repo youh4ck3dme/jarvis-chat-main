@@ -1,4 +1,5 @@
 import { jsonError, jsonSuccess } from "@/lib/api-response"
+import { Logger } from "@/lib/logger"
 import { planBuild } from "@/lib/agents/build-planner"
 import { getDefaultAiModel } from "@/lib/default-model"
 import { getProviderFromModel, missingApiKeyMessage, resolveApiKey } from "@/lib/resolve-api-key"
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
 
     return jsonSuccess(result)
   } catch (error) {
-    console.error("Build plan API error:", error)
+    Logger.error("Build plan API error", error)
     return jsonError(error instanceof Error ? error.message : "An unexpected error occurred", 500)
   }
 }

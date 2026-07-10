@@ -6,6 +6,7 @@ import {
   createFallbackBuildPlan,
   normalizeBuildPlan,
 } from "@/lib/agents/build-plan-utils"
+import { Logger } from "@/lib/logger"
 import type { PlannerResult } from "@/types/build"
 
 const PLANNER_TIMEOUT_MS = 3000
@@ -60,7 +61,7 @@ export async function planBuild(
       latencyMs: Math.round(performance.now() - startedAt),
     }
   } catch (error) {
-    console.warn("[build-planner] Falling back to heuristic plan:", error)
+    Logger.warn("Falling back to heuristic plan", { route: "build-planner", error: String(error) })
     return {
       plan: createFallbackBuildPlan(trimmedPrompt),
       latencyMs: Math.round(performance.now() - startedAt),

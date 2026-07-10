@@ -4,6 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
+import { Logger } from '@/lib/logger';
 import { 
   extractMemoryLightweight, 
   extractMemoryWithAI,
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Memory extraction error:', error);
+    Logger.error('Memory extraction error', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to extract memory' },
       { status: 500 }
@@ -79,7 +81,7 @@ export async function GET(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Memory context error:', error);
+    Logger.error('Memory context error', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to get memory context' },
       { status: 500 }
@@ -110,7 +112,7 @@ export async function DELETE(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Memory clear error:', error);
+    Logger.error('Memory clear error', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to clear memory' },
       { status: 500 }
@@ -132,7 +134,7 @@ export async function GET_ALL() {
     });
 
   } catch (error) {
-    console.error('Get all memories error:', error);
+    Logger.error('Get all memories error', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to get all memories' },
       { status: 500 }
