@@ -135,4 +135,5 @@ Zmenené súbory:
 | `Screenshot comparison failed` (darwin vs linux) | Pixel snapshot na macOS | Nahradiť layout aserciami, zmazať `*-darwin.png` snapshot |
 | `Executable doesn't exist at .../webkit-.../pw_run.sh` | `devices["iPhone 14"]` = WebKit, CI inštaluje len Chromium | V `playwright.config.ts` nastaviť `browserName: "chromium"` |
 | `BUILDER_UNLOCK_PASSWORD is not configured` | Chýba env v dev serveri | Nastaviť v playwright webServer env alebo `.env.local` |
+| Password dialog nezmizne po 2366 na CI | `lib/env.ts` vyžaduje `MISTRAL_API_KEY` pri importe unlock route | Pridať `MISTRAL_API_KEY` + `BUILDER_UNLOCK_PASSWORD` do `playwright.config.ts` webServer.env |
 | Flaky empty state timeout | Dev server pomalý na CI | `timeout: 30_000` v beforeEach, `retries: 2` v playwright.config |
