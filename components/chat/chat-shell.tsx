@@ -66,6 +66,7 @@ import {
   type ChatSession,
 } from "@/lib/chat/chat-sessions"
 import { exportFullJarvisBackup, importFullJarvisBackup } from "@/lib/chat/jarvis-backup-client"
+import { exportJarvisProjectZip } from "@/lib/chat/project-zip-export-client"
 import {
   fetchSessionSyncStatus,
   mergeLocalWithRemote,
@@ -449,6 +450,11 @@ export function ChatShell() {
   const handleExportFullBackup = useCallback(async () => {
     const state = loadChatSessionsState()
     await exportFullJarvisBackup(state)
+  }, [])
+
+  const handleExportProjectZip = useCallback(async () => {
+    const state = loadChatSessionsState()
+    await exportJarvisProjectZip(state)
   }, [])
 
   const handleOpenMemory = useCallback(
@@ -1034,6 +1040,7 @@ export function ChatShell() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onExportChat={handleExportChat}
         onExportFullBackup={handleExportFullBackup}
+        onExportProjectZip={handleExportProjectZip}
         onImportBackup={handleImportBackup}
         cloudSyncEnabled={cloudSyncEnabled}
         cloudAuthConfigured={cloudAuthConfigured}

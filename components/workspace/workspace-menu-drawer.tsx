@@ -8,6 +8,7 @@ import {
   Brain,
   Cloud,
   Download,
+  FileArchive,
   FileText,
   History,
   MessageSquare,
@@ -48,6 +49,7 @@ type WorkspaceMenuDrawerProps = {
   onOpenSettings: () => void
   onExportChat: () => void
   onExportFullBackup: () => void | Promise<void>
+  onExportProjectZip: () => void | Promise<void>
   onImportBackup: (file: File) => void | Promise<void>
   cloudSyncEnabled?: boolean
   cloudAuthConfigured?: boolean
@@ -99,6 +101,7 @@ export function WorkspaceMenuDrawer({
   onOpenSettings,
   onExportChat,
   onExportFullBackup,
+  onExportProjectZip,
   onImportBackup,
   cloudSyncEnabled = false,
   cloudAuthConfigured = false,
@@ -217,6 +220,12 @@ export function WorkspaceMenuDrawer({
                 label="Export backup"
                 description="Všetky konverzácie + pamäť Jarvisa (JSON)"
                 onClick={() => closeAndRun(() => void onExportFullBackup())}
+              />
+              <MenuAction
+                icon={FileArchive}
+                label="Export projektu (ZIP)"
+                description="Sessions + pamäť + build history + posledný HTML"
+                onClick={() => closeAndRun(() => void onExportProjectZip())}
               />
               <label className="flex w-full cursor-pointer items-start gap-3 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-3 text-left transition-colors hover:border-[#3a3a3a] hover:bg-[#222]">
                 <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#262626] text-[#aaa]">

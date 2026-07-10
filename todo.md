@@ -98,6 +98,11 @@
 - [x] Vercel: `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Prod/Preview/Dev)
 - [x] Vitest **176/176**
 
+### P15 — Export projektu ZIP (Prompt F)
+- [x] Menu → **Export projektu (ZIP)** — sessions + pamäť + build history + `latest-build.html`
+- [x] `lib/chat/project-zip-export.ts` + `fflate`; `backup.json` importovateľný cez Import backup
+- [x] Vitest **180/180**
+
 ---
 
 ## ⚠️ Známe limitácie (nie bugy, ale treba vedieť)
@@ -148,7 +153,7 @@
 
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
-pnpm test                   # 176 Vitest
+pnpm test                   # 180 Vitest
 pnpm test:e2e:iphone        # 8 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build
