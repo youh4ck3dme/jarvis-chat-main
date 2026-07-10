@@ -8,7 +8,7 @@
 
 ---
 
-## ✅ Hotové (Prompt 1–15)
+## ✅ Hotové (Prompt 1–16)
 
 ### P1 — Foundation
 - [x] `lib/env.ts` — Zod validácia env
@@ -75,14 +75,22 @@
 - [x] Bundle audit: `BUILDER_UNLOCK_PASSWORD` / `2366` nie v client `.next/static`
 - [x] Vitest **161/161**, E2E iPhone **8/8**, lint 0 errors, build OK
 
+### P12 — Export backup + Supabase sync (Prompt 16)
+- [x] **Export backup** — všetky konverzácie + IndexedDB pamäť → JSON (`lib/chat/jarvis-backup.ts`)
+- [x] **Import backup** — obnova sessions + memory z JSON (menu drawer)
+- [x] **Supabase sync** — `POST/GET /api/sessions/sync`, device `sync_key` v localStorage
+- [x] Migrácia `supabase/migrations/001_jarvis_chat_sessions.sql`
+- [x] Auto pull on load + debounced push (2s) keď je Supabase nakonfigurovaný
+- [x] Vitest **170/170**, E2E iPhone **8/8**
+
 ---
 
 ## ⚠️ Známe limitácie (nie bugy, ale treba vedieť)
 
 | Vec | Stav |
 |-----|------|
-| Supabase | **Nepoužíva sa** — Jarvis = Next.js + Vercel + Mistral |
-| Chat sessions | Len localStorage — žiadny server sync |
+| Supabase sync | **Voliteľné** — vyžaduje `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` + SQL migráciu |
+| Chat sessions | localStorage primárne; cloud sync per device key keď je Supabase zapnutý |
 | Build history | Globálna (IndexedDB), nie per-session |
 | Story nudge | 15s delay v Chat mode |
 | Preview env Vercel | `BUILDER_UNLOCK_PASSWORD` môže chýbať na Preview deployoch |
@@ -112,8 +120,8 @@
 
 ## 🚀 Backlog — nové features (voliteľné)
 
-- [ ] Server-side session sync (Postgres / Supabase — zámerne sme zatiaľ nebrali)
-- [ ] Export / backup sessions + memory JSON
+- [ ] Supabase auth (multi-device pod jedným účtom namiesto device key)
+- [ ] Sync pamäte (IndexedDB) do cloudu — zatiaľ len sessions
 - [ ] Globálny memory search naprieč sessions
 - [ ] Real-device E2E (BrowserStack / Safari remote)
 - [ ] Rate limiting na `/api/builder/unlock`
@@ -125,7 +133,7 @@
 
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
-pnpm test                   # 161 Vitest
+pnpm test                   # 170 Vitest
 pnpm test:e2e:iphone        # 8 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build

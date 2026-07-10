@@ -6,6 +6,7 @@ import {
   Activity,
   ArrowLeft,
   Brain,
+  Cloud,
   Download,
   FileText,
   History,
@@ -13,6 +14,7 @@ import {
   MessageSquarePlus,
   Settings,
   Trash2,
+  Upload,
 } from "lucide-react"
 
 import {
@@ -44,6 +46,9 @@ type WorkspaceMenuDrawerProps = {
   onClearSessionMemory: (sessionId: string) => Promise<void>
   onOpenSettings: () => void
   onExportChat: () => void
+  onExportFullBackup: () => void | Promise<void>
+  onImportBackup: (file: File) => void | Promise<void>
+  sessionSyncEnabled?: boolean
   onSelectBuildRecord: (record: BuildHistoryRecord) => void
   onFocusTelemetry: () => void
 }
@@ -91,6 +96,9 @@ export function WorkspaceMenuDrawer({
   onClearSessionMemory,
   onOpenSettings,
   onExportChat,
+  onExportFullBackup,
+  onImportBackup,
+  sessionSyncEnabled = false,
   onSelectBuildRecord,
   onFocusTelemetry,
 }: WorkspaceMenuDrawerProps) {
@@ -198,9 +206,55 @@ export function WorkspaceMenuDrawer({
               <MenuAction
                 icon={Download}
                 label="Export chatu"
-                description="Stiahne JSON so všetkými správami"
+                description="Stiahne JSON aktuálnej konverzácie"
                 onClick={() => closeAndRun(onExportChat)}
               />
+              <MenuAction
+                icon={Download}
+                label="Export backup"
+                description="Všetky konverzácie + pamäť Jarvisa (JSON)"
+                onClick={() => closeAndRun(() => void onExportFullBackup())}
+              />
+              <label className="flex w-full cursor-pointer items-start gap-3 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-3 text-left transition-colors hover:border-[#3a3a3a] hover:bg-[#222]">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#262626] text-[#aaa]">
+                  <Upload className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px] font-medium text-[#ececec]">Import backup</span>
+                  <span className="mt-0.5 block text-[11px] leading-relaxed text-[#777]">
+                    Obnoví konverzácie a pamäť z JSON súboru
+                  </span>
+                </span>
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    event.target.value = ""
+                    if (!file) return
+                    closeAndRun(() => void onImportBackup(file))
+                  }}
+                />
+              </label>
+              {sessionSyncEnabled ? (
+                <div
+                  className="flex items-start gap-3 rounded-xl border border-emerald-900/40 bg-emerald-950/20 px-3 py-3"
+                  data-testid="session-sync-enabled"
+                >
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-900/30 text-emerald-300">
+                    <Cloud className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-medium text-emerald-100">
+                      Cloud sync aktívny
+                    </span>
+                    <span className="mt-0.5 block text-[11px] leading-relaxed text-emerald-200/70">
+                      Konverzácie sa synchronizujú cez Supabase (device key)
+                    </span>
+                  </span>
+                </div>
+              ) : null}
               <MenuAction
                 icon={Settings}
                 label="Nastavenia"

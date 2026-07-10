@@ -140,6 +140,29 @@ class JarvisMemoryStore implements MemoryStore {
     }
   }
 
+  async putEntry(entry: MemoryEntry): Promise<void> {
+    try {
+      if (!this.isAvailable()) {
+        console.warn('Memory store: IndexedDB not available, skipping putEntry');
+        return;
+      }
+
+      const db = await this.getDb();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORES.MEMORIES, 'readwrite');
+        const store = transaction.objectStore(STORES.MEMORIES);
+        const request = store.put(entry);
+
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.error('Memory store: Failed to put entry', error);
+      throw error;
+    }
+  }
+
   async addEntry(data: Omit<MemoryEntry, 'id' | 'createdAt' | 'lastAccessed'>): Promise<string> {
     try {
       if (!this.isAvailable()) {

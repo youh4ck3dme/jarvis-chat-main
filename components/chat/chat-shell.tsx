@@ -63,6 +63,13 @@ import {
   updateActiveSession,
   type ChatSession,
 } from "@/lib/chat/chat-sessions"
+import { exportFullJarvisBackup, importFullJarvisBackup } from "@/lib/chat/jarvis-backup-client"
+import {
+  fetchSessionSyncStatus,
+  mergeLocalWithRemote,
+  pullSessionsFromCloud,
+  pushSessionsToCloud,
+} from "@/lib/chat/session-sync"
 import {
   exportChatAsJson,
   readProjectName,
@@ -167,6 +174,9 @@ export function ChatShell() {
   const [buildHistoryCount, setBuildHistoryCount] = useState(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isMemoryOpen, setIsMemoryOpen] = useState(false)
+  const [sessionSyncEnabled, setSessionSyncEnabled] = useState(false)
+  const deletedSessionIdsRef = useRef<string[]>([])
+  const syncPushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [projectName, setProjectName] = useState("Jarvis")
   const [jarvisMode, setJarvisMode] = useState<JarvisMode>("chat")
   const [builderUnlocked, setBuilderUnlocked] = useState(false)
@@ -320,6 +330,59 @@ export function ChatShell() {
     }
   }, [messages, projectName, isLoaded, activeSessionId])
 
+  useEffect(() => {
+    if (!isLoaded) return
+
+    void (async () => {
+      const status = await fetchSessionSyncStatus()
+      setSessionSyncEnabled(status.enabled)
+      if (!status.enabled) return
+
+      try {
+        const remote = await pullSessionsFromCloud()
+        const local = loadChatSessionsState()
+        const merged = mergeLocalWithRemote(local, remote)
+
+        if (JSON.stringify(merged) !== JSON.stringify(local)) {
+          persistChatSessionsState(merged)
+          const activeSession = getActiveSession(merged)
+          setActiveSessionId(activeSession.id)
+          setChatSessions(merged.sessions)
+          setMessages(deserializeMessages(activeSession.messages))
+          setProjectName(activeSession.projectName)
+          saveProjectName(activeSession.projectName)
+        }
+      } catch (syncError) {
+        console.warn("Session sync pull failed:", syncError)
+      }
+    })()
+  }, [isLoaded])
+
+  useEffect(() => {
+    if (!isLoaded || !sessionSyncEnabled || !activeSessionId) return
+
+    if (syncPushTimerRef.current) {
+      clearTimeout(syncPushTimerRef.current)
+    }
+
+    syncPushTimerRef.current = setTimeout(() => {
+      const state = loadChatSessionsState()
+      void pushSessionsToCloud(state, deletedSessionIdsRef.current)
+        .then(() => {
+          deletedSessionIdsRef.current = []
+        })
+        .catch((syncError: unknown) => {
+          console.warn("Session sync push failed:", syncError)
+        })
+    }, 2000)
+
+    return () => {
+      if (syncPushTimerRef.current) {
+        clearTimeout(syncPushTimerRef.current)
+      }
+    }
+  }, [messages, projectName, chatSessions, isLoaded, sessionSyncEnabled, activeSessionId])
+
   const handleModelChange = useCallback((model: AIModel) => {
     setSelectedModel(model)
     localStorage.setItem(MODEL_STORAGE_KEY, model)
@@ -368,6 +431,11 @@ export function ChatShell() {
   const handleExportChat = useCallback(() => {
     exportChatAsJson(messages, projectName)
   }, [messages, projectName])
+
+  const handleExportFullBackup = useCallback(async () => {
+    const state = loadChatSessionsState()
+    await exportFullJarvisBackup(state)
+  }, [])
 
   const handleOpenMemory = useCallback(
     (sessionId?: string) => {
@@ -809,6 +877,20 @@ export function ChatShell() {
     setIsMemoryOpen(false)
   }, [])
 
+  const handleImportBackup = useCallback(
+    async (file: File) => {
+      const restored = await importFullJarvisBackup(file)
+      const activeSession = getActiveSession(restored)
+      setActiveSessionId(activeSession.id)
+      setChatSessions(restored.sessions)
+      setMessages(deserializeMessages(activeSession.messages))
+      setProjectName(activeSession.projectName)
+      saveProjectName(activeSession.projectName)
+      resetWorkspaceUi()
+    },
+    [resetWorkspaceUi],
+  )
+
   const clearChat = useCallback(() => {
     const currentState = loadChatSessionsState()
     const nextState = addNewSession(currentState, projectName)
@@ -847,6 +929,7 @@ export function ChatShell() {
 
       const currentState = loadChatSessionsState()
       const { state: nextState } = deleteSession(currentState, sessionId)
+      deletedSessionIdsRef.current.push(sessionId)
       persistChatSessionsState(nextState)
 
       const activeSession = getActiveSession(nextState)
@@ -936,6 +1019,9 @@ export function ChatShell() {
         onClearSessionMemory={handleClearSessionMemory}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onExportChat={handleExportChat}
+        onExportFullBackup={handleExportFullBackup}
+        onImportBackup={handleImportBackup}
+        sessionSyncEnabled={sessionSyncEnabled}
         onSelectBuildRecord={handleSelectBuildRecord}
         onFocusTelemetry={handleFocusTelemetry}
       />
