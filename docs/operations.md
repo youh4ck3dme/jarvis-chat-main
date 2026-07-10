@@ -80,8 +80,13 @@ Playwright spustí dev server na `http://127.0.0.1:3141` ak nebeží.
 
 ### Playwright snapshot fail na CI
 
-**Príčina:** Snapshot z macOS (`darwin.png`) vs Linux rendering.  
-**Fix:** Regenerovať snapshot na CI alebo použiť `maxDiffPixelRatio` (už 0.02).
+**Príčina (historicky):** Pixel PNG snapshot z macOS (`darwin.png`) vs Linux rendering.  
+**Fix (aktuálne):** Používame **JSON layout metrics** snapshot (`e2e/iphone-layout-snapshot.spec.ts`) — identický na macOS aj Linux CI.
+
+Regenerácia baseline:
+```bash
+pnpm test:e2e:update-layout-snapshots
+```
 
 ### Sessions / pamäť zmizla
 

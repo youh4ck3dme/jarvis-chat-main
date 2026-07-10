@@ -70,7 +70,11 @@ Súbory:
 
 NEPOUŽÍVAJ toHaveScreenshot() v CI — fonty a rendering sa líšia medzi macOS (darwin) a ubuntu-latest (linux).
 
-Namiesto pixel snapshotu použij štrukturálne layout asercie:
+Namiesto pixel PNG snapshotu používame:
+- **JSON layout metrics** (`e2e/iphone-layout-snapshot.spec.ts` + `e2e/helpers/iphone-layout.ts`)
+- Regenerácia: `pnpm test:e2e:update-layout-snapshots`
+
+Štrukturálne layout asercie (bez snapshotu):
 - viewport width = 420
 - scrollWidth <= clientWidth (žiadny horizontal overflow)
 - data-testid="workspace-header", "jarvis-empty-state", "workspace-footer" viditeľné
@@ -82,7 +86,7 @@ Build handoff test:
 - POST /api/builder/unlock → 401 wrong password, 200 correct
 - Po unlock: storyboard telemetry, artifact panel na mobile
 
-Overenie: `pnpm test:e2e:iphone` → 8/8 passed
+Overenie: `pnpm test:e2e:iphone` → 15/15 passed
 
 ---
 
@@ -132,7 +136,7 @@ Zmenené súbory:
 |------------|---------|-----|
 | `ESLint couldn't find an eslint.config.(js\|mjs\|cjs) file` | Chýba flat config | Pridať `eslint.config.mjs` + `eslint` devDep |
 | `getFilename is not a function` | ESLint 10 + react plugin | Downgrade na `eslint@9` |
-| `Screenshot comparison failed` (darwin vs linux) | Pixel snapshot na macOS | Nahradiť layout aserciami, zmazať `*-darwin.png` snapshot |
+| `Screenshot comparison failed` (darwin vs linux) | Pixel snapshot na macOS | Použiť JSON layout snapshot (`iphone-layout-snapshot.spec.ts`), nie PNG |
 | `Executable doesn't exist at .../webkit-.../pw_run.sh` | `devices["iPhone 14"]` = WebKit, CI inštaluje len Chromium | V `playwright.config.ts` nastaviť `browserName: "chromium"` |
 | `BUILDER_UNLOCK_PASSWORD is not configured` | Chýba env v dev serveri | Nastaviť v playwright webServer env alebo `.env.local` |
 | Password dialog nezmizne po 2366 na CI | `lib/env.ts` vyžaduje `MISTRAL_API_KEY` pri importe unlock route | Pridať `MISTRAL_API_KEY` + `BUILDER_UNLOCK_PASSWORD` do `playwright.config.ts` webServer.env |

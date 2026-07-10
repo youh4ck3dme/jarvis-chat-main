@@ -44,6 +44,12 @@
 - [x] CI/E2E/playwright používajú nové heslo
 - [x] Dev fallback: `DEV_BUILDER_PASSWORD_FALLBACK` v `lib/builder-unlock.ts`
 
+### P19 — Playwright layout snapshot (cross-platform)
+- [x] JSON layout metrics snapshot namiesto pixel PNG (žiadny darwin/linux drift)
+- [x] `e2e/helpers/iphone-layout.ts` + `e2e/iphone-layout-snapshot.spec.ts`
+- [x] `pnpm test:e2e:update-layout-snapshots` pre regeneráciu baseline
+- [x] Testy: **228** unit + **15** E2E
+
 ### P18 — Builder unlock rate limiting
 - [x] `/api/builder/unlock` — 10 pokusov / IP / 15 min, odpoveď `429` + `Retry-After`
 - [x] Env: `BUILDER_UNLOCK_RATE_LIMIT_MAX`, `BUILDER_UNLOCK_RATE_LIMIT_WINDOW_SEC`
@@ -65,7 +71,7 @@
 | Chat sessions | localStorage primárne; cloud sync pod `auth.users.id` |
 | Build history | Per-session (IndexedDB), max 50 na chat |
 | Story nudge | 15s delay v Chat mode |
-| Playwright snapshot | `darwin.png` — môže sa líšiť na Linux CI |
+| Playwright snapshot | JSON layout metrics (cross-platform), nie pixel PNG |
 | Globálny gitignore | `~/.gitignore_global` blokuje `app/api/build/` — výnimka v `.gitignore` |
 
 ---
@@ -82,7 +88,7 @@
 - [x] Jasnejší copy v menu: nový chat ≠ vymazanie pamäte
 
 ### P3 — Technický dlh
-- [ ] Playwright snapshot cross-platform (Linux baseline)
+- [x] Playwright snapshot cross-platform (JSON layout baseline, nie darwin PNG)
 - [ ] CI smoke test s reálnym Mistral key (voliteľný secret)
 
 ---
@@ -103,7 +109,7 @@
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
 pnpm test                   # 228 Vitest
-pnpm test:e2e:iphone        # 14 Playwright
+pnpm test:e2e:iphone        # 15 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build
 ```

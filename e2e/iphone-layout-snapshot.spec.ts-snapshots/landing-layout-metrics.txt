@@ -1,0 +1,56 @@
+{
+  "viewportWidth": 420,
+  "viewportHeight": 912,
+  "scrollWidth": 420,
+  "clientWidth": 420,
+  "header": {
+    "top": 0,
+    "bottom": 51,
+    "left": 0,
+    "right": 420,
+    "width": 420,
+    "height": 51
+  },
+  "emptyState": {
+    "top": 51,
+    "bottom": 768,
+    "left": 0,
+    "right": 420,
+    "width": 420,
+    "height": 717
+  },
+  "footer": {
+    "top": 768,
+    "bottom": 912,
+    "left": 0,
+    "right": 420,
+    "width": 420,
+    "height": 144
+  },
+  "composer": {
+    "top": 853,
+    "bottom": 889,
+    "left": 105,
+    "right": 315,
+    "width": 210,
+    "height": 36
+  },
+  "touchTargets": [
+    {
+      "selector": "[aria-label=\"Open workspace menu\"]",
+      "size": 44
+    },
+    {
+      "selector": "[data-testid=\"jarvis-mode-chat\"]",
+      "size": 44
+    },
+    {
+      "selector": "[data-testid=\"jarvis-mode-builder\"]",
+      "size": 44
+    },
+    {
+      "selector": "[aria-label=\"Open settings\"]",
+      "size": 44
+    }
+  ]
+}
