@@ -1,5 +1,7 @@
 packages:
   - .
+overrides:
+  baseline-browser-mapping: "^2.10.42"
 allowBuilds:
   esbuild: true
   sharp: true
