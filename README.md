@@ -35,7 +35,7 @@
 **Nie je:** Postgres chat DB, OpenRouter routing, Supabase Edge Functions.
 
 **Default model:** `mistral/mistral-small-latest`  
-**Builder heslo:** `23513900` (server env + dev fallback)
+**Builder heslo:** nastav `BUILDER_UNLOCK_PASSWORD` v `.env.local` (lokálne) a vo Vercel env (produkcia) — nikdy do gitu.
 
 ---
 

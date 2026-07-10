@@ -70,7 +70,7 @@ async function main() {
     console.log(`Using existing test user: ${TEST_EMAIL}`);
   }
 
-  const e2ePassword = process.env.DESKTOP_E2E_TEST_PASSWORD ?? "jarvis-e2e-desktop-23513900";
+  const e2ePassword = process.env.DESKTOP_E2E_TEST_PASSWORD ?? "jarvis-e2e-desktop-test-secret";
 
   const { error: passwordError } = await admin.auth.admin.updateUserById(user.id, {
     password: e2ePassword,

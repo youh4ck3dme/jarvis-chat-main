@@ -42,7 +42,7 @@ Lokálny hlasový asistent s prístupom k macOS nástrojom, plne prepojený s we
 | `MISTRAL_API_KEY` | Primary — web chat + desktop text |
 | `MISTRAL_API_KEY_SECONDARY` | Fallback + Codestral (kód) |
 | `GEMINI_API_KEY` | Desktop hlas (Gemini Live) + web Gemini model |
-| `BUILDER_UNLOCK_PASSWORD` | Builder unlock (prod: `23513900`) |
+| `BUILDER_UNLOCK_PASSWORD` | Builder unlock (Vercel env + `.env.local`) |
 
 Kľúče sa generujú do `desktop-agent/config/api_keys.json` cez `pnpm desktop:gen-config`.
 
@@ -96,7 +96,7 @@ Web Chat (localhost:3141) <--- poll /health ---> FastAPI (localhost:8765)
 ```bash
 pnpm desktop:health
 curl -s -X POST http://127.0.0.1:3141/api/builder/unlock \
-  -H 'Content-Type: application/json' -d '{"password":"23513900"}'
+  -H 'Content-Type: application/json' -d '{"password":"$BUILDER_UNLOCK_PASSWORD"}'
 pnpm smoke:mistral
 pnpm audit:vercel-env
 ```
@@ -118,5 +118,5 @@ bash scripts/memory-sync-e2e.sh
 **Posledný stav (júl 2026):**
 - Local memory sync E2E: **PASS** (desktop-voice tag + content match)
 - Production memory sync E2E: **PASS** na `jarvis-ten-omega.vercel.app`
-- Builder unlock `23513900`: **PASS** (local + prod)
+- Builder unlock (env `BUILDER_UNLOCK_PASSWORD`): **PASS** (local + prod)
 - `pnpm audit:vercel-env:full`: **OK**

@@ -1,7 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 const VIEWPORT_WIDTH = 420;
-const BUILDER_PASSWORD = process.env.BUILDER_UNLOCK_PASSWORD?.trim() || "23513900";
+const BUILDER_PASSWORD = process.env.BUILDER_UNLOCK_PASSWORD?.trim() ?? "";
+
+test.beforeAll(() => {
+  if (!BUILDER_PASSWORD) {
+    throw new Error(
+      "BUILDER_UNLOCK_PASSWORD is required for handoff E2E. Set it in .env.local or export before running pnpm test:e2e:iphone.",
+    );
+  }
+});
 
 const SAMPLE_PLAN = {
   success: true,

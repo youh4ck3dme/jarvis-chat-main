@@ -6,7 +6,7 @@
       "title": "[DONE] P1–P21 Foundation — chat, builder, sessions, memory, CI",
       "priority": 4,
       "labels": ["done", "web"],
-      "description": "## Hotové\n- Build pipeline, orchestrátor, telemetry, multi-session chat\n- Server-side builder unlock (`23513900`)\n- iPhone 17 Air QA, PWA, CI (test → e2e → build → lint)\n- Story nudge, lokálne zvuky, export ZIP/backup\n- Supabase auth + session/memory cloud sync\n- 260+ Vitest, 15+ Playwright E2E\n\n**Produkcia:** https://jarvis-ten-omega.vercel.app/chat"
+      "description": "## Hotové\n- Build pipeline, orchestrátor, telemetry, multi-session chat\n- Server-side builder unlock (`BUILDER_UNLOCK_PASSWORD` env)\n- iPhone 17 Air QA, PWA, CI (test → e2e → build → lint)\n- Story nudge, lokálne zvuky, export ZIP/backup\n- Supabase auth + session/memory cloud sync\n- 260+ Vitest, 15+ Playwright E2E\n\n**Produkcia:** https://jarvis-ten-omega.vercel.app/chat"
     },
     {
       "title": "[DONE] P21 Desktop Voice Agent — Gemini Live + 18 macOS tools",

@@ -23,12 +23,13 @@ describe("builder-unlock", () => {
     expect(isBuilderPasswordValid("wrong")).toBe(false)
   })
 
-  it("falls back to dev password in development when env is unset", async () => {
+  it("returns null in development when env is unset", async () => {
     process.env = { ...originalEnv, NODE_ENV: "development" }
     delete process.env.BUILDER_UNLOCK_PASSWORD
 
-    const { resolveBuilderPassword, DEV_BUILDER_PASSWORD_FALLBACK } = await import("./builder-unlock")
-    expect(resolveBuilderPassword()).toBe(DEV_BUILDER_PASSWORD_FALLBACK)
+    const { resolveBuilderPassword, isBuilderUnlockConfigured } = await import("./builder-unlock")
+    expect(resolveBuilderPassword()).toBeNull()
+    expect(isBuilderUnlockConfigured()).toBe(false)
   })
 
   it("returns null in production when env is unset", async () => {
@@ -39,6 +40,6 @@ describe("builder-unlock", () => {
       await import("./builder-unlock")
     expect(resolveBuilderPassword()).toBeNull()
     expect(isBuilderUnlockConfigured()).toBe(false)
-    expect(isBuilderPasswordValid("23513900")).toBe(false)
+    expect(isBuilderPasswordValid("any-password")).toBe(false)
   })
 })

@@ -96,7 +96,7 @@ Sekcie:
 - [x] Monorepo desktop-agent/ + shared kontrakty
 - [x] Badge + health polling
 - [x] Dual Mistral, Gemini Live lokálne
-- [x] Builder heslo 23513900 + Vercel prod
+- [x] Builder heslo cez BUILDER_UNLOCK_PASSWORD env + Vercel prod
 - [ ] Voice Lite panel (iný agent)
 - [ ] Auth export button (iný agent)
 - [ ] Memory UI pre desktop-voice-session (iný agent)
@@ -141,14 +141,14 @@ cd .. && pnpm dev                                # T2
 ```bash
 curl -s http://127.0.0.1:8765/health | python3 -m json.tool
 curl -s -X POST http://127.0.0.1:3141/api/builder/unlock \
-  -H 'Content-Type: application/json' -d '{"password":"23513900"}'
+  -H 'Content-Type: application/json' -d '{"password":"$BUILDER_UNLOCK_PASSWORD"}'
 pnpm smoke:mistral
 ```
 
 ### D3. Produkcia
 ```bash
 curl -s -X POST https://jarvis-ten-omega.vercel.app/api/builder/unlock \
-  -H 'Content-Type: application/json' -d '{"password":"23513900"}'
+  -H 'Content-Type: application/json' -d '{"password":"$BUILDER_UNLOCK_PASSWORD"}'
 pnpm audit:vercel-env
 ```
 
@@ -205,7 +205,7 @@ curl loop na /api/builder/unlock s wrong password
 
 ### Live overenie
 - local health :8765: OK/FAIL
-- builder unlock 23513900: OK/FAIL
+- builder unlock (BUILDER_UNLOCK_PASSWORD): OK/FAIL
 - production audit: OK/FAIL
 
 ### Nezmenené (konflikt avoidance)
