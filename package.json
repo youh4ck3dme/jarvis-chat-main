@@ -17,7 +17,8 @@
     "test:e2e:update-layout-snapshots": "playwright test e2e/iphone-layout-snapshot.spec.ts --update-snapshots",
     "test:all": "pnpm test && pnpm test:e2e:iphone",
     "audit:vercel-env": "tsx scripts/audit-vercel-env.ts",
-    "audit:vercel-env:full": "tsx scripts/audit-vercel-env.ts --from-vercel-cli"
+    "audit:vercel-env:full": "tsx scripts/audit-vercel-env.ts --from-vercel-cli",
+    "smoke:mistral": "tsx scripts/mistral-smoke.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.8",

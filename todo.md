@@ -95,7 +95,7 @@
 
 ### P3 — Technický dlh
 - [x] Playwright snapshot cross-platform (JSON layout baseline, nie darwin PNG)
-- [ ] CI smoke test s reálnym Mistral key (voliteľný secret)
+- [x] CI smoke test s reálnym Mistral key (voliteľný secret `MISTRAL_API_KEY` v GitHub Secrets)
 
 ---
 
@@ -116,7 +116,8 @@
 pnpm dev                    # http://127.0.0.1:3141/chat
 pnpm audit:vercel-env:full  # Vercel env audit + CLI matrix (odporúčané)
 pnpm audit:vercel-env       # Vercel env audit (len live sondy)
-pnpm test                   # 235 Vitest
+pnpm smoke:mistral          # live Mistral API smoke (skip bez kľúča)
+pnpm test                   # 240 Vitest
 pnpm test:e2e:iphone        # 15 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build

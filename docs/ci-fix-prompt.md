@@ -98,6 +98,11 @@ Overenie: `pnpm test:e2e:iphone` → 15/15 passed
 - build: MISTRAL_API_KEY=ci-placeholder-key
 - Voliteľne: BUILDER_UNLOCK_PASSWORD pre e2e build handoff
 
+Samostatný workflow `.github/workflows/mistral-smoke.yml`:
+- `pnpm smoke:mistral` — live Mistral API (prompt `JARVIS_SMOKE_OK`)
+- Bez `secrets.MISTRAL_API_KEY` → skip (exit 0), nepadá CI
+- S reálnym secretom → overí kľúč + model `mistral-small-latest`
+
 ---
 
 ## 5) Commit a push

@@ -14,6 +14,8 @@ GitHub Actions → Vercel auto-deploy na https://jarvis-ten-omega.vercel.app
 
 **Mesačný ops audit:** workflow `vercel-env-audit.yml` (`pnpm audit:vercel-env`) — manifest + live sondy + voliteľný `VERCEL_TOKEN`.
 
+**Mistral API smoke:** workflow `mistral-smoke.yml` (`pnpm smoke:mistral`) — týždenný + push/PR na `main`. Bez `secrets.MISTRAL_API_KEY` alebo s placeholderom test **preskočí** (exit 0).
+
 ### Manuálny
 
 ```bash
@@ -37,6 +39,27 @@ test (Vitest + tsc) → e2e-iphone (Playwright) → build → lint (parallel)
 | e2e-iphone | `pnpm test:e2e:iphone` | Chromium, port 3141 |
 | build | `pnpm build` | `MISTRAL_API_KEY=ci-placeholder-key` |
 | lint | `pnpm lint` | ESLint |
+
+### Mistral smoke (`.github/workflows/mistral-smoke.yml`)
+
+Samostatný workflow — neblokuje hlavný CI build (tam zostáva `ci-placeholder-key`).
+
+| Trigger | Kedy |
+|---------|------|
+| `push` / `pull_request` | `main` |
+| `schedule` | Pondelok 06:00 UTC |
+| `workflow_dispatch` | manuálne |
+
+```bash
+pnpm smoke:mistral   # lokálne — načíta .env.local ak existuje
+```
+
+**GitHub Secret:** Settings → Secrets and variables → Actions → `MISTRAL_API_KEY` (rovnaký kľúč ako na Vercel).
+
+Voliteľné env:
+- `SKIP_MISTRAL_SMOKE=1` — vynútený skip
+- `SMOKE_FORCE=1` — vynútený beh aj s placeholderom (debug)
+- `MISTRAL_SMOKE_MODEL` — override modelu (default z `DEFAULT_AI_MODEL`)
 
 ---
 
