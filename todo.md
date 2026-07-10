@@ -44,6 +44,12 @@
 - [x] CI/E2E/playwright používajú nové heslo
 - [x] Dev fallback: `DEV_BUILDER_PASSWORD_FALLBACK` v `lib/builder-unlock.ts`
 
+### P17 — UX polish (Prompt B)
+- [x] História buildov per-session (IndexedDB `sessionId`, max 50 na chat)
+- [x] Drag & drop + hromadný upload príloh (max 10, batch send queue)
+- [x] Jasnejší copy v menu: nový chat ≠ vymazanie pamäte
+- [x] Testy: **216** unit + **11** E2E
+
 ---
 
 ## ⚠️ Známe limitácie
