@@ -1,4 +1,4 @@
-import type { BuildPlan } from "@/types/build";
+import type { BuildPlan, BuildTrace } from "@/types/build";
 
 export const DEFAULT_STORYBOARD_SECTIONS = ["hero", "navigation", "features", "contact", "footer"];
 
@@ -46,6 +46,24 @@ export function formatSectionLabel(section: string): string {
 export function resolveStoryboardSections(plan: BuildPlan | null): string[] {
   if (plan?.sections?.length) return plan.sections;
   return DEFAULT_STORYBOARD_SECTIONS;
+}
+
+/** Keep storyboard visible after fast planner→build handoffs when trace has planner detail. */
+export function resolveStoryboardPlan(
+  plannerPlan: BuildPlan | null,
+  buildTrace: BuildTrace | null,
+): BuildPlan | null {
+  if (plannerPlan) return plannerPlan;
+
+  const plannerEntry = buildTrace?.phases.find((entry) => entry.phase === "planner");
+  if (!plannerEntry?.detail) return null;
+
+  return {
+    summary: plannerEntry.detail,
+    sections: [],
+    language: "SK",
+    mustHaveScript: true,
+  };
 }
 
 export function storyboardStatusFromPlan(plan: BuildPlan): string {

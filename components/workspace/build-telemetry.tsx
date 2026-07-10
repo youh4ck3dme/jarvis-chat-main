@@ -1,9 +1,12 @@
 "use client"
 
+import { useMemo } from "react"
+
 import type { BuildEvaluation } from "@/types/build"
 import type { BuildTrace } from "@/types/build"
 
 import type { BuildPhase, BuildPlan } from "@/types/build"
+import { resolveStoryboardPlan } from "@/lib/chat/storyboard-strip"
 
 import { BuildMetrics } from "./build-metrics"
 import { BuildReasoningPanel } from "./build-reasoning-panel"
@@ -31,7 +34,11 @@ export function BuildTelemetry({
   historyCount = 0,
 }: BuildTelemetryProps) {
   const isPlanning = activePhase === "planner"
-  const showStoryboard = isPlanning || Boolean(plannerPlan)
+  const storyboardPlan = useMemo(
+    () => resolveStoryboardPlan(plannerPlan, buildTrace),
+    [plannerPlan, buildTrace],
+  )
+  const showStoryboard = isPlanning || Boolean(storyboardPlan)
   return (
     <div className="shrink-0 border-b border-border bg-background">
       <div className="space-y-3 px-3 py-3 md:px-4">
@@ -52,7 +59,7 @@ export function BuildTelemetry({
         historyCount={historyCount}
       />
       {showStoryboard ? (
-        <StoryboardStrip plan={plannerPlan} isPlanning={isPlanning} />
+        <StoryboardStrip plan={storyboardPlan} isPlanning={isPlanning} />
       ) : null}
     </div>
   )

@@ -203,6 +203,7 @@ export function ChatShell() {
   const [projectName, setProjectName] = useState("Jarvis")
   const [jarvisMode, setJarvisMode] = useState<JarvisMode>("chat")
   const [builderUnlocked, setBuilderUnlocked] = useState(false)
+  const builderUnlockedRef = useRef(false)
   const [pipelinePhase, setPipelinePhase] = useState<"planner" | null>(null)
   const [plannerPlan, setPlannerPlan] = useState<BuildPlan | null>(null)
   const [builderUnlockDialogOpen, setBuilderUnlockDialogOpen] = useState(false)
@@ -360,6 +361,7 @@ export function ChatShell() {
 
       const unlocked = readBuilderUnlocked()
       const storedMode = readStoredJarvisMode()
+      builderUnlockedRef.current = unlocked
       setBuilderUnlocked(unlocked)
       setJarvisMode(storedMode === "builder" && unlocked ? "builder" : "chat")
 
@@ -475,6 +477,7 @@ export function ChatShell() {
   >(async () => {})
 
   const handleBuilderUnlock = useCallback(() => {
+    builderUnlockedRef.current = true
     setBuilderUnlocked(true)
     persistBuilderUnlocked(true)
     setBuilderUnlockDialogOpen(false)
@@ -556,7 +559,7 @@ export function ChatShell() {
       const trimmedContent = content.trim()
       const buildIntent = detectBuildIntent(trimmedContent)
 
-      if (jarvisMode === "chat" && buildIntent && !builderUnlocked) {
+      if (jarvisMode === "chat" && buildIntent && !builderUnlockedRef.current) {
         pendingBuildPromptRef.current = trimmedContent
         const lockedUserMessage: Message = {
           id: generateId(),
@@ -574,7 +577,7 @@ export function ChatShell() {
       }
 
       const runBuilderPipeline =
-        jarvisMode === "builder" || (buildIntent && builderUnlocked)
+        jarvisMode === "builder" || (buildIntent && builderUnlockedRef.current)
 
       if (runBuilderPipeline && jarvisMode === "chat" && buildIntent) {
         setJarvisMode("builder")

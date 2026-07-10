@@ -38,6 +38,7 @@ const SAMPLE_HTML = `\`\`\`html
 \`\`\``;
 
 test.describe("iPhone 17 Air — story handoff build flow", () => {
+  test.describe.configure({ mode: "serial" })
   test.beforeEach(async ({ page }) => {
     await page.route("**/api/build/plan", async (route) => {
       await route.fulfill({
@@ -88,11 +89,20 @@ test.describe("iPhone 17 Air — story handoff build flow", () => {
     await page.getByTestId("builder-activate-button").click();
     await expect(page.getByTestId("builder-password-error")).toBeVisible();
 
+    const planResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/build/plan") &&
+        response.request().method() === "POST" &&
+        response.ok(),
+      { timeout: 20_000 },
+    );
+
     await page.getByTestId("builder-password-input").fill(BUILDER_PASSWORD);
     await page.getByTestId("builder-activate-button").click();
 
     await expect(page.getByTestId("builder-password-input")).toBeHidden({ timeout: 10_000 });
     expect(unlockRequests.length).toBeGreaterThanOrEqual(2);
+    await planResponse;
 
     // Mobile workspace auto-switches to artifact view while the pipeline runs.
     await expect(page.getByTestId("storyboard-strip")).toBeVisible({ timeout: 15_000 });
