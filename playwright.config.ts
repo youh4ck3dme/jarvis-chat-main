@@ -1,7 +1,7 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
 
 const iPhone17Air = {
-  ...devices["iPhone 14"],
+  browserName: "chromium" as const,
   viewport: { width: 420, height: 912 },
   deviceScaleFactor: 3,
   isMobile: true,

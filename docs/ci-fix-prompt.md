@@ -133,5 +133,6 @@ Zmenené súbory:
 | `ESLint couldn't find an eslint.config.(js\|mjs\|cjs) file` | Chýba flat config | Pridať `eslint.config.mjs` + `eslint` devDep |
 | `getFilename is not a function` | ESLint 10 + react plugin | Downgrade na `eslint@9` |
 | `Screenshot comparison failed` (darwin vs linux) | Pixel snapshot na macOS | Nahradiť layout aserciami, zmazať `*-darwin.png` snapshot |
+| `Executable doesn't exist at .../webkit-.../pw_run.sh` | `devices["iPhone 14"]` = WebKit, CI inštaluje len Chromium | V `playwright.config.ts` nastaviť `browserName: "chromium"` |
 | `BUILDER_UNLOCK_PASSWORD is not configured` | Chýba env v dev serveri | Nastaviť v playwright webServer env alebo `.env.local` |
 | Flaky empty state timeout | Dev server pomalý na CI | `timeout: 30_000` v beforeEach, `retries: 2` v playwright.config |
