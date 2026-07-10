@@ -1,65 +1,143 @@
-# Jarvis — Integrácia patternov z devmate
+# Jarvis — Stav projektu & backlog
 
-**Zdroj:** https://github.com/rajdesai17/devmate (forenzná analýza, júl 2026)  
 **Projekt:** `/Users/erikbabcan/HUB/JARVIS/jarvis-chat-main`  
 **Produkcia:** https://jarvis-ten-omega.vercel.app/chat  
-**Default model:** `mistral/mistral-small-latest` (MISTRAL_API_KEY)
+**GitHub:** https://github.com/youh4ck3dme/jarvis-chat-main  
+**Model:** `mistral/mistral-small-latest`  
+**Posledná aktualizácia:** júl 2026
 
-## Záver
+---
 
-Celý devmate **nekopírovať**. Brať: multi-agent orchestrátor, evaluator + refinement loop, typed env, telemetry UI, Zod API pattern.
+## ✅ Hotové (Prompt 1–14)
 
-## Čo NIE (nekopírovať)
+### P1 — Foundation
+- [x] `lib/env.ts` — Zod validácia env
+- [x] `types/build.ts` — BuildTrace, BuildPlan, BuildEvaluation
+- [x] `lib/agents/build-evaluator.ts` — scoring 0–1, shouldRefine
+- [x] `lib/agents/build-orchestrator.ts` — refinement max 2×
+- [x] `lib/api-response.ts` — `{ success, data, error }`
 
-- `lib/db/*`, `drizzle/*`, `scripts/seed*.ts`, `install-pgvector.ps1`
-- `lib/agents/executor.ts` (vector teammate search)
-- OpenRouter — Jarvis používa priamy Mistral API
+### P2 — Orchestrátor & UI metriky
+- [x] `lib/chat/build-pipeline.ts` — extrahovaný z chat-shell
+- [x] `lib/agents/build-planner.ts` — JSON plán pred streamom
+- [x] Build telemetry, metrics, reasoning panel
+- [x] `lib/agents/build-experience.ts` — localStorage hints
 
-## Priorita P1 — Foundation
+### P3 — História & API polish
+- [x] IndexedDB build history (max 50)
+- [x] `/api/chat` + `/api/build/plan` error envelope
 
-- [x] `lib/env.ts` — Zod validácia: `MISTRAL_API_KEY`, `DEFAULT_AI_MODEL`, `NEXT_PUBLIC_DEFAULT_AI_MODEL`, `BLOB_READ_WRITE_TOKEN`, `PORT`
-- [x] `lib/agents/build-orchestrator.ts` — Planner → Stream → Evaluator → refinement (max 2×)
-- [x] `lib/agents/build-evaluator.ts` — wrap `validateJarvisHtmlArtifact()` + scoring + `shouldRefine`
-- [x] `types/build.ts` — `BuildTrace`, `BuildPlan`, `BuildEvaluation`, `PlannerResult`
-- [x] API pattern `{ success, data, error }` v error responses (chat + build/plan routes)
+### P4 — Test coverage & CI
+- [x] Vitest: 157 testov (agents, lib/chat, responsive, integrity)
+- [x] Playwright iPhone 17 Air: 8 E2E testov
+- [x] CI: test → e2e-iphone → build → lint
+- [x] Odstránený mŕtvy `chat-sidebar.tsx`
 
-## Priorita P2 — UI & Planner
+### P5 — Chat / Builder modes & story
+- [x] Default **Chat** režim, Builder chránený heslom
+- [x] `lib/chat/jarvis-story.ts` — narrative beats, 45s nudge, build intent
+- [x] Storyboard strip + Orb mind-map animácie
+- [x] Build intent → password dialog → auto-resume pipeline
 
-- [x] `components/workspace/build-metrics.tsx` — `MetricTile`, `formatLatency`, `StrategyBadge` (tmavý Lovable štýl)
-- [x] `components/workspace/build-reasoning-panel.tsx` — timeline Plan → Stream → Validate → Refine
-- [x] `lib/agents/build-planner.ts` — `generateObject` + Zod: sekcie, farby, CTA, jazyk pred streamom
-- [x] Integrovať metriky do `chat-shell.tsx` / preview oblasti
-- [x] `lib/agents/build-experience.ts` — localStorage posledných 10 evaluácií + script hint
-- [x] `docs/architecture.md` — mermaid build pipeline
+### P6 — Mobile QA (Prompt 11)
+- [x] `lib/agents/build-mobile-validator.ts`
+- [x] iPhone 17 Air viewport 420×912, touch targets 44px
+- [x] E2E pixel snapshot + overflow checks
 
-## Priorita P3 — Voliteľné
+### P7 — Multi-session chat (Prompt 12)
+- [x] `lib/chat/chat-sessions.ts` — localStorage sessions + migrácia `chat-messages`
+- [x] Drawer „Konverzácie“ — prepínanie, mazanie
+- [x] Pamäť viazaná na `sessionId` (= conversationId)
 
-- [x] IndexedDB história buildov (`lib/build-history/build-history-store.ts`)
-- [x] API pattern `{ success, data, error }` aj v `/api/chat` error responses
-- [x] `lib/api-response.ts` — `jsonError`, `jsonSuccess`, `readApiErrorMessage`
+### P8 — Server-side Builder unlock (Prompt 13)
+- [x] `POST /api/builder/unlock` — len `BUILDER_UNLOCK_PASSWORD` (server)
+- [x] `lib/chat/builder-unlock-client.ts` — žiadny client-side password
+- [x] E2E story handoff na iPhone
 
-## Architektúra (cieľ)
+### P9 — Per-session memory UI (Prompt 14)
+- [x] `lib/memory/session-memory-summary.ts`
+- [x] Drawer „Pamäť konverzácií“ — prehľad + otvorenie panelu per session
 
+### P10 — Production hardening
+- [x] Produkcia bez dev fallback hesla (503 bez env)
+- [x] `BUILDER_UNLOCK_PASSWORD` na Vercel Production
+- [x] Opravená duplicitná user správa po unlock
+- [x] Mobile auto-switch na artifact počas plannera
+- [x] PWA metadata + dark webmanifest
+- [x] GitHub push: 9+ commitov na `main`
+
+---
+
+## ⚠️ Známe limitácie (nie bugy, ale treba vedieť)
+
+| Vec | Stav |
+|-----|------|
+| Supabase | **Nepoužíva sa** — Jarvis = Next.js + Vercel + Mistral |
+| Chat sessions | Len localStorage — žiadny server sync |
+| Build history | Globálna (IndexedDB), nie per-session |
+| Story nudge | 45s delay v Chat mode |
+| Preview env Vercel | `BUILDER_UNLOCK_PASSWORD` môže chýbať na Preview deployoch |
+| Playwright snapshot | `darwin.png` — môže sa líšiť na Linux CI |
+| Globálny gitignore | `~/.gitignore_global` blokuje `app/api/build/` — výnimka v `.gitignore` |
+
+---
+
+## 🔧 Backlog — opravy (priorita)
+
+### P1 — Bezpečnosť & ops
+- [ ] Zmeniť produkčné heslo z `2366` na silnejšie
+- [ ] Pridať `BUILDER_UNLOCK_PASSWORD` do Vercel **Preview** env
+- [ ] Rotácia / audit Vercel env premenných
+
+### P2 — UX
+- [ ] Skrátiť story nudge (45s → 15–20s alebo po prvej správe)
+- [ ] História buildov per-session
+- [ ] Jasnejší copy v menu: nový chat ≠ vymazanie pamäte
+- [ ] Loading stav pri server-side unlock (už čiastočne)
+
+### P3 — Technický dlh
+- [ ] Playwright snapshot cross-platform (Linux baseline)
+- [ ] CI smoke test s reálnym Mistral key (voliteľný secret)
+- [ ] `todo.md` / docs sync v CI check (voliteľné)
+
+---
+
+## 🚀 Backlog — nové features (voliteľné)
+
+- [ ] Server-side session sync (Postgres / Supabase — zámerne sme zatiaľ nebrali)
+- [ ] Export / backup sessions + memory JSON
+- [ ] Globálny memory search naprieč sessions
+- [ ] Real-device E2E (BrowserStack / Safari remote)
+- [ ] Rate limiting na `/api/builder/unlock`
+- [ ] Batch eval / continuous monitoring (Foundry pattern)
+
+---
+
+## 📋 Príkazy
+
+```bash
+pnpm dev                    # http://127.0.0.1:3141/chat
+pnpm test                   # 157 Vitest
+pnpm test:e2e:iphone        # 8 Playwright
+pnpm test:all               # Vitest + E2E
+pnpm build                  # production build
 ```
-Planner (Mistral Small, JSON) → Builder (stream ```html```) → Evaluator (local validate)
-  → ak issues: Refine pass (max 2×) → Live Preview → IndexedDB history
-```
 
-## Už hotové v Jarvis
+---
 
-- [x] Lovable workspace UI (chat + preview + footer)
-- [x] `copied-from-visual-html/` — jarvis-artifacts, preview panel, advisor prompt
-- [x] `DEFAULT_AI_MODEL=mistral/mistral-small-latest` (local + Vercel)
-- [x] Deploy: jarvis-ten-omega.vercel.app
-- [x] 5 implementačných promptov — `docs/devmate-integration-prompts.md`
+## 📚 Dokumentácia
 
-## Priorita P4 — Test coverage
+| Súbor | Obsah |
+|-------|--------|
+| `docs/README.md` | Index dokumentácie |
+| `docs/architecture.md` | Build pipeline, sessions, memory, mobile |
+| `docs/environment.md` | Vercel env, lokálny dev |
+| `docs/operations.md` | Deploy, test, troubleshoot |
+| `docs/diagnostic-prompt.md` | **AI diagnostický prompt** — anomálie + očakávané správanie |
+| `docs/devmate-integration-prompts.md` | Historické implementačné prompty 1–9 |
 
-- [x] Prompt 6 — `test:coverage`, threshold 80%, `resolve-api-key`, `default-model`, `build-planner` testy
-- [x] Prompt 7 — IndexedDB CRUD testy + HTML fixtures + pipeline simulation
-- [x] Prompt 8 — extrakcia `build-pipeline.ts` z chat-shell + integračný test
-- [x] Prompt 9 — TS cleanup, coverage lib/chat, odstránenie mŕtveho sidebaru, Vercel deploy
+---
 
-## Implementačné prompty
+## 🔍 Diagnostika
 
-→ **`docs/devmate-integration-prompts.md`** (Prompt 1–9)
+Pre kompletný audit spusti obsah `docs/diagnostic-prompt.md` v AI agentovi (Cursor/Grok) s otvoreným projektom.

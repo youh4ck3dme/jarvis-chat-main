@@ -2,7 +2,49 @@
 
 **Project:** `/Users/erikbabcan/HUB/JARVIS/jarvis-chat-main`  
 **Production:** https://jarvis-ten-omega.vercel.app/chat  
+**GitHub:** https://github.com/youh4ck3dme/jarvis-chat-main  
 **Model:** `mistral/mistral-small-latest` via `MISTRAL_API_KEY`
+
+---
+
+## System overview
+
+```mermaid
+flowchart TB
+  subgraph client [Browser]
+    CS[chat-shell.tsx]
+    LS[(localStorage sessions)]
+    IDB[(IndexedDB memory + build history)]
+    CS --> LS
+    CS --> IDB
+  end
+
+  subgraph api [Vercel API Routes]
+    CHAT[/api/chat stream/]
+    PLAN[/api/build/plan/]
+    UNLOCK[/api/builder/unlock/]
+    MEM[/api/memory/]
+  end
+
+  subgraph agents [lib/agents]
+    PL[build-planner]
+    EV[build-evaluator]
+    OR[build-orchestrator]
+    MV[build-mobile-validator]
+  end
+
+  CS --> PLAN --> PL
+  CS --> CHAT
+  CS --> UNLOCK
+  CS --> BP[build-pipeline.ts]
+  BP --> EV
+  BP --> OR
+  BP --> MV
+  CHAT --> Mistral[Mistral API]
+  PL --> Mistral
+```
+
+---
 
 ## Build pipeline
 
@@ -24,113 +66,171 @@ flowchart LR
   BP --> R
 ```
 
-## Chat orchestration layer
+### Chat orchestration layer
 
-`lib/chat/build-pipeline.ts` holds the pure build flow extracted from `chat-shell.tsx`:
+`lib/chat/build-pipeline.ts` — pure build flow (no React):
 
-- `runBuildPipeline()` — planner → stream → evaluate → refine (max 2×), no React
+- `runBuildPipeline()` — planner → stream → evaluate → refine (max 2×)
 - Injectable hooks: `fetchPlan`, `streamReply`, `onRefinementRound`, `onRoundComplete`
 - `buildIncompleteHtmlError()` — user-facing SK message when HTML stays incomplete
 
-`components/chat/chat-shell.tsx` keeps UI concerns only: streaming state, memory persistence, IndexedDB history, preview panel.
+`components/chat/chat-shell.tsx` — UI: streaming, sessions, memory, history, preview.
 
-## Phases
+---
 
-| Phase | Module | Notes |
-| --- | --- | --- |
-| Orchestrate | `lib/chat/build-pipeline.ts` | Wires planner, stream, evaluator, refine loop |
-| Plan | `lib/agents/build-planner.ts` | `generateObject` + Zod `BuildPlan` before stream |
-| Stream | `app/api/chat/route.ts` | Mistral text stream into ```html artifact |
-| Validate | `lib/agents/build-evaluator.ts` | Local scoring 0–1, no extra model call |
-| Refine | `lib/agents/build-orchestrator.ts` | Auto user message, max 2 rounds |
-| Preview | `copied-from-visual-html/` | Sanitized iframe preview + code tab |
+## Chat vs Builder modes
 
-## Experience layer
+| Režim | Default | Správanie |
+|-------|---------|-----------|
+| **Chat** | ✅ | Konverzácia, žiadny auto-build HTML |
+| **Builder** | Po unlock | Planner + stream + preview pipeline |
 
-`lib/agents/build-experience.ts` stores the last 10 `BuildEvaluation` results in `localStorage` (`jarvis-build-experience`). When more than 50% of recent builds missed `<script>`, a hint is injected into the planner/system prompt.
+**Unlock:** `POST /api/builder/unlock` + server `BUILDER_UNLOCK_PASSWORD`.  
+Client: `lib/chat/builder-unlock-client.ts` — žiadne heslo v bundle.
 
-`lib/build-history/build-history-store.ts` persists up to 50 full build records in IndexedDB (`JarvisBuildHistory`): prompt, evaluation, trace, HTML size, planner summary.
+**Build intent v Chat:** `detectBuildIntent()` → ak locked, password dialog + `pendingBuildPromptRef` → po unlock resume bez duplicitnej správy (`resumeAfterUnlockRef`).
 
-## API responses
-
-JSON routes use a unified envelope via `lib/api-response.ts`:
-
-- Success: `{ success: true, data }`
-- Error: `{ success: false, error }`
-
-`/api/chat` keeps plain-text streaming on success; only error paths return JSON.
-
-## Typed environment
-
-`lib/env.ts` validates `MISTRAL_API_KEY` (required) and optional `DEFAULT_AI_MODEL`, `NEXT_PUBLIC_DEFAULT_AI_MODEL`, `BLOB_READ_WRITE_TOKEN`, `PORT`, `BUILDER_UNLOCK_PASSWORD`.
-
-Builder unlock uses `POST /api/builder/unlock` with server-only `BUILDER_UNLOCK_PASSWORD` (Vercel env).
-Local dev falls back to `2366` when unset; production returns `503` without the env var.
+---
 
 ## Story → Build handoff
 
-`lib/chat/jarvis-story.ts` drives quoted narrative beats:
+`lib/chat/jarvis-story.ts`:
 
-1. Empty state opening quote
-2. Timed nudge after 45s in Chat mode
-3. Build intent → «rozložím v hlave…»
-4. Planner complete → «Teraz kódujem…»
-5. Successful build → «Hotovo…»
+| Beat | Trigger |
+|------|---------|
+| Opening quote | Empty state |
+| 45s nudge | Chat mode idle |
+| Build intent | «rozložím v hlave…» |
+| Plan ready | «Teraz kódujem…» |
+| Build success | «Hotovo…» |
+| Locked hint | Build intent bez unlock |
 
-Locked build intent opens the Builder password dialog and queues the prompt for auto-resume after unlock.
+---
 
-## Mobile QA
+## Multi-session chat
 
-**Target device:** iPhone 17 Air — 420×912 CSS px, 3× DPR.
+`lib/chat/chat-sessions.ts` — `jarvis-chat-sessions` v localStorage:
 
-| Layer | Module / command |
-| --- | --- |
-| Generated HTML | `lib/agents/build-mobile-validator.ts` — `@media`, viewport meta, touch targets |
-| Refinement | `build-orchestrator.ts` — mobile issues trigger SK refine prompt |
-| Workspace UI | `tests/responsive/iphone-17-air.test.tsx` — Vitest layout integrity |
-| Real browser | `e2e/iphone-17-air.spec.ts` — Playwright snapshot + overflow checks |
-| CI | `.github/workflows/ci.yml` — `test` → `e2e-iphone` → `build` |
+```typescript
+{ activeSessionId, sessions: [{ id, title, messages, projectName, updatedAt }] }
+```
 
-Run locally:
+- Migrácia legacy `chat-messages` → prvá session
+- `conversationId` = `activeSessionId` (pamäť per session)
+- Drawer: Konverzácie (prepínanie, mazanie)
+
+---
+
+## Memory system
+
+| Vrstva | Úložisko | Scope |
+|--------|----------|-------|
+| Memory entries | IndexedDB `JarvisChatMemory` | Per `conversationId` |
+| Session summary UI | `lib/memory/session-memory-summary.ts` | Drawer prehľad |
+| Memory panel | `components/chat/memory-panel.tsx` | Detail + filter + delete |
+| Build history | IndexedDB `JarvisBuildHistory` | **Globálna** (max 50) |
+| Build experience | localStorage | Posledných 10 evaluácií |
+
+---
+
+## Mobile (iPhone 17 Air)
+
+**Viewport:** 420×912 CSS px, 3× DPR, `viewport-fit: cover`
+
+| Správanie | Implementácia |
+|-----------|---------------|
+| Single panel chat/artifact | `workspaceView` state |
+| Auto artifact počas buildu | `isBuildActive` → `setWorkspaceView("artifact")` |
+| Footer Preview/Code počas plannera | `showArtifactWorkspace` prop |
+| Touch 44px | header, footer, mode control |
+| HTML mobile validate | `build-mobile-validator.ts` v refine |
+
+**Testy:**
 
 ```bash
-pnpm test:iphone
-pnpm test:e2e:iphone
+pnpm test:iphone          # Vitest
+pnpm test:e2e:iphone      # Playwright (8 tests)
 pnpm test:all
 ```
 
-## What we took from devmate
+---
 
-| Pattern | Jarvis implementation |
-| --- | --- |
-| Zod env validation | `lib/env.ts` |
-| Planner before main work | `lib/agents/build-planner.ts` |
-| Evaluator + score threshold | `lib/agents/build-evaluator.ts` |
-| Orchestrator refinement loop | `lib/agents/build-orchestrator.ts` |
-| Build telemetry UI | `components/workspace/build-metrics.tsx`, `build-reasoning-panel.tsx` |
-| Experience / history hints | `lib/agents/build-experience.ts` (localStorage, not Postgres) |
+## API routes
 
-## What we did not take
+| Route | Method | Response |
+|-------|--------|----------|
+| `/api/chat` | POST | text stream (success), JSON error |
+| `/api/build/plan` | POST | `{ success, data: PlannerResult }` |
+| `/api/builder/unlock` | POST | `{ success, data: { unlocked: true } }` |
+| `/api/memory` | GET/POST/DELETE | Memory CRUD |
 
-- Postgres, pgvector, Drizzle schema, seed scripts
-- `lib/agents/executor.ts` vector teammate search
-- OpenRouter multi-model routing
-- Light/indigo devmate theme (Jarvis uses dark Lovable workspace)
+Envelope: `lib/api-response.ts`
+
+---
+
+## Environment
+
+Detail: [environment.md](./environment.md)
+
+| Premenná | Povinné prod | Poznámka |
+|----------|--------------|----------|
+| `MISTRAL_API_KEY` | ✅ | Planner + stream |
+| `BUILDER_UNLOCK_PASSWORD` | ✅ | Server only |
+| `DEFAULT_AI_MODEL` | odporúčané | |
+| `NEXT_PUBLIC_*` password | ❌ | Nikdy |
+
+---
+
+## Phases reference
+
+| Phase | Module |
+|-------|--------|
+| Orchestrate | `lib/chat/build-pipeline.ts` |
+| Plan | `lib/agents/build-planner.ts` |
+| Stream | `app/api/chat/route.ts` |
+| Validate | `lib/agents/build-evaluator.ts` |
+| Refine | `lib/agents/build-orchestrator.ts` |
+| Mobile check | `lib/agents/build-mobile-validator.ts` |
+| Preview | `copied-from-visual-html/` |
+
+---
 
 ## Key files
 
 ```
-lib/env.ts
-lib/agents/build-planner.ts
-lib/agents/build-plan-utils.ts
-lib/agents/build-evaluator.ts
-lib/agents/build-orchestrator.ts
-lib/agents/build-experience.ts
-lib/chat/build-pipeline.ts
-types/build.ts
-components/chat/chat-shell.tsx
-components/workspace/build-telemetry.tsx
+components/chat/chat-shell.tsx      # Main orchestrator UI
+components/workspace/               # Header, footer, telemetry, drawer
+lib/chat/
+  build-pipeline.ts                 # Pure build flow
+  chat-sessions.ts                  # Multi-session storage
+  jarvis-mode.ts                    # Chat/Builder mode
+  jarvis-story.ts                   # Narrative beats
+  builder-unlock-client.ts          # Server unlock fetch
+lib/agents/                         # Planner, evaluator, orchestrator
+lib/memory/                         # IndexedDB + session summaries
 app/api/build/plan/route.ts
+app/api/builder/unlock/route.ts
 app/api/chat/route.ts
-copied-from-visual-html/
+copied-from-visual-html/            # Preview panel + artifacts
+e2e/                                # Playwright iPhone tests
+tests/responsive/                   # Vitest layout tests
 ```
+
+---
+
+## Z devmate sme vzali / nevzali
+
+| Vzali | Nevzali |
+|-------|---------|
+| Zod env, planner, evaluator, refine loop | Postgres, pgvector |
+| Telemetry UI, experience hints | executor.ts vector search |
+| API envelope pattern | OpenRouter |
+| | Supabase Edge Functions |
+
+---
+
+## Diagnostika & ops
+
+- **Audit prompt:** [diagnostic-prompt.md](./diagnostic-prompt.md)
+- **Deploy & troubleshoot:** [operations.md](./operations.md)
+- **Backlog:** [../todo.md](../todo.md)
