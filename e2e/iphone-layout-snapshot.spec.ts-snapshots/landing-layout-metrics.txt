@@ -13,26 +13,26 @@
   },
   "emptyState": {
     "top": 51,
-    "bottom": 825,
+    "bottom": 837,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 774
+    "height": 786
   },
   "footer": {
-    "top": 825,
+    "top": 837,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 87
+    "height": 75
   },
   "composer": {
-    "top": 851,
-    "bottom": 887,
-    "left": 129,
-    "right": 291,
-    "width": 162,
+    "top": 857,
+    "bottom": 893,
+    "left": 121,
+    "right": 299,
+    "width": 178,
     "height": 36
   },
   "touchTargets": [
