@@ -23,7 +23,7 @@ describe("builder-unlock", () => {
     expect(isBuilderPasswordValid("wrong")).toBe(false)
   })
 
-  it("falls back to 2366 in development when env is unset", async () => {
+  it("falls back to dev password in development when env is unset", async () => {
     process.env = { ...originalEnv, NODE_ENV: "development" }
     delete process.env.BUILDER_UNLOCK_PASSWORD
 
@@ -39,6 +39,6 @@ describe("builder-unlock", () => {
       await import("./builder-unlock")
     expect(resolveBuilderPassword()).toBeNull()
     expect(isBuilderUnlockConfigured()).toBe(false)
-    expect(isBuilderPasswordValid("2366")).toBe(false)
+    expect(isBuilderPasswordValid("223513900")).toBe(false)
   })
 })

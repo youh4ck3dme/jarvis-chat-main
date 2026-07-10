@@ -53,13 +53,13 @@ Bez `BUILDER_UNLOCK_PASSWORD` na produkcii → `503`.
 ```env
 # .env.local
 MISTRAL_API_KEY=sk-...
-BUILDER_UNLOCK_PASSWORD=2366
+BUILDER_UNLOCK_PASSWORD=223513900
 DEFAULT_AI_MODEL=mistral/mistral-small-latest
 NEXT_PUBLIC_DEFAULT_AI_MODEL=mistral/mistral-small-latest
 PORT=3141
 ```
 
-Ak `BUILDER_UNLOCK_PASSWORD` chýba lokálne → fallback `2366` (len `NODE_ENV=development`).
+Ak `BUILDER_UNLOCK_PASSWORD` chýba lokálne → fallback `223513900` (len `NODE_ENV=development`).
 
 ---
 

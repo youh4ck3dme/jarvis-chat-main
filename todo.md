@@ -8,112 +8,52 @@
 
 ---
 
-## ✅ Hotové (Prompt 1–18)
+## ✅ Hotové (Prompt 1–19)
 
-### P1 — Foundation
-- [x] `lib/env.ts` — Zod validácia env
-- [x] `types/build.ts` — BuildTrace, BuildPlan, BuildEvaluation
-- [x] `lib/agents/build-evaluator.ts` — scoring 0–1, shouldRefine
-- [x] `lib/agents/build-orchestrator.ts` — refinement max 2×
-- [x] `lib/api-response.ts` — `{ success, data, error }`
+### P1–P10 — Foundation → Production hardening
+- [x] Build pipeline, orchestrátor, telemetry, multi-session chat, server-side unlock
+- [x] iPhone 17 Air QA, PWA, CI (test → e2e → build → lint)
+- [x] Story nudge 15s, lokálne zvuky, mobile chat streaming regression
 
-### P2 — Orchestrátor & UI metriky
-- [x] `lib/chat/build-pipeline.ts` — extrahovaný z chat-shell
-- [x] `lib/agents/build-planner.ts` — JSON plán pred streamom
-- [x] Build telemetry, metrics, reasoning panel
-- [x] `lib/agents/build-experience.ts` — localStorage hints
+### P11 — Export backup + Supabase session sync (P16)
+- [x] Export/Import backup JSON (sessions + pamäť)
+- [x] `POST/GET /api/sessions/sync` + device `sync_key`
 
-### P3 — História & API polish
-- [x] IndexedDB build history (max 50)
-- [x] `/api/chat` + `/api/build/plan` error envelope
-
-### P4 — Test coverage & CI
-- [x] Vitest: 157 testov (agents, lib/chat, responsive, integrity)
-- [x] Playwright iPhone 17 Air: 8 E2E testov
-- [x] CI: test → e2e-iphone → build → lint
-- [x] Odstránený mŕtvy `chat-sidebar.tsx`
-
-### P5 — Chat / Builder modes & story
-- [x] Default **Chat** režim, Builder chránený heslom
-- [x] `lib/chat/jarvis-story.ts` — narrative beats, 45s nudge, build intent
-- [x] Storyboard strip + Orb mind-map animácie
-- [x] Build intent → password dialog → auto-resume pipeline
-
-### P6 — Mobile QA (Prompt 11)
-- [x] `lib/agents/build-mobile-validator.ts`
-- [x] iPhone 17 Air viewport 420×912, touch targets 44px
-- [x] E2E pixel snapshot + overflow checks
-
-### P7 — Multi-session chat (Prompt 12)
-- [x] `lib/chat/chat-sessions.ts` — localStorage sessions + migrácia `chat-messages`
-- [x] Drawer „Konverzácie“ — prepínanie, mazanie
-- [x] Pamäť viazaná na `sessionId` (= conversationId)
-
-### P8 — Server-side Builder unlock (Prompt 13)
-- [x] `POST /api/builder/unlock` — len `BUILDER_UNLOCK_PASSWORD` (server)
-- [x] `lib/chat/builder-unlock-client.ts` — žiadny client-side password
-- [x] E2E story handoff na iPhone
-
-### P9 — Per-session memory UI (Prompt 14)
-- [x] `lib/memory/session-memory-summary.ts`
-- [x] Drawer „Pamäť konverzácií“ — prehľad + otvorenie panelu per session
-
-### P10 — Production hardening
-- [x] Produkcia bez dev fallback hesla (503 bez env)
-- [x] `BUILDER_UNLOCK_PASSWORD` na Vercel Production
-- [x] Opravená duplicitná user správa po unlock
-- [x] Mobile auto-switch na artifact počas plannera
-- [x] PWA metadata + dark webmanifest
-- [x] GitHub push: 9+ commitov na `main`
-
-### P11 — Production polish + iPhone UX (Prompt 15)
-- [x] Story nudge: 45s → **15s** (`JARVIS_STORY_NUDGE_DELAY_MS`)
-- [x] Chat režim: pravý panel idle copy (`JARVIS_ORB_CHAT_IDLE`), nie build streaming text
-- [x] Zvuky: `public/sounds/{click,record,launch}.mp3` — lokálne, bez Vercel Blob
-- [x] `allowedDevOrigins` v `next.config.mjs` pre dev na `127.0.0.1:3141`
-- [x] Regresný test: chat + mobile streaming nikdy neotvára artifact panel
-- [x] Bundle audit: `BUILDER_UNLOCK_PASSWORD` / `2366` nie v client `.next/static`
-- [x] Vitest **161/161**, E2E iPhone **8/8**, lint 0 errors, build OK
-
-### P12 — Export backup + Supabase sync (Prompt 16)
-- [x] **Export backup** — všetky konverzácie + IndexedDB pamäť → JSON (`lib/chat/jarvis-backup.ts`)
-- [x] **Import backup** — obnova sessions + memory z JSON (menu drawer)
-- [x] **Supabase sync** — `POST/GET /api/sessions/sync`, device `sync_key` v localStorage
-- [x] Migrácia `supabase/migrations/001_jarvis_chat_sessions.sql`
-- [x] Auto pull on load + debounced push (2s) keď je Supabase nakonfigurovaný
-- [x] Vitest **170/170**, E2E iPhone **8/8**
-
-### P13 — Supabase ops + memory cloud sync (Prompt 17)
-- [x] Vercel env: `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (Production, Preview, Development)
-- [x] Supabase projekt: `googlabuilder-project` (`qytsiddrksybwpqldjfj`) — tabuľky sessions + memory
+### P12 — Memory cloud sync (P17)
 - [x] `POST/GET /api/memory/sync` — pamäť per conversation + user profile
-- [x] Auto pull/push pamäte spolu so sessions (debounce 2s)
-- [x] Backup roundtrip test: export browser A → import browser B
+- [x] Vercel env: `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
 
-### P14 — Supabase Auth multi-device (Prompt 18)
-- [x] Magic link prihlásenie (`/auth/callback`) — jeden účet namiesto device key
-- [x] Sync API vyžadujú `Authorization: Bearer` (user.id ako sync scope)
-- [x] Migrácia device key → user účet pri prvom prihlásení (`POST /api/sessions/sync/migrate`)
-- [x] UI: `JarvisAuthPanel` v menu (email, magic link, odhlásenie)
-- [x] Vercel: `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Prod/Preview/Dev)
-- [x] Vitest **176/176**
+### P13 — Supabase Auth multi-device (P18)
+- [x] Magic link (`/auth/callback`), `JarvisAuthPanel`
+- [x] Sync API vyžaduje JWT; migrácia device → user
+- [x] Vercel: `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-### P15 — Export projektu ZIP (Prompt F)
+### P14 — Export projektu ZIP (Prompt F)
 - [x] Menu → **Export projektu (ZIP)** — sessions + pamäť + build history + `latest-build.html`
-- [x] `lib/chat/project-zip-export.ts` + `fflate`; `backup.json` importovateľný cez Import backup
-- [x] Vitest **180/180**
+- [x] `backup.json` importovateľný cez Import backup
+
+### P15 — Prílohy JPEG/HEIC/PNG/WebP/PDF/HTML
+- [x] `lib/chat/jarvis-attachments.ts` — HEIC→JPEG, MIME routing, system prompt
+- [x] Composer accept všetkých formátov; API multimodal pre image/PDF, inline HTML
+- [x] Export tlačidlá v assistant správach (HTML/PNG/PDF)
+- [x] Testy: **210** unit + **11** E2E
+
+### P16 — Ops & bezpečnosť (Prompt A)
+- [x] Builder heslo zmenené z `2366` → **`223513900`**
+- [x] `BUILDER_UNLOCK_PASSWORD` na Vercel **Production + Preview + Development**
+- [x] CI/E2E/playwright používajú nové heslo
+- [x] Dev fallback: `DEV_BUILDER_PASSWORD_FALLBACK` v `lib/builder-unlock.ts`
 
 ---
 
-## ⚠️ Známe limitácie (nie bugy, ale treba vedieť)
+## ⚠️ Známe limitácie
 
 | Vec | Stav |
 |-----|------|
-| Supabase sync | Vyžaduje **prihlásenie** (magic link) + env na Vercel |
-| Chat sessions | localStorage primárne; cloud sync pod `auth.users.id` keď si prihlásený |
+| Supabase sync | Vyžaduje prihlásenie (magic link) + env na Vercel |
+| Chat sessions | localStorage primárne; cloud sync pod `auth.users.id` |
 | Build history | Globálna (IndexedDB), nie per-session |
 | Story nudge | 15s delay v Chat mode |
-| Preview env Vercel | `BUILDER_UNLOCK_PASSWORD` môže chýbať na Preview deployoch |
 | Playwright snapshot | `darwin.png` — môže sa líšiť na Linux CI |
 | Globálny gitignore | `~/.gitignore_global` blokuje `app/api/build/` — výnimka v `.gitignore` |
 
@@ -121,20 +61,18 @@
 
 ## 🔧 Backlog — opravy (priorita)
 
-### P1 — Bezpečnosť & ops
-- [ ] Zmeniť produkčné heslo z `2366` na silnejšie
-- [ ] Pridať `BUILDER_UNLOCK_PASSWORD` do Vercel **Preview** env
-- [ ] Rotácia / audit Vercel env premenných
+### P1 — Ops
+- [ ] Rotácia / audit Vercel env premenných (periodický)
+- [ ] Redeploy produkcie po zmene hesla (ak staré heslo ešte funguje)
 
 ### P2 — UX
 - [ ] História buildov per-session
+- [ ] Drag & drop + hromadný upload príloh
 - [ ] Jasnejší copy v menu: nový chat ≠ vymazanie pamäte
-- [ ] Loading stav pri server-side unlock (už čiastočne)
 
 ### P3 — Technický dlh
 - [ ] Playwright snapshot cross-platform (Linux baseline)
 - [ ] CI smoke test s reálnym Mistral key (voliteľný secret)
-- [ ] `todo.md` / docs sync v CI check (voliteľné)
 
 ---
 
@@ -153,11 +91,13 @@
 
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
-pnpm test                   # 180 Vitest
-pnpm test:e2e:iphone        # 8 Playwright
+pnpm test                   # 210 Vitest
+pnpm test:e2e:iphone        # 11 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build
 ```
+
+**Builder heslo:** `223513900` (lokálny dev fallback + Vercel env)
 
 ---
 
@@ -169,11 +109,4 @@ pnpm build                  # production build
 | `docs/architecture.md` | Build pipeline, sessions, memory, mobile |
 | `docs/environment.md` | Vercel env, lokálny dev |
 | `docs/operations.md` | Deploy, test, troubleshoot |
-| `docs/diagnostic-prompt.md` | **AI diagnostický prompt** — anomálie + očakávané správanie |
-| `docs/devmate-integration-prompts.md` | Historické implementačné prompty 1–9 |
-
----
-
-## 🔍 Diagnostika
-
-Pre kompletný audit spusti obsah `docs/diagnostic-prompt.md` v AI agentovi (Cursor/Grok) s otvoreným projektom.
+| `docs/diagnostic-prompt.md` | AI diagnostický prompt |

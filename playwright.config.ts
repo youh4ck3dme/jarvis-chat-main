@@ -36,7 +36,7 @@ export default defineConfig({
     env: {
       ...process.env,
       MISTRAL_API_KEY: process.env.MISTRAL_API_KEY || "ci-placeholder-key",
-      BUILDER_UNLOCK_PASSWORD: process.env.BUILDER_UNLOCK_PASSWORD || "2366",
+      BUILDER_UNLOCK_PASSWORD: process.env.BUILDER_UNLOCK_PASSWORD || "223513900",
     },
   },
 });

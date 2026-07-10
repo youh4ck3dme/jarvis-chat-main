@@ -14,7 +14,7 @@ pnpm install
 pnpm dev                     # http://127.0.0.1:3141/chat
 ```
 
-Builder heslo (lokálne): `2366` (ak `BUILDER_UNLOCK_PASSWORD` nie je v `.env.local`)
+Builder heslo (lokálne): `223513900` (ak `BUILDER_UNLOCK_PASSWORD` nie je v `.env.local`)
 
 ---
 

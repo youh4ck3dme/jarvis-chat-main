@@ -37,7 +37,7 @@ jobs:
     needs: test
     env:
       MISTRAL_API_KEY: ci-placeholder-key
-      BUILDER_UNLOCK_PASSWORD: "2366"
+      BUILDER_UNLOCK_PASSWORD: "223513900"
 
     steps:
       - uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
         run: pnpm test:e2e:iphone
         env:
           MISTRAL_API_KEY: ci-placeholder-key
-          BUILDER_UNLOCK_PASSWORD: "2366"
+          BUILDER_UNLOCK_PASSWORD: "223513900"
 
       - name: Upload Playwright report on failure
         if: failure()

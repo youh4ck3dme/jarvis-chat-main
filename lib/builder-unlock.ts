@@ -1,5 +1,5 @@
 /** Dev-only fallback when BUILDER_UNLOCK_PASSWORD is not configured locally. */
-export const DEV_BUILDER_PASSWORD_FALLBACK = "2366";
+export const DEV_BUILDER_PASSWORD_FALLBACK = "223513900";
 
 export function isDevelopmentRuntime(): boolean {
   return process.env.NODE_ENV === "development";
