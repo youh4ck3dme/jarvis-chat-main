@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { ApiErrorCode } from "@/lib/error-codes"
 import { resetRateLimitStoreForTests } from "@/lib/rate-limit/in-memory-rate-limit"
 
 import { POST } from "./route"
@@ -63,6 +64,7 @@ describe("POST /api/builder/unlock", () => {
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: "Nesprávne heslo. Builder režim je chránený.",
+      code: ApiErrorCode.UNAUTHORIZED,
     })
   })
 
@@ -91,6 +93,7 @@ describe("POST /api/builder/unlock", () => {
     await expect(third.json()).resolves.toEqual({
       success: false,
       error: "Príliš veľa pokusov o odomknutie. Skús znova neskôr.",
+      code: ApiErrorCode.RATE_LIMITED,
     })
   })
 })

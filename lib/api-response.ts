@@ -1,6 +1,9 @@
+import { ApiErrorCode, defaultErrorCodeForStatus, type ApiErrorCode as ApiErrorCodeType } from "./error-codes"
+
 export type ApiErrorBody = {
   success: false
   error: string
+  code: ApiErrorCodeType
 }
 
 export type ApiSuccessBody<T> = {
@@ -8,16 +11,23 @@ export type ApiSuccessBody<T> = {
   data: T
 }
 
+export type JsonErrorOptions = {
+  code?: ApiErrorCodeType
+  extraHeaders?: Record<string, string>
+}
+
 export function jsonError(
   error: string,
   status: number,
-  extraHeaders?: Record<string, string>,
+  options?: JsonErrorOptions,
 ): Response {
-  return Response.json({ success: false, error } satisfies ApiErrorBody, {
+  const code = options?.code ?? defaultErrorCodeForStatus(status)
+
+  return Response.json({ success: false, error, code } satisfies ApiErrorBody, {
     status,
     headers: {
       "Content-Type": "application/json",
-      ...extraHeaders,
+      ...options?.extraHeaders,
     },
   })
 }
@@ -44,4 +54,19 @@ export function readApiErrorMessage(payload: unknown): string | null {
   }
 
   return null
+}
+
+export function readApiErrorCode(payload: unknown): ApiErrorCodeType | null {
+  if (!payload || typeof payload !== "object") {
+    return null
+  }
+
+  const record = payload as { code?: unknown }
+  if (typeof record.code !== "string") {
+    return null
+  }
+
+  return Object.values(ApiErrorCode).includes(record.code as ApiErrorCodeType)
+    ? (record.code as ApiErrorCodeType)
+    : null
 }

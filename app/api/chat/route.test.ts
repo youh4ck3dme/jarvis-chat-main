@@ -8,6 +8,8 @@ vi.mock("ai", () => ({
   streamText: streamTextMock,
 }))
 
+import { ApiErrorCode } from "@/lib/error-codes"
+
 import { POST } from "./route"
 
 describe("POST /api/chat", () => {
@@ -54,6 +56,7 @@ describe("POST /api/chat", () => {
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: expect.stringContaining("Mistral API key is missing"),
+      code: ApiErrorCode.UNAUTHORIZED,
     })
     expect(streamTextMock).not.toHaveBeenCalled()
   })
@@ -71,6 +74,7 @@ describe("POST /api/chat", () => {
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: "Invalid request: messages array required",
+      code: ApiErrorCode.VALIDATION_ERROR,
     })
     expect(streamTextMock).not.toHaveBeenCalled()
   })
@@ -90,6 +94,7 @@ describe("POST /api/chat", () => {
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: "No valid messages to process",
+      code: ApiErrorCode.VALIDATION_ERROR,
     })
   })
 
@@ -274,6 +279,7 @@ describe("POST /api/chat", () => {
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: "Gateway unavailable",
+      code: ApiErrorCode.INTERNAL_ERROR,
     })
   })
 })
