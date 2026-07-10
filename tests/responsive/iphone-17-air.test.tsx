@@ -152,6 +152,13 @@ describe("iPhone 17 Air responsive layout", () => {
     assertNoHorizontalOverflow(container, IPHONE_17_AIR.width);
   });
 
+  it("shows chat-mode idle copy instead of build streaming text", () => {
+    render(<OrbMindMap isPlanning={false} plan={null} variant="chat" />);
+
+    expect(screen.getByTestId("orb-mind-status")).toHaveTextContent(/Chat režim/i);
+    expect(screen.getByTestId("orb-mind-status")).not.toHaveTextContent(/Generujem HTML/i);
+  });
+
   it("exposes compact mode control buttons for iPhone 17 Air", () => {
     render(
       <JarvisModeControl

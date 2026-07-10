@@ -227,7 +227,7 @@ describe("ChatShell", () => {
     )
   })
 
-  it("chat mode on mobile stays in chat view for casual messages", async () => {
+  it("chat mode on mobile stays in chat view while streaming casual messages", async () => {
     vi.stubGlobal(
       "matchMedia",
       (query: string) =>
@@ -243,9 +243,14 @@ describe("ChatShell", () => {
         }) as MediaQueryList,
     )
 
+    let resolveStream: (() => void) | undefined
+    const streamStarted = new Promise<void>((resolve) => {
+      resolveStream = resolve
+    })
+
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
       if (String(input).includes("/api/chat")) {
-        await new Promise((resolve) => setTimeout(resolve, 80))
+        await streamStarted
         return createStreamResponse("Ahoj! Ako ti môžem pomôcť?")
       }
       return new Response("Not found", { status: 404 })
@@ -263,7 +268,14 @@ describe("ChatShell", () => {
     })
     await user.click(screen.getByRole("button", { name: "Send message" }))
 
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Stop generating" })).toBeInTheDocument()
+    })
+
     expect(screen.queryByRole("button", { name: /Live Preview/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Generated Code/i })).not.toBeInTheDocument()
+
+    resolveStream?.()
 
     await waitFor(() => {
       expect(screen.getByText("Ahoj! Ako ti môžem pomôcť?")).toBeInTheDocument()

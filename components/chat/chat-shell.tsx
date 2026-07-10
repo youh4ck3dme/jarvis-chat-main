@@ -899,6 +899,7 @@ export function ChatShell() {
               isPlanning={pipelinePhase === "planner"}
               plan={plannerPlan}
               isStreaming={isBuildActive && isStreaming}
+              variant={jarvisMode === "builder" ? "builder" : "chat"}
             />
           ) : undefined
         }

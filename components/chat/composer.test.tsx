@@ -137,5 +137,6 @@ describe("Composer", () => {
 
     expect(MockAudio.instances.length).toBeGreaterThan(0)
     expect(MockAudio.instances.some((audio) => audio.play.mock.calls.length > 0)).toBe(true)
+    expect(MockAudio.instances[0]?.src).toContain("/sounds/click.mp3")
   })
 })

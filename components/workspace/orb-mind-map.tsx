@@ -11,13 +11,17 @@ import {
   ORB_PLANNING_NODE_SEQUENCE,
   type MindMapNode,
 } from "@/lib/chat/orb-mind-map";
+import { JARVIS_ORB_CHAT_IDLE } from "@/lib/chat/jarvis-story";
 import type { BuildPlan } from "@/types/build";
 import { cn } from "@/lib/utils";
+
+export type OrbMindMapVariant = "chat" | "builder";
 
 type OrbMindMapProps = {
   isPlanning: boolean;
   plan: BuildPlan | null;
   isStreaming?: boolean;
+  variant?: OrbMindMapVariant;
   className?: string;
 };
 
@@ -34,7 +38,13 @@ function nodeStyles(kind: MindMapNode["kind"]) {
   return "border-emerald-500/35 bg-emerald-950/35 text-emerald-200";
 }
 
-export function OrbMindMap({ isPlanning, plan, isStreaming = false, className }: OrbMindMapProps) {
+export function OrbMindMap({
+  isPlanning,
+  plan,
+  isStreaming = false,
+  variant = "builder",
+  className,
+}: OrbMindMapProps) {
   const [revealedCount, setRevealedCount] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -76,6 +86,7 @@ export function OrbMindMap({ isPlanning, plan, isStreaming = false, className }:
   }, [plan, isPlanning]);
 
   const showIdle = !isPlanning && !plan && !isStreaming;
+  const builderIdleText = "Tu sa zrodí tvoj build";
   const statusText = isStreaming && !isPlanning
     ? "Generujem HTML do živého preview…"
     : isPlanning
@@ -84,7 +95,9 @@ export function OrbMindMap({ isPlanning, plan, isStreaming = false, className }:
         ? "Plán je hotový — spúšťam build"
         : plan
           ? "Uzly sa zbiehajú do jedného bodu…"
-          : "Tu sa zrodí tvoj build";
+          : variant === "chat"
+            ? JARVIS_ORB_CHAT_IDLE
+            : builderIdleText;
 
   return (
     <div

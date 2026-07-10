@@ -21,7 +21,7 @@ interface MessageListProps {
   variant?: "default" | "workspace"
 }
 
-const LAUNCH_SOUND_URL = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/launch-SUi0itAGHr1wtvdDYYG5bzFLsIYHtP.mp3"
+import { SOUND_LAUNCH_URL } from "@/lib/sounds"
 export const INTRO_PLAYED_KEY = "jarvis-intro-last-played"
 export const INTRO_COOLDOWN_MS = 60 * 60 * 1000 // 1 hour in milliseconds
 
@@ -100,7 +100,7 @@ export function MessageList({
       hasPlayedIntroRef.current = true
       markIntroPlayed()
 
-      audioRef.current = new Audio(LAUNCH_SOUND_URL)
+      audioRef.current = new Audio(SOUND_LAUNCH_URL)
       audioRef.current.volume = 0.5
       audioRef.current.play().catch(() => {
         // Ignore autoplay errors - browser may block without user interaction

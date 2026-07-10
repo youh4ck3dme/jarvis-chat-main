@@ -8,7 +8,7 @@
 
 ---
 
-## ✅ Hotové (Prompt 1–14)
+## ✅ Hotové (Prompt 1–15)
 
 ### P1 — Foundation
 - [x] `lib/env.ts` — Zod validácia env
@@ -66,6 +66,15 @@
 - [x] PWA metadata + dark webmanifest
 - [x] GitHub push: 9+ commitov na `main`
 
+### P11 — Production polish + iPhone UX (Prompt 15)
+- [x] Story nudge: 45s → **15s** (`JARVIS_STORY_NUDGE_DELAY_MS`)
+- [x] Chat režim: pravý panel idle copy (`JARVIS_ORB_CHAT_IDLE`), nie build streaming text
+- [x] Zvuky: `public/sounds/{click,record,launch}.mp3` — lokálne, bez Vercel Blob
+- [x] `allowedDevOrigins` v `next.config.mjs` pre dev na `127.0.0.1:3141`
+- [x] Regresný test: chat + mobile streaming nikdy neotvára artifact panel
+- [x] Bundle audit: `BUILDER_UNLOCK_PASSWORD` / `2366` nie v client `.next/static`
+- [x] Vitest **161/161**, E2E iPhone **8/8**, lint 0 errors, build OK
+
 ---
 
 ## ⚠️ Známe limitácie (nie bugy, ale treba vedieť)
@@ -75,7 +84,7 @@
 | Supabase | **Nepoužíva sa** — Jarvis = Next.js + Vercel + Mistral |
 | Chat sessions | Len localStorage — žiadny server sync |
 | Build history | Globálna (IndexedDB), nie per-session |
-| Story nudge | 45s delay v Chat mode |
+| Story nudge | 15s delay v Chat mode |
 | Preview env Vercel | `BUILDER_UNLOCK_PASSWORD` môže chýbať na Preview deployoch |
 | Playwright snapshot | `darwin.png` — môže sa líšiť na Linux CI |
 | Globálny gitignore | `~/.gitignore_global` blokuje `app/api/build/` — výnimka v `.gitignore` |
@@ -90,7 +99,6 @@
 - [ ] Rotácia / audit Vercel env premenných
 
 ### P2 — UX
-- [ ] Skrátiť story nudge (45s → 15–20s alebo po prvej správe)
 - [ ] História buildov per-session
 - [ ] Jasnejší copy v menu: nový chat ≠ vymazanie pamäte
 - [ ] Loading stav pri server-side unlock (už čiastočne)
@@ -117,7 +125,7 @@
 
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
-pnpm test                   # 157 Vitest
+pnpm test                   # 161 Vitest
 pnpm test:e2e:iphone        # 8 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build

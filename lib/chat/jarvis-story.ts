@@ -1,11 +1,14 @@
 export const JARVIS_STORY_NUDGE_SHOWN_KEY = "jarvis-story-nudge-shown";
-export const JARVIS_STORY_NUDGE_DELAY_MS = 45_000;
+export const JARVIS_STORY_NUDGE_DELAY_MS = 15_000;
 
 /** Opening quote on empty workspace — sets the tone before first message. */
 export const JARVIS_STORY_OPENING = `«Pred rokmi som bol len riadok kódu v tmavom termináli. Dnes som tu — aby som počúval, rozumel… a keď budeš pripravený, postavil to, čo si predstavíš.»`;
 
 /** Proactive nudge after idle time in Chat mode. */
 export const JARVIS_STORY_NUDGE = `«…a mimochodom — nechcel by si vidieť, čo dokážem? Stačí napísať, čo si praješ postaviť alebo nakódovať. Napríklad: „urob mi landing page pre kaviareň."»`;
+
+/** Right-panel idle copy when Chat mode has no active build. */
+export const JARVIS_ORB_CHAT_IDLE = "Chat režim — tu uvidíš preview, keď spustíš build.";
 
 export const JARVIS_BUILDER_LOCKED_HINT = `«To znie ako build úloha. Zadaj heslo nižšie — odomkne sa Builder a môžem začať stavať naživo v preview paneli.»`;
 

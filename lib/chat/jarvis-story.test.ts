@@ -5,6 +5,7 @@ import {
   detectBuildIntent,
   JARVIS_STORY_BUILD_INTENT,
   JARVIS_STORY_BUILD_SUCCESS,
+  JARVIS_STORY_NUDGE_DELAY_MS,
   JARVIS_STORY_NUDGE_SHOWN_KEY,
   JARVIS_STORY_PLAN_READY,
   markStoryNudgeShown,
@@ -33,6 +34,10 @@ describe("jarvis-story", () => {
     const beat = createNarrativeBeat("beat-1", JARVIS_STORY_BUILD_INTENT);
     expect(beat.narrative).toBe(true);
     expect(beat.role).toBe("assistant");
+  });
+
+  it("uses a 15s proactive nudge delay in chat mode", () => {
+    expect(JARVIS_STORY_NUDGE_DELAY_MS).toBe(15_000);
   });
 
   it("tracks story nudge per session", () => {

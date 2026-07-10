@@ -20,6 +20,7 @@ import {
   Eraser,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { SOUND_CLICK_URL, SOUND_RECORD_URL } from "@/lib/sounds"
 import { cn } from "@/lib/utils"
 import {
   DropdownMenu,
@@ -212,13 +213,13 @@ export function Composer({
   }, [])
 
   const playClickSound = useCallback(() => {
-    const audio = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/click-FM4Xaa1FJj237591TiZw4yL1fIxdOw.mp3")
+    const audio = new Audio(SOUND_CLICK_URL)
     audio.volume = 0.5
     audio.play().catch(() => {})
   }, [])
 
   const playRecordSound = useCallback(() => {
-    const audio = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/record-CNHOyjcpri6lx5C2sGXncDtFVDwspO.mp3")
+    const audio = new Audio(SOUND_RECORD_URL)
     audio.volume = 0.5
     audio.play().catch(() => {})
   }, [])
