@@ -36,7 +36,7 @@ test (Vitest + tsc) → e2e-iphone (Playwright) → build → lint (parallel)
 | Job | Príkaz | Poznámka |
 |-----|--------|----------|
 | test | `pnpm test` + `tsc --noEmit` | 157 testov |
-| e2e-iphone | `pnpm test:e2e:iphone` | Chromium, port 3141 |
+| e2e-iphone | `pnpm test:e2e:iphone` | Chromium, port 3141, `secrets.BUILDER_UNLOCK_PASSWORD` |
 | build | `pnpm build` | `MISTRAL_API_KEY=ci-placeholder-key` |
 | lint | `pnpm lint` | ESLint |
 

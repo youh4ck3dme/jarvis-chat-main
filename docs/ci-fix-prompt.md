@@ -96,7 +96,7 @@ Overenie: `pnpm test:e2e:iphone` → 15/15 passed
 - lint job: pnpm lint (nezávislý, nemusí čakať na test)
 - e2e-iphone: playwright install chromium, workers: 1 na CI, retries: 2
 - build: MISTRAL_API_KEY=ci-placeholder-key
-- Voliteľne: BUILDER_UNLOCK_PASSWORD pre e2e build handoff
+- e2e-iphone: `BUILDER_UNLOCK_PASSWORD: ${{ secrets.BUILDER_UNLOCK_PASSWORD }}` (Playwright webServer)
 
 Samostatný workflow `.github/workflows/mistral-smoke.yml`:
 - `pnpm smoke:mistral` — live Mistral API (prompt `JARVIS_SMOKE_OK`)
