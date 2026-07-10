@@ -101,4 +101,22 @@ pnpm smoke:mistral
 pnpm audit:vercel-env
 ```
 
-**Posledný stav:** local health `:8765` OK, builder unlock OK (júl 2026).
+## Memory sync E2E (automatizované)
+
+```bash
+# 1. Vygeneruj ~/.jarvis/desktop-auth.json (Supabase test user + JWT)
+pnpm tsx scripts/setup-desktop-auth-e2e.ts
+
+# 2. Push z desktop agenta + overenie v web API (< 5s)
+bash scripts/memory-sync-e2e.sh
+
+# Produkcia
+pnpm tsx scripts/setup-desktop-auth-e2e.ts --web-base-url https://jarvis-ten-omega.vercel.app
+bash scripts/memory-sync-e2e.sh
+```
+
+**Posledný stav (júl 2026):**
+- Local memory sync E2E: **PASS** (desktop-voice tag + content match)
+- Production memory sync E2E: **PASS** na `jarvis-ten-omega.vercel.app`
+- Builder unlock `23513900`: **PASS** (local + prod)
+- `pnpm audit:vercel-env:full`: **OK**

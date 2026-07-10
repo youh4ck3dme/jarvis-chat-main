@@ -18,7 +18,7 @@
 - [x] Voice Lite: desktop-voice-panel, desktop-auth-export, memory UI badge
 - [x] Parallel ops: `desktop:health`, `jarvis-stack.sh`, CI workflow, composer mic hint
 - [x] Vitest: lib/desktop-agent, lib/prompts, lib/speech-recognition
-- [ ] Memory sync E2E (desktop → web do 60s) — manuálne s `~/.jarvis/desktop-auth.json`
+- [x] Memory sync E2E (desktop → web) — `scripts/setup-desktop-auth-e2e.ts` + `scripts/memory-sync-e2e.sh` (local + Vercel prod PASS, júl 2026)
 
 ### P1–P10 — Foundation → Production hardening
 - [x] Build pipeline, orchestrátor, telemetry, multi-session chat, server-side unlock
