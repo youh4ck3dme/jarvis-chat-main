@@ -8,10 +8,17 @@ export type ApiSuccessBody<T> = {
   data: T
 }
 
-export function jsonError(error: string, status: number): Response {
+export function jsonError(
+  error: string,
+  status: number,
+  extraHeaders?: Record<string, string>,
+): Response {
   return Response.json({ success: false, error } satisfies ApiErrorBody, {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...extraHeaders,
+    },
   })
 }
 

@@ -44,6 +44,11 @@
 - [x] CI/E2E/playwright používajú nové heslo
 - [x] Dev fallback: `DEV_BUILDER_PASSWORD_FALLBACK` v `lib/builder-unlock.ts`
 
+### P18 — Builder unlock rate limiting
+- [x] `/api/builder/unlock` — 10 pokusov / IP / 15 min, odpoveď `429` + `Retry-After`
+- [x] Env: `BUILDER_UNLOCK_RATE_LIMIT_MAX`, `BUILDER_UNLOCK_RATE_LIMIT_WINDOW_SEC`
+- [x] Testy: **228** unit + **14** E2E
+
 ### P17 — UX polish (Prompt B)
 - [x] História buildov per-session (IndexedDB `sessionId`, max 50 na chat)
 - [x] Drag & drop + hromadný upload príloh (max 10, batch send queue)
@@ -88,7 +93,7 @@
 - [ ] OAuth providers (Google/GitHub) okrem magic linku
 - [ ] Globálny memory search naprieč sessions
 - [ ] Real-device E2E (BrowserStack / Safari remote)
-- [ ] Rate limiting na `/api/builder/unlock`
+- [x] Rate limiting na `/api/builder/unlock` (10/IP/15 min, `429` + `Retry-After`)
 - [ ] Batch eval / continuous monitoring (Foundry pattern)
 
 ---
@@ -97,7 +102,7 @@
 
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
-pnpm test                   # 216 Vitest
+pnpm test                   # 228 Vitest
 pnpm test:e2e:iphone        # 14 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build

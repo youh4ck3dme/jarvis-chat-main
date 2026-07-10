@@ -12,6 +12,9 @@
 |----------|-----|--------|
 | `MISTRAL_API_KEY` | Server | API kľúč pre planner + chat stream |
 | `BUILDER_UNLOCK_PASSWORD` | Server only | Heslo pre Builder režim. **Nikdy** `NEXT_PUBLIC_` |
+| `BUILDER_UNLOCK_RATE_LIMIT_MAX` | Server | Max pokusov na IP za okno (default `10`) |
+| `BUILDER_UNLOCK_RATE_LIMIT_WINDOW_SEC` | Server | Dĺžka okna v sekundách (default `900` = 15 min) |
+| `BUILDER_UNLOCK_RATE_LIMIT_DISABLED` | Server | `true` = vypne limit (len test/dev) |
 
 ### Overenie na live
 

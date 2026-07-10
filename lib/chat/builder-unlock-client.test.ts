@@ -28,6 +28,29 @@ describe("builder-unlock-client", () => {
     )
   })
 
+  it("returns rate limit message when the API responds with 429", async () => {
+    vi.stubGlobal(
+      "fetch",
+      fetchMock.mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: false,
+            error: "Príliš veľa pokusov o odomknutie. Skús znova neskôr.",
+          }),
+          {
+            status: 429,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      ),
+    )
+
+    await expect(requestBuilderUnlock("bad")).resolves.toEqual({
+      ok: false,
+      error: "Príliš veľa pokusov o odomknutie. Skús znova neskôr.",
+    })
+  })
+
   it("returns server error message for invalid password", async () => {
     vi.stubGlobal(
       "fetch",
