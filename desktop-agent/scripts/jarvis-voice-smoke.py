@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from jarvis_voice import (  # noqa: E402
+    IRON_MAN_JARVIS_BILINGUAL_DELIVERY,
     IRON_MAN_JARVIS_LIVE_VOICE,
     IRON_MAN_JARVIS_MACOS_TTS_VOICE,
     JARVIS_VOICE_SMOKE_LINE,
@@ -60,7 +61,11 @@ def check_prompt_persona() -> None:
     prompt = (ROOT / "core" / "prompt.txt").read_text(encoding="utf-8").lower()
     if "iron man" not in prompt or "jarvis" not in prompt:
         fail("core/prompt.txt missing Iron Man JARVIS persona")
-    ok("system prompt includes Iron Man JARVIS persona")
+    if "alternate" not in prompt and "english, slovak" not in prompt:
+        fail("core/prompt.txt missing bilingual voice instruction")
+    if "alternate every single word" not in IRON_MAN_JARVIS_BILINGUAL_DELIVERY.lower():
+        fail("jarvis_voice bilingual delivery block incomplete")
+    ok("system prompt includes Iron Man JARVIS + EN/SK alternation")
 
 
 def check_macos_voice() -> None:

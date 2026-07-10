@@ -44,7 +44,7 @@ from actions.dev_agent         import dev_agent
 from actions.web_search        import web_search as web_search_action
 from actions.computer_control  import computer_control
 from actions.game_updater      import game_updater
-from jarvis_voice import IRON_MAN_JARVIS_LIVE_VOICE
+from jarvis_voice import IRON_MAN_JARVIS_BILINGUAL_DELIVERY, IRON_MAN_JARVIS_LIVE_VOICE
 
 
 def get_base_dir():
@@ -586,6 +586,7 @@ class JarvisLive:
         if mem_str:
             parts.append(mem_str)
         parts.append(sys_prompt)
+        parts.append(IRON_MAN_JARVIS_BILINGUAL_DELIVERY)
 
         return types.LiveConnectConfig(
             response_modalities=["AUDIO"],
