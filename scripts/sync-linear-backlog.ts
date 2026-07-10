@@ -28,6 +28,24 @@ type BacklogFile = {
 const LINEAR_API = "https://api.linear.app/graphql"
 const dryRun = process.argv.includes("--dry-run")
 
+function loadEnvLocal(): void {
+  try {
+    const envPath = resolve(__dirname, "../.env.local")
+    const content = readFileSync(envPath, "utf-8")
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue
+      const [key, ...rest] = trimmed.split("=")
+      const value = rest.join("=").trim()
+      if (key && value && !process.env[key]) {
+        process.env[key] = value
+      }
+    }
+  } catch {
+    // .env.local optional
+  }
+}
+
 async function linearRequest<T>(query: string, variables: Record<string, unknown>): Promise<T> {
   const apiKey = process.env.LINEAR_API_KEY
   if (!apiKey) {
@@ -62,7 +80,7 @@ async function resolveTeamId(): Promise<string> {
   const teamId = process.env.LINEAR_TEAM_ID
   if (teamId) return teamId
 
-  const teamKey = process.env.LINEAR_TEAM_KEY ?? "JAR"
+  const teamKey = process.env.LINEAR_TEAM_KEY ?? "YOU"
   const data = await linearRequest<{
     teams: { nodes: { id: string; key: string; name: string }[] }
   }>(
@@ -158,6 +176,7 @@ async function createIssue(
 }
 
 async function main(): Promise<void> {
+  loadEnvLocal()
   const backlogPath = resolve(__dirname, "linear-backlog.json")
   const backlog = JSON.parse(readFileSync(backlogPath, "utf-8")) as BacklogFile
 
