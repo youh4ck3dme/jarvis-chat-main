@@ -8,7 +8,7 @@
 
 ---
 
-## ✅ Hotové (Prompt 1–17)
+## ✅ Hotové (Prompt 1–18)
 
 ### P1 — Foundation
 - [x] `lib/env.ts` — Zod validácia env
@@ -90,14 +90,22 @@
 - [x] Auto pull/push pamäte spolu so sessions (debounce 2s)
 - [x] Backup roundtrip test: export browser A → import browser B
 
+### P14 — Supabase Auth multi-device (Prompt 18)
+- [x] Magic link prihlásenie (`/auth/callback`) — jeden účet namiesto device key
+- [x] Sync API vyžadujú `Authorization: Bearer` (user.id ako sync scope)
+- [x] Migrácia device key → user účet pri prvom prihlásení (`POST /api/sessions/sync/migrate`)
+- [x] UI: `JarvisAuthPanel` v menu (email, magic link, odhlásenie)
+- [x] Vercel: `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Prod/Preview/Dev)
+- [x] Vitest **176/176**
+
 ---
 
 ## ⚠️ Známe limitácie (nie bugy, ale treba vedieť)
 
 | Vec | Stav |
 |-----|------|
-| Supabase sync | **Voliteľné** — vyžaduje `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` + SQL migráciu |
-| Chat sessions | localStorage primárne; cloud sync per device key keď je Supabase zapnutý |
+| Supabase sync | Vyžaduje **prihlásenie** (magic link) + env na Vercel |
+| Chat sessions | localStorage primárne; cloud sync pod `auth.users.id` keď si prihlásený |
 | Build history | Globálna (IndexedDB), nie per-session |
 | Story nudge | 15s delay v Chat mode |
 | Preview env Vercel | `BUILDER_UNLOCK_PASSWORD` môže chýbať na Preview deployoch |
@@ -127,8 +135,8 @@
 
 ## 🚀 Backlog — nové features (voliteľné)
 
-- [ ] Supabase auth (multi-device pod jedným účtom namiesto device key)
 - [ ] Dedikovaný Supabase projekt pre Jarvis (free tier limit 2 projekty)
+- [ ] OAuth providers (Google/GitHub) okrem magic linku
 - [ ] Globálny memory search naprieč sessions
 - [ ] Real-device E2E (BrowserStack / Safari remote)
 - [ ] Rate limiting na `/api/builder/unlock`
@@ -140,7 +148,7 @@
 
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
-pnpm test                   # 174 Vitest
+pnpm test                   # 176 Vitest
 pnpm test:e2e:iphone        # 8 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build

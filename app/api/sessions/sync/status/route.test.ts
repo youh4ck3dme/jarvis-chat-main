@@ -33,5 +33,21 @@ describe("GET /api/sessions/sync/status", () => {
     const payload = await response.json();
 
     expect(payload.data.enabled).toBe(true);
+    expect(payload.data.authRequired).toBe(true);
+    expect(payload.data.authConfigured).toBe(false);
+  });
+
+  it("reports auth configured when anon key is present", async () => {
+    process.env = {
+      ...originalEnv,
+      SUPABASE_URL: "https://example.supabase.co",
+      SUPABASE_SERVICE_ROLE_KEY: "service-role",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
+    };
+
+    const response = await GET();
+    const payload = await response.json();
+
+    expect(payload.data.authConfigured).toBe(true);
   });
 });

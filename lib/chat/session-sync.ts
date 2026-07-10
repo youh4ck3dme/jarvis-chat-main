@@ -1,58 +1,40 @@
-import { readApiErrorMessage } from "@/lib/api-response";
-
 import type { ChatSession, ChatSessionsState } from "./chat-sessions";
+import {
+  cloudSyncFetch,
+  fetchCloudSyncStatus,
+  readCloudSyncError,
+  type CloudSyncStatus,
+} from "./cloud-sync-client";
 import { mergeSessionsState } from "./jarvis-backup";
-import { getOrCreateSyncKey } from "./sync-key";
 
-export type SessionSyncStatus = {
-  enabled: boolean;
-};
+export type SessionSyncStatus = CloudSyncStatus;
 
 export type SessionSyncPullResult = {
   sessions: ChatSession[];
 };
 
 export type SessionSyncPushInput = {
-  syncKey: string;
   sessions: ChatSession[];
   deletedSessionIds?: string[];
 };
 
-function buildSyncHeaders(syncKey: string): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    "X-Jarvis-Sync-Key": syncKey,
-  };
-}
-
 export async function fetchSessionSyncStatus(): Promise<SessionSyncStatus> {
-  try {
-    const response = await fetch("/api/sessions/sync/status", { method: "GET" });
-    if (!response.ok) {
-      return { enabled: false };
-    }
-
-    const payload = (await response.json()) as { data?: SessionSyncStatus };
-    return payload.data ?? { enabled: false };
-  } catch {
-    return { enabled: false };
-  }
+  return fetchCloudSyncStatus();
 }
 
 export async function pullSessionsFromCloud(): Promise<ChatSessionsState | null> {
-  const syncKey = getOrCreateSyncKey();
-  const response = await fetch(`/api/sessions/sync?syncKey=${encodeURIComponent(syncKey)}`, {
-    method: "GET",
-    headers: buildSyncHeaders(syncKey),
-  });
+  const response = await cloudSyncFetch("/api/sessions/sync", { method: "GET" });
 
-  if (response.status === 503) {
+  if (!response) {
+    return null;
+  }
+
+  if (response.status === 503 || response.status === 401) {
     return null;
   }
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    throw new Error(readApiErrorMessage(payload) ?? "Nepodarilo sa stiahnuť sessions zo cloudu");
+    throw new Error(await readCloudSyncError(response));
   }
 
   const payload = (await response.json()) as {
@@ -74,26 +56,26 @@ export async function pushSessionsToCloud(
   state: ChatSessionsState,
   deletedSessionIds: string[] = [],
 ): Promise<void> {
-  const syncKey = getOrCreateSyncKey();
   const body: SessionSyncPushInput = {
-    syncKey,
     sessions: state.sessions,
     deletedSessionIds,
   };
 
-  const response = await fetch("/api/sessions/sync", {
+  const response = await cloudSyncFetch("/api/sessions/sync", {
     method: "POST",
-    headers: buildSyncHeaders(syncKey),
     body: JSON.stringify(body),
   });
 
-  if (response.status === 503) {
+  if (!response) {
+    return;
+  }
+
+  if (response.status === 503 || response.status === 401) {
     return;
   }
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    throw new Error(readApiErrorMessage(payload) ?? "Nepodarilo sa synchronizovať sessions do cloudu");
+    throw new Error(await readCloudSyncError(response));
   }
 }
 

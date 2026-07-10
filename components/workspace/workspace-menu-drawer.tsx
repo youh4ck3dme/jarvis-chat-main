@@ -28,6 +28,7 @@ import { formatPercent } from "@/components/workspace/build-metrics"
 import type { BuildHistoryRecord } from "@/lib/build-history/build-history-store"
 import { listBuildHistory } from "@/lib/build-history/build-history-store"
 import { listSessionsSorted, type ChatSession } from "@/lib/chat/chat-sessions"
+import { JarvisAuthPanel } from "@/components/workspace/jarvis-auth-panel"
 import { SessionMemoryDrawerView } from "@/components/workspace/session-memory-drawer-view"
 import { cn } from "@/lib/utils"
 
@@ -48,7 +49,8 @@ type WorkspaceMenuDrawerProps = {
   onExportChat: () => void
   onExportFullBackup: () => void | Promise<void>
   onImportBackup: (file: File) => void | Promise<void>
-  sessionSyncEnabled?: boolean
+  cloudSyncEnabled?: boolean
+  cloudAuthConfigured?: boolean
   onSelectBuildRecord: (record: BuildHistoryRecord) => void
   onFocusTelemetry: () => void
 }
@@ -98,7 +100,8 @@ export function WorkspaceMenuDrawer({
   onExportChat,
   onExportFullBackup,
   onImportBackup,
-  sessionSyncEnabled = false,
+  cloudSyncEnabled = false,
+  cloudAuthConfigured = false,
   onSelectBuildRecord,
   onFocusTelemetry,
 }: WorkspaceMenuDrawerProps) {
@@ -237,22 +240,22 @@ export function WorkspaceMenuDrawer({
                   }}
                 />
               </label>
-              {sessionSyncEnabled ? (
-                <div
-                  className="flex items-start gap-3 rounded-xl border border-emerald-900/40 bg-emerald-950/20 px-3 py-3"
-                  data-testid="session-sync-enabled"
-                >
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-900/30 text-emerald-300">
-                    <Cloud className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-medium text-emerald-100">
-                      Cloud sync aktívny
+              {cloudSyncEnabled ? (
+                <div className="space-y-2" data-testid="cloud-sync-section">
+                  <div className="flex items-start gap-3 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-3">
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#262626] text-[#aaa]">
+                      <Cloud className="h-4 w-4" />
                     </span>
-                    <span className="mt-0.5 block text-[11px] leading-relaxed text-emerald-200/70">
-                      Konverzácie aj pamäť sa synchronizujú cez Supabase (device key)
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13px] font-medium text-[#ececec]">
+                        Cloud sync
+                      </span>
+                      <span className="mt-0.5 block text-[11px] leading-relaxed text-[#777]">
+                        Prihlás sa — sessions aj pamäť sa syncujú pod jedným účtom
+                      </span>
                     </span>
-                  </span>
+                  </div>
+                  <JarvisAuthPanel authConfigured={cloudAuthConfigured} />
                 </div>
               ) : null}
               <MenuAction

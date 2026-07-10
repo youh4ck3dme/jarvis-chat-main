@@ -1,35 +1,29 @@
-import { readApiErrorMessage } from "@/lib/api-response";
-import { getOrCreateSyncKey } from "@/lib/chat/sync-key";
+import type { JarvisBackupPayload } from "@/lib/chat/jarvis-backup";
+import {
+  cloudSyncFetch,
+  readCloudSyncError,
+} from "@/lib/chat/cloud-sync-client";
 
 import { exportMemorySnapshot, importMemorySnapshot } from "./memory-backup";
-import type { JarvisBackupPayload } from "@/lib/chat/jarvis-backup";
 
 export type MemorySyncPullResult = {
   conversations: JarvisBackupPayload["memory"]["conversations"];
   userProfile: JarvisBackupPayload["memory"]["userProfile"];
 };
 
-function buildSyncHeaders(syncKey: string): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    "X-Jarvis-Sync-Key": syncKey,
-  };
-}
-
 export async function pullMemoryFromCloud(): Promise<MemorySyncPullResult | null> {
-  const syncKey = getOrCreateSyncKey();
-  const response = await fetch(`/api/memory/sync?syncKey=${encodeURIComponent(syncKey)}`, {
-    method: "GET",
-    headers: buildSyncHeaders(syncKey),
-  });
+  const response = await cloudSyncFetch("/api/memory/sync", { method: "GET" });
 
-  if (response.status === 503) {
+  if (!response) {
+    return null;
+  }
+
+  if (response.status === 503 || response.status === 401) {
     return null;
   }
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    throw new Error(readApiErrorMessage(payload) ?? "Nepodarilo sa stiahnuť pamäť zo cloudu");
+    throw new Error(await readCloudSyncError(response));
   }
 
   const payload = (await response.json()) as { data?: MemorySyncPullResult };
@@ -37,25 +31,23 @@ export async function pullMemoryFromCloud(): Promise<MemorySyncPullResult | null
 }
 
 export async function pushMemoryToCloud(conversationIds: string[]): Promise<void> {
-  const syncKey = getOrCreateSyncKey();
   const memory = await exportMemorySnapshot(conversationIds);
 
-  const response = await fetch("/api/memory/sync", {
+  const response = await cloudSyncFetch("/api/memory/sync", {
     method: "POST",
-    headers: buildSyncHeaders(syncKey),
-    body: JSON.stringify({
-      syncKey,
-      memory,
-    }),
+    body: JSON.stringify({ memory }),
   });
 
-  if (response.status === 503) {
+  if (!response) {
+    return;
+  }
+
+  if (response.status === 503 || response.status === 401) {
     return;
   }
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    throw new Error(readApiErrorMessage(payload) ?? "Nepodarilo sa synchronizovať pamäť do cloudu");
+    throw new Error(await readCloudSyncError(response));
   }
 }
 

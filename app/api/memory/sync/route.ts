@@ -3,6 +3,7 @@ import { z } from "zod";
 import { jsonError, jsonSuccess } from "@/lib/api-response";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import { isSupabaseSyncConfigured } from "@/lib/supabase/config";
+import { verifyRequestAuth } from "@/lib/supabase/verify-request-auth";
 
 const memoryBundleSchema = z.object({
   conversationId: z.string(),
@@ -11,7 +12,6 @@ const memoryBundleSchema = z.object({
 });
 
 const pushBodySchema = z.object({
-  syncKey: z.string().min(8),
   memory: z.object({
     conversations: z.array(memoryBundleSchema),
     userProfile: z.unknown().nullable().optional(),
@@ -27,20 +27,14 @@ type RemoteMemoryRow = {
   deleted_at: string | null;
 };
 
-function readSyncKey(req: Request, queryValue: string | null): string | null {
-  const header = req.headers.get("x-jarvis-sync-key")?.trim();
-  if (header) return header;
-  return queryValue?.trim() || null;
-}
-
 export async function GET(req: Request) {
   if (!isSupabaseSyncConfigured()) {
     return jsonError("Memory sync nie je nakonfigurovaný (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY).", 503);
   }
 
-  const syncKey = readSyncKey(req, new URL(req.url).searchParams.get("syncKey"));
-  if (!syncKey) {
-    return jsonError("syncKey je povinný.", 400);
+  const auth = await verifyRequestAuth(req);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   const supabase = getSupabaseAdminClient();
@@ -52,13 +46,13 @@ export async function GET(req: Request) {
     supabase
       .from("jarvis_conversation_memory")
       .select("sync_key,conversation_id,entries,conversation_memory,updated_at,deleted_at")
-      .eq("sync_key", syncKey)
+      .eq("sync_key", auth.user.userId)
       .is("deleted_at", null)
       .order("updated_at", { ascending: false }),
     supabase
       .from("jarvis_user_memory_profile")
       .select("profile,updated_at")
-      .eq("sync_key", syncKey)
+      .eq("sync_key", auth.user.userId)
       .maybeSingle(),
   ]);
 
@@ -87,16 +81,16 @@ export async function POST(req: Request) {
     return jsonError("Memory sync nie je nakonfigurovaný (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY).", 503);
   }
 
+  const auth = await verifyRequestAuth(req);
+  if (!auth.ok) {
+    return auth.response;
+  }
+
   let body: z.infer<typeof pushBodySchema>;
   try {
     body = pushBodySchema.parse(await req.json());
   } catch {
     return jsonError("Neplatný payload pre memory sync.", 400);
-  }
-
-  const headerSyncKey = readSyncKey(req, null);
-  if (headerSyncKey && headerSyncKey !== body.syncKey) {
-    return jsonError("Sync key v hlavičke a tele nezhodujú.", 403);
   }
 
   const supabase = getSupabaseAdminClient();
@@ -106,7 +100,7 @@ export async function POST(req: Request) {
 
   const now = new Date().toISOString();
   const rows = body.memory.conversations.map((bundle) => ({
-    sync_key: body.syncKey,
+    sync_key: auth.user.userId,
     conversation_id: bundle.conversationId,
     entries: bundle.entries,
     conversation_memory: bundle.conversationMemory,
@@ -128,7 +122,7 @@ export async function POST(req: Request) {
   if (body.memory.userProfile) {
     const { error: profileError } = await supabase.from("jarvis_user_memory_profile").upsert(
       {
-        sync_key: body.syncKey,
+        sync_key: auth.user.userId,
         profile: body.memory.userProfile,
         updated_at: now,
       },

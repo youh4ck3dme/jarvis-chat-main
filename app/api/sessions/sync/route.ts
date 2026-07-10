@@ -4,6 +4,7 @@ import { jsonError, jsonSuccess } from "@/lib/api-response";
 import type { ChatSession } from "@/lib/chat/chat-sessions";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import { isSupabaseSyncConfigured } from "@/lib/supabase/config";
+import { verifyRequestAuth } from "@/lib/supabase/verify-request-auth";
 
 const sessionSchema = z.object({
   id: z.string(),
@@ -14,7 +15,6 @@ const sessionSchema = z.object({
 });
 
 const pushBodySchema = z.object({
-  syncKey: z.string().min(8),
   sessions: z.array(sessionSchema),
   deletedSessionIds: z.array(z.string()).optional(),
 });
@@ -28,12 +28,6 @@ type RemoteSessionRow = {
   updated_at: string;
   deleted_at: string | null;
 };
-
-function readSyncKey(req: Request, queryValue: string | null): string | null {
-  const header = req.headers.get("x-jarvis-sync-key")?.trim();
-  if (header) return header;
-  return queryValue?.trim() || null;
-}
 
 function mapRowToSession(row: RemoteSessionRow): ChatSession {
   return {
@@ -50,9 +44,9 @@ export async function GET(req: Request) {
     return jsonError("Session sync nie je nakonfigurovaný (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY).", 503);
   }
 
-  const syncKey = readSyncKey(req, new URL(req.url).searchParams.get("syncKey"));
-  if (!syncKey) {
-    return jsonError("syncKey je povinný.", 400);
+  const auth = await verifyRequestAuth(req);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   const supabase = getSupabaseAdminClient();
@@ -63,7 +57,7 @@ export async function GET(req: Request) {
   const { data, error } = await supabase
     .from("jarvis_chat_sessions")
     .select("session_id,sync_key,title,project_name,messages,updated_at,deleted_at")
-    .eq("sync_key", syncKey)
+    .eq("sync_key", auth.user.userId)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 
@@ -85,16 +79,16 @@ export async function POST(req: Request) {
     return jsonError("Session sync nie je nakonfigurovaný (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY).", 503);
   }
 
+  const auth = await verifyRequestAuth(req);
+  if (!auth.ok) {
+    return auth.response;
+  }
+
   let body: z.infer<typeof pushBodySchema>;
   try {
     body = pushBodySchema.parse(await req.json());
   } catch {
     return jsonError("Neplatný payload pre session sync.", 400);
-  }
-
-  const headerSyncKey = readSyncKey(req, null);
-  if (headerSyncKey && headerSyncKey !== body.syncKey) {
-    return jsonError("Sync key v hlavičke a tele nezhodujú.", 403);
   }
 
   const supabase = getSupabaseAdminClient();
@@ -104,7 +98,7 @@ export async function POST(req: Request) {
 
   const rows = body.sessions.map((session) => ({
     session_id: session.id,
-    sync_key: body.syncKey,
+    sync_key: auth.user.userId,
     title: session.title,
     project_name: session.projectName,
     messages: session.messages,
@@ -128,7 +122,7 @@ export async function POST(req: Request) {
     const { error: deleteError } = await supabase
       .from("jarvis_chat_sessions")
       .update({ deleted_at: deletedAt })
-      .eq("sync_key", body.syncKey)
+      .eq("sync_key", auth.user.userId)
       .in("session_id", body.deletedSessionIds);
 
     if (deleteError) {

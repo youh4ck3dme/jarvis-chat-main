@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+
+import { useJarvisAuth } from "@/hooks/use-jarvis-auth"
 import { MessageSquareDashed, Settings, X, Eye, EyeOff } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -175,7 +177,10 @@ export function ChatShell() {
   const [buildHistoryCount, setBuildHistoryCount] = useState(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isMemoryOpen, setIsMemoryOpen] = useState(false)
-  const [sessionSyncEnabled, setSessionSyncEnabled] = useState(false)
+  const [cloudSyncEnabled, setCloudSyncEnabled] = useState(false)
+  const [cloudAuthConfigured, setCloudAuthConfigured] = useState(false)
+  const { isAuthenticated } = useJarvisAuth()
+  const cloudSyncActive = cloudSyncEnabled && cloudAuthConfigured && isAuthenticated
   const deletedSessionIdsRef = useRef<string[]>([])
   const syncPushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [projectName, setProjectName] = useState("Jarvis")
@@ -336,8 +341,9 @@ export function ChatShell() {
 
     void (async () => {
       const status = await fetchSessionSyncStatus()
-      setSessionSyncEnabled(status.enabled)
-      if (!status.enabled) return
+      setCloudSyncEnabled(status.enabled)
+      setCloudAuthConfigured(status.authConfigured)
+      if (!status.enabled || !status.authConfigured || !isAuthenticated) return
 
       try {
         const remote = await pullSessionsFromCloud()
@@ -360,10 +366,10 @@ export function ChatShell() {
         console.warn("Session sync pull failed:", syncError)
       }
     })()
-  }, [isLoaded])
+  }, [isLoaded, isAuthenticated])
 
   useEffect(() => {
-    if (!isLoaded || !sessionSyncEnabled || !activeSessionId) return
+    if (!isLoaded || !cloudSyncActive || !activeSessionId) return
 
     if (syncPushTimerRef.current) {
       clearTimeout(syncPushTimerRef.current)
@@ -389,7 +395,7 @@ export function ChatShell() {
         clearTimeout(syncPushTimerRef.current)
       }
     }
-  }, [messages, projectName, chatSessions, isLoaded, sessionSyncEnabled, activeSessionId])
+  }, [messages, projectName, chatSessions, isLoaded, cloudSyncActive, activeSessionId])
 
   const handleModelChange = useCallback((model: AIModel) => {
     setSelectedModel(model)
@@ -1029,7 +1035,8 @@ export function ChatShell() {
         onExportChat={handleExportChat}
         onExportFullBackup={handleExportFullBackup}
         onImportBackup={handleImportBackup}
-        sessionSyncEnabled={sessionSyncEnabled}
+        cloudSyncEnabled={cloudSyncEnabled}
+        cloudAuthConfigured={cloudAuthConfigured}
         onSelectBuildRecord={handleSelectBuildRecord}
         onFocusTelemetry={handleFocusTelemetry}
       />
