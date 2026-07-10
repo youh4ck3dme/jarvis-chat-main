@@ -19,8 +19,14 @@ jobs:
   python-smoke:
     runs-on: macos-latest
     timeout-minutes: 10
+    env:
+      MISTRAL_API_KEY: ci-placeholder-key
+      GEMINI_API_KEY: ci-placeholder-key
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install PortAudio (pyaudio build dependency)
+        run: brew install portaudio
 
       - name: Desktop agent setup
         run: cd desktop-agent && make setup
