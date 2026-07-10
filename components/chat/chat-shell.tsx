@@ -54,6 +54,7 @@ import {
 import type { BuildPlan } from "@/types/build"
 import { OrbMindMap } from "@/components/workspace/orb-mind-map"
 import { readApiErrorMessage } from "@/lib/api-response"
+import { Logger } from "@/lib/logger"
 import {
   clearBuildHistoryForSession,
   countBuildHistory,
@@ -374,7 +375,7 @@ export function ChatShell() {
         localStorage.setItem(MODEL_STORAGE_KEY, DEFAULT_AI_MODEL)
       }
     } catch (e) {
-      console.error("Failed to load settings:", e)
+      Logger.error("Failed to load settings", e)
     } finally {
       setIsLoaded(true)
     }
@@ -392,7 +393,7 @@ export function ChatShell() {
       persistChatSessionsState(nextState)
       setChatSessions(nextState.sessions)
     } catch (e) {
-      console.error("Failed to save chat session:", e)
+      Logger.error("Failed to save chat session", e)
     }
   }, [messages, projectName, isLoaded, activeSessionId, isStreaming])
 
@@ -423,7 +424,7 @@ export function ChatShell() {
         const remoteMemory = await pullMemoryFromCloud()
         await mergeMemoryFromCloud(remoteMemory)
       } catch (syncError) {
-        console.warn("Session sync pull failed:", syncError)
+        Logger.warn("Session sync pull failed", { error: String(syncError) })
       }
     })()
   }, [isLoaded, isAuthenticated])
@@ -446,7 +447,7 @@ export function ChatShell() {
           deletedSessionIdsRef.current = []
         })
         .catch((syncError: unknown) => {
-          console.warn("Cloud sync push failed:", syncError)
+          Logger.warn("Cloud sync push failed", { error: String(syncError) })
         })
     }, 2000)
 
@@ -730,7 +731,7 @@ export function ChatShell() {
             await updateConversationSummary(conversationId, conversationHistory)
           }
         } catch (memoryError) {
-          console.warn("Failed to update memory:", memoryError)
+          Logger.warn("Failed to update memory", { error: String(memoryError) })
         }
       }
 
@@ -743,7 +744,7 @@ export function ChatShell() {
               systemPrompt = `${JARVIS_CHAT_SYSTEM_PROMPT}\n\n## User context\n${memorySystemPrompt}`
             }
           } catch (contextError) {
-            console.warn("Failed to build memory context:", contextError)
+            Logger.warn("Failed to build memory context", { error: String(contextError) })
           }
 
           const history = [...messages, userMessage].map(toPipelineMessage)
@@ -761,7 +762,7 @@ export function ChatShell() {
             systemPrompt = `${JARVIS_ADVISOR_SYSTEM_PROMPT}\n\n## User context\n${memorySystemPrompt}`
           }
         } catch (contextError) {
-          console.warn("Failed to build memory context:", contextError)
+          Logger.warn("Failed to build memory context", { error: String(contextError) })
         }
 
         const pipelineResult = await runBuildPipeline({
@@ -896,7 +897,7 @@ export function ChatShell() {
             ),
           )
         } else {
-          console.error("Error sending message:", e)
+          Logger.error("Error sending message", e)
           setError(e instanceof Error ? e.message : "An error occurred")
           setMessages((prev) => prev.filter((msg) => msg.id !== activeAssistantMessage.id))
         }
@@ -1070,10 +1071,10 @@ export function ChatShell() {
       resetWorkspaceUi()
 
       clearConversationMemory(sessionId).catch((err: unknown) => {
-        console.warn("Failed to clear session memory:", err)
+        Logger.warn("Failed to clear session memory", { error: String(err) })
       })
       clearBuildHistoryForSession(sessionId).catch((err: unknown) => {
-        console.warn("Failed to clear session build history:", err)
+        Logger.warn("Failed to clear session build history", { error: String(err) })
       })
     },
     [isStreaming, resetWorkspaceUi],

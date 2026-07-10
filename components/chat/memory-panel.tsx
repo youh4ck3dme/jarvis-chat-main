@@ -13,6 +13,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { useMemory } from "@/hooks/use-memory"
+import { Logger } from "@/lib/logger"
 import type { MemoryEntry, MemoryType } from "@/lib/memory/types"
 import { cn } from "@/lib/utils"
 import { formatDesktopMemoryForDisplay, isDesktopVoiceEntry } from "@/lib/desktop-agent/memory-bridge"
@@ -107,7 +108,7 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
       const context = await getMemoryContext(conversationId)
       setMemoryData(context)
     } catch (error) {
-      console.error("Failed to load memory data:", error)
+      Logger.error("Failed to load memory data:", error)
     } finally {
       setIsLoading(false)
     }
@@ -151,7 +152,7 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
         await deleteMemoryEntry(id)
         await loadMemoryData()
       } catch (error) {
-        console.error("Failed to delete memory entry:", error)
+        Logger.error("Failed to delete memory entry:", error)
       }
     },
     [deleteMemoryEntry, loadMemoryData],
@@ -162,7 +163,7 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
       await clearConversationMemory(conversationId)
       await loadMemoryData()
     } catch (error) {
-      console.error("Failed to clear conversation memory:", error)
+      Logger.error("Failed to clear conversation memory:", error)
     }
   }, [clearConversationMemory, conversationId, loadMemoryData])
 

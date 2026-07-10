@@ -3,6 +3,8 @@
  * Builds AI context from memory for better conversation understanding
  */
 
+import { Logger } from '@/lib/logger';
+
 import { MemoryContext, MemoryEntry, MemoryType, ConversationMemory, UserProfile } from './types';
 import { getMemoryStore } from './memory-store';
 
@@ -267,7 +269,7 @@ export async function buildAICcontext(
     };
 
   } catch (error) {
-    console.error('Failed to build AI context:', error);
+    Logger.error('Failed to build AI context:', error);
     return {
       context: '',
       systemPrompt: 'You are a helpful, friendly AI assistant.',
@@ -367,7 +369,7 @@ export async function getMemoryContextForDisplay(conversationId: string): Promis
     };
 
   } catch (error) {
-    console.error('Failed to get memory context for display:', error);
+    Logger.error('Failed to get memory context for display:', error);
     return {
       userProfile: null,
       conversationMemory: null,
@@ -443,7 +445,7 @@ export async function getAllUserMemories(): Promise<{
     };
 
   } catch (error) {
-    console.error('Failed to get all user memories:', error);
+    Logger.error('Failed to get all user memories:', error);
     return {
       allMemories: [],
       byType: {},

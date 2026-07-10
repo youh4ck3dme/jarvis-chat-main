@@ -3,6 +3,7 @@
  * Extracts important facts, preferences, and user information from conversations
  */
 
+import { Logger } from '@/lib/logger';
 import { streamText } from 'ai';
 import { createMistral } from '@ai-sdk/mistral';
 import { MemoryEntry, MemoryType, MemoryMetadata, ExtractedMemory, MemoryExtractionOptions } from './types';
@@ -306,14 +307,14 @@ export async function extractMemoryWithAI(
         return normalized;
       }
     } catch (e) {
-      console.warn('Failed to parse AI extraction response, falling back to lightweight', e);
+      Logger.warn('Failed to parse AI extraction response, falling back to lightweight', e);
     }
 
     // Fallback
     return extractMemoryLightweight(conversationId, messages);
     
   } catch (error) {
-    console.error('AI extraction failed, falling back to lightweight:', error);
+    Logger.error('AI extraction failed, falling back to lightweight:', error);
     return extractMemoryLightweight(conversationId, messages);
   }
 }
@@ -470,7 +471,7 @@ export async function updateConversationSummary(
     await saveExtractedMemory(conversationId, extracted);
     
   } catch (error) {
-    console.error('Failed to update conversation summary:', error);
+    Logger.error('Failed to update conversation summary:', error);
   }
 }
 

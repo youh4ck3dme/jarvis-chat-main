@@ -58,7 +58,10 @@ function writeLog(
     return
   }
 
-  if (level === "warn" && isServerRuntime()) {
+  if (level === "warn") {
+    if (!isServerRuntime()) {
+      return
+    }
     console.warn(
       JSON.stringify({
         level,

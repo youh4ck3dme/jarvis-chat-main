@@ -3,8 +3,10 @@
  * IndexedDB-based long-term memory storage for Jarvis-Chat
  */
 
+import { Logger } from '@/lib/logger';
+
 import { 
-  MemoryEntry, 
+  MemoryEntry,
   MemoryType, 
   MemoryMetadata, 
   MemoryContext,
@@ -51,7 +53,7 @@ class JarvisMemoryStore implements MemoryStore {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        console.error('Memory store: Failed to open database');
+        Logger.error('Memory store: Failed to open database');
         reject(request.error);
       };
 
@@ -135,7 +137,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to get entry', error);
+      Logger.error('Memory store: Failed to get entry', error);
       return null;
     }
   }
@@ -143,7 +145,7 @@ class JarvisMemoryStore implements MemoryStore {
   async putEntry(entry: MemoryEntry): Promise<void> {
     try {
       if (!this.isAvailable()) {
-        console.warn('Memory store: IndexedDB not available, skipping putEntry');
+        Logger.warn('Memory store: IndexedDB not available, skipping putEntry');
         return;
       }
 
@@ -158,7 +160,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to put entry', error);
+      Logger.error('Memory store: Failed to put entry', error);
       throw error;
     }
   }
@@ -166,7 +168,7 @@ class JarvisMemoryStore implements MemoryStore {
   async addEntry(data: Omit<MemoryEntry, 'id' | 'createdAt' | 'lastAccessed'>): Promise<string> {
     try {
       if (!this.isAvailable()) {
-        console.warn('Memory store: IndexedDB not available, skipping addEntry');
+        Logger.warn('Memory store: IndexedDB not available, skipping addEntry');
         return '';
       }
       
@@ -182,7 +184,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to add entry', error);
+      Logger.error('Memory store: Failed to add entry', error);
       throw error;
     }
   }
@@ -209,7 +211,7 @@ class JarvisMemoryStore implements MemoryStore {
         transaction.onerror = () => reject(transaction.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to add multiple entries', error);
+      Logger.error('Memory store: Failed to add multiple entries', error);
       throw error;
     }
   }
@@ -240,7 +242,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to update entry', error);
+      Logger.error('Memory store: Failed to update entry', error);
       throw error;
     }
   }
@@ -258,7 +260,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to delete entry', error);
+      Logger.error('Memory store: Failed to delete entry', error);
       throw error;
     }
   }
@@ -284,7 +286,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to query by type', error);
+      Logger.error('Memory store: Failed to query by type', error);
       return [];
     }
   }
@@ -306,7 +308,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to query by conversation', error);
+      Logger.error('Memory store: Failed to query by conversation', error);
       return [];
     }
   }
@@ -340,7 +342,7 @@ class JarvisMemoryStore implements MemoryStore {
         transaction.onerror = () => reject(transaction.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to query by tags', error);
+      Logger.error('Memory store: Failed to query by tags', error);
       return [];
     }
   }
@@ -379,7 +381,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to search', error);
+      Logger.error('Memory store: Failed to search', error);
       return [];
     }
   }
@@ -427,7 +429,7 @@ class JarvisMemoryStore implements MemoryStore {
 
       return context;
     } catch (error) {
-      console.error('Memory store: Failed to build context', error);
+      Logger.error('Memory store: Failed to build context', error);
       return {
         conversationId,
         summary: '',
@@ -458,7 +460,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to get user profile', error);
+      Logger.error('Memory store: Failed to get user profile', error);
       return null;
     }
   }
@@ -493,7 +495,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to update user profile', error);
+      Logger.error('Memory store: Failed to update user profile', error);
       throw error;
     }
   }
@@ -519,7 +521,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to get conversation memory', error);
+      Logger.error('Memory store: Failed to get conversation memory', error);
       return null;
     }
   }
@@ -537,7 +539,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to update conversation memory', error);
+      Logger.error('Memory store: Failed to update conversation memory', error);
       throw error;
     }
   }
@@ -565,7 +567,7 @@ class JarvisMemoryStore implements MemoryStore {
         });
       }
     } catch (error) {
-      console.error('Memory store: Failed to delete by conversation', error);
+      Logger.error('Memory store: Failed to delete by conversation', error);
       throw error;
     }
   }
@@ -619,7 +621,7 @@ class JarvisMemoryStore implements MemoryStore {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to get stats', error);
+      Logger.error('Memory store: Failed to get stats', error);
       return {
         totalEntries: 0,
         byType: {
@@ -677,7 +679,7 @@ class JarvisMemoryStore implements MemoryStore {
 
       return oldEntries.length;
     } catch (error) {
-      console.error('Memory store: Failed to cleanup old entries', error);
+      Logger.error('Memory store: Failed to cleanup old entries', error);
       return 0;
     }
   }
@@ -700,7 +702,7 @@ class JarvisMemoryStore implements MemoryStore {
         transaction.onerror = () => reject(transaction.error);
       });
     } catch (error) {
-      console.error('Memory store: Failed to clear all', error);
+      Logger.error('Memory store: Failed to clear all', error);
       throw error;
     }
   }
@@ -712,7 +714,7 @@ class JarvisMemoryStore implements MemoryStore {
         entries.map(entry => this.deleteEntry(entry.id))
       );
     } catch (error) {
-      console.error('Memory store: Failed to clear by type', error);
+      Logger.error('Memory store: Failed to clear by type', error);
       throw error;
     }
   }
@@ -770,7 +772,7 @@ class JarvisMemoryStore implements MemoryStore {
 
       return JSON.stringify(exportData, null, 2);
     } catch (error) {
-      console.error('Memory store: Failed to export all', error);
+      Logger.error('Memory store: Failed to export all', error);
       return '{}';
     }
   }
@@ -801,7 +803,7 @@ class JarvisMemoryStore implements MemoryStore {
 
       return importedCount + (importData.conversationMemories?.length || 0);
     } catch (error) {
-      console.error('Memory store: Failed to import all', error);
+      Logger.error('Memory store: Failed to import all', error);
       return 0;
     }
   }

@@ -20,6 +20,7 @@ import {
   Eraser,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Logger } from "@/lib/logger"
 import { SOUND_CLICK_URL, SOUND_RECORD_URL } from "@/lib/sounds"
 import { cn } from "@/lib/utils"
 import {
@@ -271,7 +272,7 @@ export function Composer({
             desktopAgentOnline: desktopAgentOnlineRef.current,
           })
           setSpeechError(message)
-          console.warn("[jarvis] Speech recognition:", code, message)
+          Logger.warn("Speech recognition error", { code, message })
         }
 
         recognitionRef.current.onend = () => {
@@ -333,7 +334,7 @@ export function Composer({
       try {
         recognitionRef.current.start()
       } catch (err) {
-        console.warn("[jarvis] Speech recognition start failed:", err)
+        Logger.warn("Speech recognition start failed", { error: String(err) })
         setSpeechError(
           getSpeechRecognitionErrorMessage("network", {
             desktopAgentOnline: desktopAgentState === "online",
@@ -349,7 +350,7 @@ export function Composer({
           setMediaStream(stream)
         })
         .catch((err) => {
-          console.error("[v0] Error getting microphone stream:", err)
+          Logger.error("Error getting microphone stream", err)
         })
     }
   }, [isRecording, value, playClickSound, playRecordSound, mediaStream, desktopAgentState])
@@ -457,7 +458,7 @@ export function Composer({
           fileName: parsed.fileName,
         })
       } catch (error) {
-        console.error("Unsupported attachment:", error)
+        Logger.error("Unsupported attachment", error)
       }
     }
 

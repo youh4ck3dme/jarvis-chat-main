@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
 import { migrateDeviceDataToUserAccount } from "@/lib/chat/device-migration";
+import { Logger } from "@/lib/logger";
 import {
   signInWithMagicLink,
   signOutJarvis,
@@ -27,7 +28,7 @@ export function useJarvisAuth() {
         try {
           await migrateDeviceDataToUserAccount();
         } catch (error) {
-          console.warn("Device-to-user migration failed:", error);
+          Logger.warn("Device-to-user migration failed:", error);
         }
       }
     });

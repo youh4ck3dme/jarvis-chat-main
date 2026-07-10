@@ -4,6 +4,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+
+import { Logger } from '@/lib/logger';
 import { 
   MemoryEntry, 
   MemoryType, 
@@ -87,7 +89,7 @@ export function useMemory(): UseMemoryResult {
 
         setIsLoaded(true);
       } catch (err) {
-        console.error('Memory initialization error:', err);
+        Logger.error('Memory initialization error:', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize memory');
         setIsLoaded(true);
       }
@@ -106,7 +108,7 @@ export function useMemory(): UseMemoryResult {
       const savedIds = await saveExtractedMemory(conversationId, extracted);
       return savedIds;
     } catch (err) {
-      console.error('Memory extraction error:', err);
+      Logger.error('Memory extraction error:', err);
       setError(err instanceof Error ? err.message : 'Failed to extract memory');
       return [];
     }
@@ -121,7 +123,7 @@ export function useMemory(): UseMemoryResult {
     try {
       return await extractFromMessage(conversationId, message, messageId);
     } catch (err) {
-      console.error('Message memory extraction error:', err);
+      Logger.error('Message memory extraction error:', err);
       return [];
     }
   }, []);
@@ -138,7 +140,7 @@ export function useMemory(): UseMemoryResult {
       const memoryStats = await memoryStore.getStats();
       setStats(memoryStats);
     } catch (err) {
-      console.error('Conversation summary update error:', err);
+      Logger.error('Conversation summary update error:', err);
     }
   }, []);
 
@@ -154,7 +156,7 @@ export function useMemory(): UseMemoryResult {
     try {
       return await buildAICcontext(conversationId, recentMessages);
     } catch (err) {
-      console.error('Context building error:', err);
+      Logger.error('Context building error:', err);
       return {
         context: '',
         systemPrompt: 'You are a helpful, friendly AI assistant.',
@@ -174,7 +176,7 @@ export function useMemory(): UseMemoryResult {
     try {
       return await getMemoryContextForDisplay(conversationId);
     } catch (err) {
-      console.error('Memory context error:', err);
+      Logger.error('Memory context error:', err);
       return {
         userProfile: null,
         conversationMemory: null,
@@ -198,7 +200,7 @@ export function useMemory(): UseMemoryResult {
       const profile = await memoryStore.getUserProfile();
       setUserProfile(profile);
     } catch (err) {
-      console.error('Clear memory error:', err);
+      Logger.error('Clear memory error:', err);
     }
   }, []);
 
@@ -207,7 +209,7 @@ export function useMemory(): UseMemoryResult {
     try {
       return await getAllUserMemories();
     } catch (err) {
-      console.error('Get all memories error:', err);
+      Logger.error('Get all memories error:', err);
       return {
         allMemories: [],
         byType: {},
@@ -222,7 +224,7 @@ export function useMemory(): UseMemoryResult {
       setUserProfile(profile);
       return profile;
     } catch (err) {
-      console.error('User profile update error:', err);
+      Logger.error('User profile update error:', err);
       throw err;
     }
   }, []);
@@ -236,7 +238,7 @@ export function useMemory(): UseMemoryResult {
       const memoryStats = await memoryStore.getStats();
       setStats(memoryStats);
     } catch (err) {
-      console.error('Delete entry error:', err);
+      Logger.error('Delete entry error:', err);
       throw err;
     }
   }, []);
@@ -247,7 +249,7 @@ export function useMemory(): UseMemoryResult {
       const memoryStore = getMemoryStore();
       return await memoryStore.queryByType(type);
     } catch (err) {
-      console.error('Query by type error:', err);
+      Logger.error('Query by type error:', err);
       return [];
     }
   }, []);
@@ -258,7 +260,7 @@ export function useMemory(): UseMemoryResult {
       const memoryStore = getMemoryStore();
       return await memoryStore.search(query, 50);
     } catch (err) {
-      console.error('Search memories error:', err);
+      Logger.error('Search memories error:', err);
       return [];
     }
   }, []);
@@ -285,7 +287,7 @@ export function useMemory(): UseMemoryResult {
       
       return systemPrompt;
     } catch (err) {
-      console.error('Memory-enhanced system error:', err);
+      Logger.error('Memory-enhanced system error:', err);
       return customSystem || 'You are a helpful, friendly AI assistant. You provide clear, concise, and accurate responses.';
     }
   }, []);

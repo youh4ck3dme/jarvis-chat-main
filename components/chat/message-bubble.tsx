@@ -12,6 +12,7 @@ import {
   extractExportableArtifacts,
 } from "@/lib/chat/assistant-artifact-export"
 import { classifyDataUrl } from "@/lib/chat/jarvis-attachments"
+import { Logger } from "@/lib/logger"
 
 interface MessageBubbleProps {
   message: Message
@@ -51,7 +52,7 @@ export function MessageBubble({ message, isStreaming = false, onEdit, onDelete }
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error("Failed to copy text: ", err)
+      Logger.error("Failed to copy text: ", err)
     }
   }
 
