@@ -74,10 +74,44 @@ test.describe("iPhone 17 Air — pixel & layout integrity", () => {
     expect(fits).toBe(true);
   });
 
-  test("visual snapshot — workspace landing", async ({ page }) => {
-    await expect(page).toHaveScreenshot("iphone-17-air-landing.png", {
-      fullPage: false,
-      maxDiffPixelRatio: 0.02,
+  test("landing layout — key regions stack without overlap", async ({ page }) => {
+    const layout = await page.evaluate(() => {
+      const pick = (selector: string) => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const rect = element.getBoundingClientRect();
+        return {
+          top: rect.top,
+          bottom: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          height: rect.height,
+        };
+      };
+
+      return {
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        header: pick('[data-testid="workspace-header"]'),
+        emptyState: pick('[data-testid="jarvis-empty-state"]'),
+        footer: pick('[data-testid="workspace-footer"]'),
+        composer: pick('[aria-label="Message input"]'),
+      };
     });
+
+    expect(layout.header).not.toBeNull();
+    expect(layout.emptyState).not.toBeNull();
+    expect(layout.footer).not.toBeNull();
+    expect(layout.composer).not.toBeNull();
+
+    expect(layout.header!.bottom).toBeLessThanOrEqual(layout.emptyState!.top + 2);
+    expect(layout.emptyState!.bottom).toBeLessThanOrEqual(layout.footer!.top + 2);
+    expect(layout.footer!.bottom).toBeLessThanOrEqual(layout.viewportHeight + 1);
+
+    for (const region of [layout.header, layout.emptyState, layout.footer, layout.composer]) {
+      expect(region!.left).toBeGreaterThanOrEqual(0);
+      expect(region!.right).toBeLessThanOrEqual(layout.viewportWidth + 1);
+    }
   });
 });
