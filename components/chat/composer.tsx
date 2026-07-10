@@ -42,6 +42,12 @@ import {
 import Image from "next/image"
 import { AnimatedOrb } from "./animated-orb"
 import { AudioWaveform } from "./audio-waveform"
+import { useDesktopAgent } from "@/lib/desktop-agent/use-desktop-agent"
+import {
+  getSpeechRecognitionErrorMessage,
+  isIgnorableSpeechError,
+  resolveSpeechRecognitionLang,
+} from "@/lib/speech-recognition"
 
 export type AIModel =
   | "google/gemini-2.0-flash-001"
@@ -181,12 +187,25 @@ export function Composer({
   const isMobile = useIsMobile()
   const [value, setValue] = useState("")
   const [isRecording, setIsRecording] = useState(false)
+  const [speechError, setSpeechError] = useState<string | null>(null)
+  const { connectionState: desktopAgentState } = useDesktopAgent()
+  const speechRetryRef = useRef(0)
+  const mediaStreamRef = useRef<MediaStream | null>(null)
+  const desktopAgentOnlineRef = useRef(false)
   const [pendingAttachments, setPendingAttachments] = useState<ComposerAttachmentItem[]>([])
   const [showFileBounce, setShowFileBounce] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const dragDepthRef = useRef(0)
   const [hasAnimated, setHasAnimated] = useState(false)
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
+
+  useEffect(() => {
+    desktopAgentOnlineRef.current = desktopAgentState === "online"
+  }, [desktopAgentState])
+
+  useEffect(() => {
+    mediaStreamRef.current = mediaStream
+  }, [mediaStream])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
@@ -200,7 +219,7 @@ export function Composer({
         recognitionRef.current = new SpeechRecognition()
         recognitionRef.current.continuous = true
         recognitionRef.current.interimResults = true
-        recognitionRef.current.lang = "en-US"
+        recognitionRef.current.lang = resolveSpeechRecognitionLang()
 
         recognitionRef.current.onresult = (event: any) => {
           let newFinalText = ""
@@ -220,8 +239,39 @@ export function Composer({
         }
 
         recognitionRef.current.onerror = (event: any) => {
-          console.error("[v0] Speech recognition error:", event.error)
+          const code = String(event.error ?? "unknown")
+
+          if (code === "network" && speechRetryRef.current < 1) {
+            speechRetryRef.current += 1
+            window.setTimeout(() => {
+              try {
+                recognitionRef.current?.start()
+              } catch {
+                /* already started or unavailable */
+              }
+            }, 400)
+            return
+          }
+
           setIsRecording(false)
+          if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach((track) => track.stop())
+            mediaStreamRef.current = null
+            setMediaStream(null)
+          }
+
+          if (isIgnorableSpeechError(code)) {
+            if (code === "no-speech") {
+              setSpeechError(getSpeechRecognitionErrorMessage(code))
+            }
+            return
+          }
+
+          const message = getSpeechRecognitionErrorMessage(code, {
+            desktopAgentOnline: desktopAgentOnlineRef.current,
+          })
+          setSpeechError(message)
+          console.warn("[jarvis] Speech recognition:", code, message)
         }
 
         recognitionRef.current.onend = () => {
@@ -270,10 +320,27 @@ export function Composer({
         setMediaStream(null)
       }
     } else {
+      if (desktopAgentState === "offline") {
+        setSpeechError("Pre hlas použij Desktop JARVIS (pnpm desktop:run). Web diktovanie vyžaduje Google STT.")
+        return
+      }
+
       playRecordSound()
+      setSpeechError(null)
+      speechRetryRef.current = 0
       baseTextRef.current = value
       finalTranscriptsRef.current = ""
-      recognitionRef.current.start()
+      try {
+        recognitionRef.current.start()
+      } catch (err) {
+        console.warn("[jarvis] Speech recognition start failed:", err)
+        setSpeechError(
+          getSpeechRecognitionErrorMessage("network", {
+            desktopAgentOnline: desktopAgentState === "online",
+          }),
+        )
+        return
+      }
       setIsRecording(true)
 
       navigator.mediaDevices
@@ -285,7 +352,7 @@ export function Composer({
           console.error("[v0] Error getting microphone stream:", err)
         })
     }
-  }, [isRecording, value, playClickSound, playRecordSound, mediaStream])
+  }, [isRecording, value, playClickSound, playRecordSound, mediaStream, desktopAgentState])
 
   const handleInput = useCallback(() => {
     const textarea = textareaRef.current
@@ -821,6 +888,11 @@ export function Composer({
           >
             {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           </button>
+          {speechError ? (
+            <p className="max-w-[220px] text-[10px] leading-snug text-amber-400/90" role="status">
+              {speechError}
+            </p>
+          ) : null}
 
           {showPlayButton && onPlayPreview && (
             <button
@@ -965,7 +1037,7 @@ export function Composer({
               aria-label="Upload file"
             />
 
-            <div className="relative">
+            <div className="relative flex flex-col items-center gap-1">
               <Button
                 onClick={toggleRecording}
                 disabled={isStreaming || disabled}
@@ -980,6 +1052,11 @@ export function Composer({
               >
                 {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </Button>
+              {speechError ? (
+                <p className="max-w-[200px] text-center text-[10px] leading-snug text-amber-600 dark:text-amber-400" role="status">
+                  {speechError}
+                </p>
+              ) : null}
             </div>
 
             <Button

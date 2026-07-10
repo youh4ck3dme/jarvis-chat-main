@@ -19,7 +19,13 @@
     "audit:vercel-env": "tsx scripts/audit-vercel-env.ts",
     "audit:vercel-env:full": "tsx scripts/audit-vercel-env.ts --from-vercel-cli",
     "smoke:mistral": "tsx scripts/mistral-smoke.ts",
-    "refresh:baseline-browsers": "pnpm add -D baseline-browser-mapping@latest"
+    "refresh:baseline-browsers": "pnpm add -D baseline-browser-mapping@latest",
+    "desktop:setup": "cd desktop-agent && make setup",
+    "desktop:run": "cd desktop-agent && make run",
+    "desktop:gen-config": "cd desktop-agent && make gen-config",
+    "desktop:sync-prompt": "bash scripts/sync-jarvis-prompt.sh",
+    "desktop:health": "curl -s http://127.0.0.1:8765/health | python3 -m json.tool",
+    "desktop:stack": "bash scripts/jarvis-stack.sh"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.8",

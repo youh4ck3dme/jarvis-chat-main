@@ -39,6 +39,6 @@ describe("builder-unlock", () => {
       await import("./builder-unlock")
     expect(resolveBuilderPassword()).toBeNull()
     expect(isBuilderUnlockConfigured()).toBe(false)
-    expect(isBuilderPasswordValid("223513900")).toBe(false)
+    expect(isBuilderPasswordValid("23513900")).toBe(false)
   })
 })

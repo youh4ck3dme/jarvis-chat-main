@@ -37,3 +37,12 @@ next-env.d.ts
 # playwright
 /playwright-report/
 /test-results/
+
+# desktop-agent (Python)
+desktop-agent/.venv/
+desktop-agent/__pycache__/
+desktop-agent/**/__pycache__/
+desktop-agent/config/api_keys.json
+desktop-agent/.env
+desktop-agent/.pytest_cache/
+desktop-agent/data/

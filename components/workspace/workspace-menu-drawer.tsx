@@ -30,6 +30,10 @@ import type { BuildHistoryRecord } from "@/lib/build-history/build-history-store
 import { listBuildHistory } from "@/lib/build-history/build-history-store"
 import { listSessionsSorted, type ChatSession } from "@/lib/chat/chat-sessions"
 import { JarvisAuthPanel } from "@/components/workspace/jarvis-auth-panel"
+import { DesktopAgentBadge } from "@/components/workspace/desktop-agent-badge"
+import { DesktopAgentProvider } from "@/lib/desktop-agent/desktop-agent-context"
+import { DesktopVoicePanel } from "@/components/workspace/desktop-voice-panel"
+import { DesktopAuthExport } from "@/components/workspace/desktop-auth-export"
 import { SessionMemoryDrawerView } from "@/components/workspace/session-memory-drawer-view"
 import { cn } from "@/lib/utils"
 
@@ -269,6 +273,15 @@ export function WorkspaceMenuDrawer({
                     </span>
                   </div>
                   <JarvisAuthPanel authConfigured={cloudAuthConfigured} />
+                  <DesktopAuthExport />
+                  <DesktopAgentProvider>
+                    <div className="pt-1">
+                      <DesktopAgentBadge />
+                    </div>
+                    <div className="pt-2">
+                      <DesktopVoicePanel />
+                    </div>
+                  </DesktopAgentProvider>
                 </div>
               ) : null}
               <MenuAction

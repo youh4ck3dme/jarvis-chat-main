@@ -106,11 +106,18 @@ export const JARVIS_VERCEL_ENV_RULES: EnvVarRule[] = [
     description: "Unlock rate limit window seconds",
   },
   {
+    key: "MISTRAL_API_KEY_SECONDARY",
+    requirement: "optional",
+    targets: ALL_TARGETS,
+    serverOnly: true,
+    description: "Mistral fallback + Codestral (desktop code tasks)",
+  },
+  {
     key: "GEMINI_API_KEY",
     requirement: "optional",
     targets: ALL_TARGETS,
     serverOnly: true,
-    description: "Optional Gemini provider fallback",
+    description: "Gemini provider + desktop voice (Gemini Live is local-only)",
   },
   {
     key: "GOOGLE_GENERATIVE_AI_API_KEY",

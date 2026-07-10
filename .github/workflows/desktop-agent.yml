@@ -1,0 +1,53 @@
+name: Desktop Agent
+
+on:
+  pull_request:
+    paths:
+      - "desktop-agent/**"
+      - "shared/**"
+      - "lib/desktop-agent/**"
+      - "lib/prompts/**"
+  push:
+    branches: [main]
+    paths:
+      - "desktop-agent/**"
+      - "shared/**"
+      - "lib/desktop-agent/**"
+      - "lib/prompts/**"
+
+jobs:
+  python-smoke:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Desktop agent setup
+        run: cd desktop-agent && make setup
+
+      - name: Python smoke import
+        run: |
+          cd desktop-agent && .venv/bin/python -c "
+          from or_client import client
+          from bridge.health_server import create_app
+          from memory.memory_manager import load_memory
+          assert client.available_models()['api_keys'] >= 1
+          print('desktop smoke OK')
+          "
+
+  web-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - run: pnpm install
+      - run: pnpm vitest run lib/desktop-agent lib/prompts lib/speech-recognition

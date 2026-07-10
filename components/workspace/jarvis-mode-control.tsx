@@ -161,7 +161,13 @@ export function JarvisModeControl({
               <p className="text-xs text-red-400" data-testid="builder-password-error">
                 {error}
               </p>
-            ) : null}
+            ) : (
+              <p className="text-xs text-white/40">
+                Staré heslo <span className="font-mono">2366</span> už neplatí. Heslo má 8 číslic
+                z <span className="font-mono">.env.local</span> →{" "}
+                <span className="font-mono">BUILDER_UNLOCK_PASSWORD</span>.
+              </p>
+            )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">

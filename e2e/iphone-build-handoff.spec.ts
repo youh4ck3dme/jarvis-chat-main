@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const VIEWPORT_WIDTH = 420;
-const BUILDER_PASSWORD = process.env.BUILDER_UNLOCK_PASSWORD?.trim() || "223513900";
+const BUILDER_PASSWORD = process.env.BUILDER_UNLOCK_PASSWORD?.trim() || "23513900";
 
 const SAMPLE_PLAN = {
   success: true,

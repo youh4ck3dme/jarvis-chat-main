@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Brain, Search, Trash2, X } from "lucide-react"
+import { Brain, Search, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -15,6 +15,8 @@ import {
 import { useMemory } from "@/hooks/use-memory"
 import type { MemoryEntry, MemoryType } from "@/lib/memory/types"
 import { cn } from "@/lib/utils"
+import { formatDesktopMemoryForDisplay, isDesktopVoiceEntry } from "@/lib/desktop-agent/memory-bridge"
+import { Mic } from "lucide-react"
 
 interface MemoryPanelProps {
   conversationId: string
@@ -287,14 +289,22 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
                     className={cn("rounded-xl border px-3 py-3", styles.card)}
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                          styles.badge,
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                            styles.badge,
+                          )}
+                        >
+                          {TYPE_LABELS[memory.type]}
+                        </span>
+                        {isDesktopVoiceEntry(memory) && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-sky-950/60 bg-sky-950/40 text-sky-400 px-2 py-0.5 text-[10px] font-semibold">
+                            <Mic className="w-2.5 h-2.5" />
+                            Voice
+                          </span>
                         )}
-                      >
-                        {TYPE_LABELS[memory.type]}
-                      </span>
+                      </div>
                       <span className="text-[10px] text-[#666]">{memory.importance}% dôležitosť</span>
                     </div>
 
@@ -311,7 +321,9 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
                           !isExpanded && "line-clamp-2",
                         )}
                       >
-                        {memory.content}
+                        {isDesktopVoiceEntry(memory)
+                          ? formatDesktopMemoryForDisplay(memory.content)
+                          : memory.content}
                       </p>
                     </button>
 

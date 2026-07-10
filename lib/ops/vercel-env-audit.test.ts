@@ -57,7 +57,7 @@ describe("vercel-env-audit", () => {
     const keys = parseEnvExampleKeys(`
 # comment
 MISTRAL_API_KEY=
-BUILDER_UNLOCK_PASSWORD=223513900
+BUILDER_UNLOCK_PASSWORD=23513900
 `)
     expect(keys).toEqual(["BUILDER_UNLOCK_PASSWORD", "MISTRAL_API_KEY"])
   })

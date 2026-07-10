@@ -8,7 +8,17 @@
 
 ---
 
-## ✅ Hotové (Prompt 1–19)
+## ✅ Hotové (Prompt 1–21)
+
+### P21 — Desktop Voice Agent (Mark XXXIX-OR monorepo)
+- [x] Fáza 0–A: shared prompt, tool manifest (18 tools), sync scripts
+- [x] Fáza B–D: Next.js status badge, health client hook, voice panel, cloud memory sync
+- [x] Fáza E: 18 macOS-native actions (vrátane `agent_task`)
+- [x] Fáza F–G: PyQt6 interface, FastAPI health port 8765, auth export button
+- [x] Voice Lite: desktop-voice-panel, desktop-auth-export, memory UI badge
+- [x] Parallel ops: `desktop:health`, `jarvis-stack.sh`, CI workflow, composer mic hint
+- [x] Vitest: lib/desktop-agent, lib/prompts, lib/speech-recognition
+- [ ] Memory sync E2E (desktop → web do 60s) — manuálne s `~/.jarvis/desktop-auth.json`
 
 ### P1–P10 — Foundation → Production hardening
 - [x] Build pipeline, orchestrátor, telemetry, multi-session chat, server-side unlock
@@ -39,7 +49,7 @@
 - [x] Testy: **216** unit + **14** E2E (`e2e/ux-polish.spec.ts`)
 
 ### P16 — Ops & bezpečnosť (Prompt A)
-- [x] Builder heslo zmenené z `2366` → **`223513900`**
+- [x] Builder heslo zmenené z `2366` → **`23513900`**
 - [x] `BUILDER_UNLOCK_PASSWORD` na Vercel **Production + Preview + Development**
 - [x] CI/E2E/playwright používajú nové heslo
 - [x] Dev fallback: `DEV_BUILDER_PASSWORD_FALLBACK` v `lib/builder-unlock.ts`
@@ -86,7 +96,7 @@
 
 ### P1 — Ops
 - [x] Rotácia / audit Vercel env premenných (periodický) — `pnpm audit:vercel-env` + workflow mesačne
-- [x] Redeploy produkcie po zmene hesla — overené: `223513900` OK, `2366` zamietnuté
+- [x] Redeploy produkcie po zmene hesla — overené: `23513900` OK, `2366` zamietnuté
 
 ### P2 — UX
 - [x] História buildov per-session
@@ -123,7 +133,7 @@ pnpm test:all               # Vitest + E2E
 pnpm build                  # production build
 ```
 
-**Builder heslo:** `223513900` (lokálny dev fallback + Vercel env)
+**Builder heslo:** `23513900` (lokálny dev fallback + Vercel env)
 
 ---
 
@@ -136,3 +146,4 @@ pnpm build                  # production build
 | `docs/environment.md` | Vercel env, lokálny dev |
 | `docs/operations.md` | Deploy, test, troubleshoot |
 | `docs/diagnostic-prompt.md` | AI diagnostický prompt |
+| `docs/desktop-agent.md` | Hlasový Desktop Agent ( setup, run, troubleshooting ) |

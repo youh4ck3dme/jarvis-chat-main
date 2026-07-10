@@ -3,6 +3,30 @@ import "fake-indexeddb/auto"
 import "@testing-library/jest-dom/vitest"
 import { beforeEach, vi } from "vitest"
 
+// Polyfill localStorage if Node 22 native localStorage throws errors
+try {
+  if (typeof localStorage === "undefined" || !localStorage.setItem) {
+    throw new Error("No localStorage");
+  }
+  localStorage.setItem("__test_ls_probe__", "1");
+  localStorage.removeItem("__test_ls_probe__");
+} catch {
+  const store: Record<string, string> = {};
+  const mockLocalStorage = {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: any) => { store[key] = String(value); },
+    removeItem: (key: string) => { delete store[key]; },
+    clear: () => { for (const key in store) delete store[key]; },
+    get length() { return Object.keys(store).length; },
+    key: (index: number) => Object.keys(store)[index] || null,
+  };
+  Object.defineProperty(globalThis, "localStorage", {
+    value: mockLocalStorage,
+    writable: true,
+    configurable: true,
+  });
+}
+
 process.env.MISTRAL_API_KEY ??= "test-mistral-key"
 
 class MockAudio {

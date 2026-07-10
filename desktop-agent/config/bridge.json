@@ -1,0 +1,7 @@
+{
+  "health_port": 8765,
+  "web_base_url": "http://127.0.0.1:3141",
+  "conversation_id": "desktop-voice-session",
+  "memory_sync_enabled": true,
+  "memory_sync_interval_sec": 60
+}

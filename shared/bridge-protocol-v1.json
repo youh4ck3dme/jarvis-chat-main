@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JARVIS Desktop Agent Bridge Protocol v1",
+  "description": "Communication contract between web app and desktop voice agent",
+
+  "definitions": {
+    "HealthResponse": {
+      "type": "object",
+      "required": ["status", "agent_version", "platform", "conversation_id", "tools_available", "uptime_sec"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["ok", "degraded", "error"]
+        },
+        "agent_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "platform": {
+          "type": "string",
+          "enum": ["darwin", "win32", "linux"]
+        },
+        "gemini_live_model": {
+          "type": "string"
+        },
+        "conversation_id": {
+          "type": "string",
+          "default": "desktop-voice-session"
+        },
+        "memory_sync": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "last_sync_at": {"type": ["string", "null"], "format": "date-time"},
+            "web_base_url": {"type": "string", "format": "uri"}
+          },
+          "required": ["enabled"]
+        },
+        "tools_available": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "uptime_sec": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+
+    "MemoryPushPayload": {
+      "type": "object",
+      "description": "Payload sent by desktop to POST /api/memory/sync",
+      "required": ["memory"],
+      "properties": {
+        "memory": {
+          "type": "object",
+          "required": ["conversations"],
+          "properties": {
+            "conversations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["conversationId", "entries"],
+                "properties": {
+                  "conversationId": {"type": "string"},
+                  "entries": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["id", "type", "content"],
+                      "properties": {
+                        "id": {"type": "string"},
+                        "type": {
+                          "type": "string",
+                          "enum": ["fact", "preference", "user_info", "summarization", "decision", "emotional_context"]
+                        },
+                        "content": {"type": "string"},
+                        "metadata": {
+                          "type": "object",
+                          "properties": {
+                            "sourceConversationId": {"type": "string"},
+                            "relatedIds": {"type": "array", "items": {"type": "string"}},
+                            "tags": {"type": "array", "items": {"type": "string"}},
+                            "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+                          }
+                        },
+                        "importance": {"type": "integer", "minimum": 0, "maximum": 100},
+                        "lastAccessed": {"type": "string", "format": "date-time"},
+                        "createdAt": {"type": "string", "format": "date-time"}
+                      }
+                    }
+                  },
+                  "conversationMemory": {"type": "object"}
+                }
+              }
+            },
+            "userProfile": {"type": "object"}
+          }
+        }
+      }
+    }
+  },
+
+  "constants": {
+    "DESKTOP_AGENT_PORT": 8765,
+    "DESKTOP_CONVERSATION_ID": "desktop-voice-session",
+    "WEB_DEV_PORT": 3141,
+    "AUTH_FILE": "~/.jarvis/desktop-auth.json",
+    "HEALTH_ENDPOINT": "/health",
+    "TOOLS_ENDPOINT": "/tools",
+    "MEMORY_STATUS_ENDPOINT": "/status/memory"
+  }
+}

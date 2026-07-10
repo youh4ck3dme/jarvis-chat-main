@@ -1,0 +1,292 @@
+[
+  {
+    "name": "open_app",
+    "description": "Opens any application on the Mac. Use this whenever the user asks to open, launch, or start any app, website, or program. Always call this tool — never just say you opened it.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "app_name": {
+          "type": "STRING",
+          "description": "Exact name of the application (e.g. 'Safari', 'Chrome', 'Spotify')"
+        }
+      },
+      "required": ["app_name"]
+    },
+    "macos_impl": "actions/open_app.py",
+    "risk_level": "low"
+  },
+  {
+    "name": "web_search",
+    "description": "Searches the web for any information.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "query": {"type": "STRING", "description": "Search query"},
+        "mode": {"type": "STRING", "description": "search (default) or compare"},
+        "items": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "Items to compare"},
+        "aspect": {"type": "STRING", "description": "price | specs | reviews"}
+      },
+      "required": ["query"]
+    },
+    "macos_impl": "actions/web_search.py",
+    "risk_level": "low"
+  },
+  {
+    "name": "weather_report",
+    "description": "Gives the weather report to user.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "city": {"type": "STRING", "description": "City name"}
+      },
+      "required": ["city"]
+    },
+    "macos_impl": "actions/weather_report.py",
+    "risk_level": "low"
+  },
+  {
+    "name": "send_message",
+    "description": "Sends a text message via WhatsApp, Telegram, or other messaging platform.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "receiver": {"type": "STRING", "description": "Recipient contact name"},
+        "message_text": {"type": "STRING", "description": "The message to send"},
+        "platform": {"type": "STRING", "description": "Platform: WhatsApp, Telegram, etc."}
+      },
+      "required": ["receiver", "message_text", "platform"]
+    },
+    "macos_impl": "actions/send_message.py",
+    "risk_level": "medium"
+  },
+  {
+    "name": "reminder",
+    "description": "Sets a timed reminder using macOS Reminders.app.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "date": {"type": "STRING", "description": "Date in YYYY-MM-DD format"},
+        "time": {"type": "STRING", "description": "Time in HH:MM format (24h)"},
+        "message": {"type": "STRING", "description": "Reminder message text"}
+      },
+      "required": ["date", "time", "message"]
+    },
+    "macos_impl": "actions/reminder.py",
+    "risk_level": "low"
+  },
+  {
+    "name": "youtube_video",
+    "description": "Controls YouTube. Use for: playing videos, summarizing a video's content, getting video info, or showing trending videos.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {"type": "STRING", "description": "play | summarize | get_info | trending (default: play)"},
+        "query": {"type": "STRING", "description": "Search query for play action"},
+        "save": {"type": "BOOLEAN", "description": "Save summary to file (summarize only)"},
+        "region": {"type": "STRING", "description": "Country code for trending e.g. SK, US"},
+        "url": {"type": "STRING", "description": "Video URL for get_info action"}
+      },
+      "required": []
+    },
+    "macos_impl": "actions/youtube_video.py",
+    "risk_level": "low"
+  },
+  {
+    "name": "screen_process",
+    "description": "Captures and analyzes the screen or webcam image. MUST be called when user asks what is on screen, what you see, analyze my screen, look at camera, etc. You have NO visual ability without this tool. After calling this tool, stay SILENT — the vision module speaks directly.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "angle": {"type": "STRING", "description": "'screen' to capture display, 'camera' for webcam. Default: 'screen'"},
+        "text": {"type": "STRING", "description": "The question or instruction about the captured image"}
+      },
+      "required": ["text"]
+    },
+    "macos_impl": "actions/screen_processor.py",
+    "risk_level": "low"
+  },
+  {
+    "name": "computer_settings",
+    "description": "Controls the computer: volume, brightness, window management, keyboard shortcuts, media playback.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {"type": "STRING", "description": "Action to perform"},
+        "value": {"type": "STRING", "description": "Value for the action (e.g. volume level 0-100)"}
+      },
+      "required": ["action"]
+    },
+    "macos_impl": "actions/computer_settings.py",
+    "risk_level": "medium"
+  },
+  {
+    "name": "desktop_control",
+    "description": "Controls the desktop environment: organize windows, manage files on desktop, open folders, empty trash.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {"type": "STRING", "description": "Action: organize_desktop | list_files | open_folder | empty_trash | show_desktop"},
+        "path": {"type": "STRING", "description": "Path for file/folder operations"},
+        "pattern": {"type": "STRING", "description": "File pattern for filtering"}
+      },
+      "required": ["action"]
+    },
+    "macos_impl": "actions/desktop.py",
+    "risk_level": "medium"
+  },
+  {
+    "name": "browser_control",
+    "description": "Controls a browser: navigate, click, type, take screenshot, extract text from web pages.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {"type": "STRING", "description": "navigate | click | type | screenshot | extract_text | scroll"},
+        "url": {"type": "STRING", "description": "URL for navigate action"},
+        "selector": {"type": "STRING", "description": "CSS selector for click/type actions"},
+        "text": {"type": "STRING", "description": "Text to type"},
+        "direction": {"type": "STRING", "description": "up | down for scroll"}
+      },
+      "required": ["action"]
+    },
+    "macos_impl": "actions/browser_control.py",
+    "risk_level": "medium"
+  },
+  {
+    "name": "file_controller",
+    "description": "Manages files: create, read, write, copy, move, delete, list directory, search files.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {"type": "STRING", "description": "create | read | write | copy | move | delete | list | search | info"},
+        "path": {"type": "STRING", "description": "File or directory path"},
+        "destination": {"type": "STRING", "description": "Destination path for copy/move"},
+        "content": {"type": "STRING", "description": "Content for write/create"},
+        "query": {"type": "STRING", "description": "Search query for search action"},
+        "recursive": {"type": "BOOLEAN", "description": "Recursive search/list"}
+      },
+      "required": ["action", "path"]
+    },
+    "macos_impl": "actions/file_controller.py",
+    "risk_level": "high"
+  },
+  {
+    "name": "code_helper",
+    "description": "Helps with coding tasks: explain code, review, fix bugs, optimize, generate documentation, run scripts.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {"type": "STRING", "description": "explain | review | fix | optimize | document | run | test | generate"},
+        "code": {"type": "STRING", "description": "Code to analyze or file path"},
+        "language": {"type": "STRING", "description": "Programming language"},
+        "instruction": {"type": "STRING", "description": "Specific instruction for the task"}
+      },
+      "required": ["action"]
+    },
+    "macos_impl": "actions/code_helper.py",
+    "risk_level": "medium"
+  },
+  {
+    "name": "dev_agent",
+    "description": "Autonomous development agent for complex multi-step coding tasks. Creates files, edits code, runs commands.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "task": {"type": "STRING", "description": "Description of the development task"},
+        "project_path": {"type": "STRING", "description": "Path to the project directory"},
+        "language": {"type": "STRING", "description": "Primary language/framework"}
+      },
+      "required": ["task"]
+    },
+    "macos_impl": "actions/dev_agent.py",
+    "risk_level": "high"
+  },
+  {
+    "name": "agent_task",
+    "description": "Executes complex multi-step tasks requiring multiple different tools. Examples: 'research X and save to file', 'find and organize files'. DO NOT use for single commands. NEVER use for Steam/Epic — use game_updater.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "goal": {"type": "STRING", "description": "Complete description of what to accomplish"},
+        "priority": {"type": "STRING", "description": "low | normal | high (default: normal)"}
+      },
+      "required": ["goal"]
+    },
+    "macos_impl": "agent/task_queue.py",
+    "risk_level": "medium"
+  },
+  {
+    "name": "computer_control",
+    "description": "System-level operations: shutdown, restart, sleep, lock, battery status, disk space, network info.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {"type": "STRING", "description": "shutdown | restart | sleep | lock | battery | disk | network | processes | kill_process"},
+        "process_name": {"type": "STRING", "description": "Process name for kill_process"}
+      },
+      "required": ["action"]
+    },
+    "macos_impl": "actions/computer_control.py",
+    "risk_level": "high"
+  },
+  {
+    "name": "game_updater",
+    "description": "Checks for game updates and manages game installations (Steam/Epic). Limited on macOS.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {"type": "STRING", "description": "check | install | update | schedule"},
+        "platform": {"type": "STRING", "description": "steam | epic | both (default: both)"},
+        "game_name": {"type": "STRING", "description": "Game name (partial match supported)"},
+        "app_id": {"type": "STRING", "description": "Steam AppID for install (optional)"},
+        "hour": {"type": "INTEGER", "description": "Hour for scheduled update 0-23 (default: 3)"},
+        "minute": {"type": "INTEGER", "description": "Minute for scheduled update 0-59 (default: 0)"},
+        "shutdown_when_done": {"type": "BOOLEAN", "description": "Shut down PC when download finishes"}
+      },
+      "required": []
+    },
+    "macos_impl": "actions/game_updater.py",
+    "risk_level": "low"
+  },
+  {
+    "name": "flight_finder",
+    "description": "Searches Google Flights and speaks the best options.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "origin": {"type": "STRING", "description": "Departure city or airport code"},
+        "destination": {"type": "STRING", "description": "Arrival city or airport code"},
+        "date": {"type": "STRING", "description": "Departure date (any format)"},
+        "return_date": {"type": "STRING", "description": "Return date for round trips"},
+        "passengers": {"type": "INTEGER", "description": "Number of passengers (default: 1)"},
+        "cabin": {"type": "STRING", "description": "economy | premium | business | first"},
+        "save": {"type": "BOOLEAN", "description": "Save results to file"}
+      },
+      "required": ["origin", "destination", "date"]
+    },
+    "macos_impl": "actions/flight_finder.py",
+    "risk_level": "low"
+  },
+  {
+    "name": "file_processor",
+    "description": "Processes any file that the user has uploaded or dropped onto the interface. Supports: images, PDFs, Word docs, CSV/Excel, JSON/XML, code files, audio, video, archives, presentations.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "file_path": {"type": "STRING", "description": "Full path to the file. Leave empty to use the currently uploaded file."},
+        "action": {"type": "STRING", "description": "What to do: describe | ocr | summarize | extract_text | analyze | review | fix | explain | convert | info"},
+        "instruction": {"type": "STRING", "description": "Free-form instruction if action doesn't cover it."},
+        "format": {"type": "STRING", "description": "Target format for conversion."},
+        "width": {"type": "INTEGER", "description": "Target width for image resize"},
+        "height": {"type": "INTEGER", "description": "Target height for image resize"},
+        "scale": {"type": "NUMBER", "description": "Scale factor for image resize (e.g. 0.5)"},
+        "quality": {"type": "INTEGER", "description": "Quality 1-100 for image/video compress"},
+        "start": {"type": "STRING", "description": "Start time for trim: seconds or HH:MM:SS"},
+        "end": {"type": "STRING", "description": "End time for trim: seconds or HH:MM:SS"},
+        "save": {"type": "BOOLEAN", "description": "Save result to file (default: true)"}
+      },
+      "required": []
+    },
+    "macos_impl": "actions/file_processor.py",
+    "risk_level": "low"
+  }
+]
