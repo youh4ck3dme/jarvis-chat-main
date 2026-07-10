@@ -35,6 +35,9 @@ jobs:
   e2e-iphone:
     runs-on: ubuntu-latest
     needs: test
+    env:
+      MISTRAL_API_KEY: ci-placeholder-key
+      BUILDER_UNLOCK_PASSWORD: "2366"
 
     steps:
       - uses: actions/checkout@v4

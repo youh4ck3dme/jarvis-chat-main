@@ -1,4 +1,3 @@
-import "@/lib/env";
 import { jsonError, jsonSuccess } from "@/lib/api-response";
 import { isBuilderPasswordValid, isBuilderUnlockConfigured } from "@/lib/builder-unlock";
 

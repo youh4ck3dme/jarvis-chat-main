@@ -8,7 +8,6 @@ describe("POST /api/builder/unlock", () => {
   beforeEach(() => {
     process.env = {
       ...originalEnv,
-      MISTRAL_API_KEY: "test-mistral-key",
       BUILDER_UNLOCK_PASSWORD: "secret-builder",
       NODE_ENV: "test",
     }
@@ -21,7 +20,6 @@ describe("POST /api/builder/unlock", () => {
   it("returns 503 when BUILDER_UNLOCK_PASSWORD is not configured in production", async () => {
     process.env = {
       ...originalEnv,
-      MISTRAL_API_KEY: "test-mistral-key",
       NODE_ENV: "production",
     }
     delete process.env.BUILDER_UNLOCK_PASSWORD
