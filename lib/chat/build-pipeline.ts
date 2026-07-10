@@ -10,6 +10,8 @@ export type PipelineChatMessage = {
   role: "user" | "assistant"
   content: string
   imageData?: string
+  attachment?: string
+  attachmentName?: string
 }
 
 export type PipelineStreamResult = {

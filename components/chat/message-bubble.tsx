@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { User, Copy, Check, Volume2, Square, Trash2, FileText } from "lucide-react"
+import { User, Copy, Check, Volume2, Square, Trash2, FileText, Download } from "lucide-react"
 import Image from "next/image"
 import { AnimatedOrb } from "./animated-orb"
 import type { Message } from "./chat-shell"
 import { MarkdownRenderer } from "./markdown-renderer"
+import {
+  downloadArtifact,
+  extractExportableArtifacts,
+} from "@/lib/chat/assistant-artifact-export"
+import { classifyDataUrl } from "@/lib/chat/jarvis-attachments"
 
 interface MessageBubbleProps {
   message: Message
@@ -26,6 +31,8 @@ export function MessageBubble({ message, isStreaming = false, onEdit, onDelete }
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
+  const exportableArtifacts = !isUser ? extractExportableArtifacts(message.content) : []
+  const attachmentKind = message.attachment ? classifyDataUrl(message.attachment) : null
 
   // Stop speaking when component unmounts
   useEffect(() => {
@@ -147,9 +154,16 @@ export function MessageBubble({ message, isStreaming = false, onEdit, onDelete }
                     <div className="w-8 h-8 flex items-center justify-center bg-stone-200 dark:bg-zinc-800 rounded">
                       <FileText className="w-4 h-4 text-stone-500" />
                     </div>
-                    <span className="text-xs font-medium text-stone-700 dark:text-zinc-300 max-w-[150px] truncate">
-                      {message.attachmentName || "Document"}
-                    </span>
+                    <div className="min-w-0">
+                      <span className="block text-xs font-medium text-stone-700 dark:text-zinc-300 max-w-[150px] truncate">
+                        {message.attachmentName || "Document"}
+                      </span>
+                      {attachmentKind && (
+                        <span className="text-[10px] uppercase tracking-wide text-stone-500 dark:text-zinc-500">
+                          {attachmentKind}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
                 {isEditing ? (
@@ -245,6 +259,21 @@ export function MessageBubble({ message, isStreaming = false, onEdit, onDelete }
                   <Volume2 className="w-3.5 h-3.5" />
                 )}
               </button>
+            )}
+            {!isUser && exportableArtifacts.length > 0 && (
+              <div className="flex items-center gap-1">
+                {exportableArtifacts.slice(0, 3).map((artifact) => (
+                  <button
+                    key={`${artifact.kind}-${artifact.label}`}
+                    onClick={() => downloadArtifact(artifact)}
+                    className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-stone-500 hover:text-stone-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+                    title={`Download ${artifact.label}`}
+                  >
+                    <Download className="w-3 h-3" />
+                    {artifact.kind === "pdf" ? "PDF" : artifact.label.split(".").pop()}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         </div>

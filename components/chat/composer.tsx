@@ -33,6 +33,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import { QUICK_PROMPTS, type QuickPromptKey } from "@/lib/chat/workspace-actions"
+import {
+  classifyDataUrl,
+  getDefaultAttachmentPrompt,
+  JARVIS_ATTACHMENT_ACCEPT,
+  readAttachmentFromFile,
+} from "@/lib/chat/jarvis-attachments"
 import Image from "next/image"
 import { AnimatedOrb } from "./animated-orb"
 import { AudioWaveform } from "./audio-waveform"
@@ -298,7 +304,9 @@ export function Composer({
       recognitionRef.current.stop()
       setIsRecording(false)
     }
-    onSend(value || (uploadedFile?.startsWith("data:image/") ? "Describe this image" : "Analyze this document"), uploadedFile || undefined, uploadedFileName || undefined)
+    const attachmentKind = uploadedFile ? classifyDataUrl(uploadedFile) : null
+    const fallbackPrompt = attachmentKind ? getDefaultAttachmentPrompt(attachmentKind) : "Analyze this document"
+    onSend(value || fallbackPrompt, uploadedFile || undefined, uploadedFileName || undefined)
     setValue("")
     setUploadedFile(null)
     setUploadedFileName(null)
@@ -319,24 +327,32 @@ export function Composer({
     [handleSend],
   )
 
+  const attachFile = useCallback(
+    async (file: File) => {
+      try {
+        const parsed = await readAttachmentFromFile(file)
+        setUploadedFile(parsed.dataUrl)
+        setUploadedFileName(parsed.fileName)
+        setShowFileBounce(true)
+        setTimeout(() => setShowFileBounce(false), 400)
+      } catch (error) {
+        console.error("Unsupported attachment:", error)
+      }
+    },
+    [],
+  )
+
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       playClickSound()
 
       const file = e.target.files?.[0]
-      if (file && (file.type.startsWith("image/") || file.type === "application/pdf" || file.type === "text/plain")) {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-          setUploadedFile(event.target?.result as string)
-          setUploadedFileName(file.name)
-          setShowFileBounce(true)
-          setTimeout(() => setShowFileBounce(false), 400)
-        }
-        reader.readAsDataURL(file)
+      if (file) {
+        void attachFile(file)
       }
       e.target.value = ""
     },
-    [playClickSound],
+    [attachFile, playClickSound],
   )
 
   const removeFile = useCallback(() => {
@@ -356,33 +372,53 @@ export function Composer({
           if (file) {
             e.preventDefault()
             playClickSound()
-            const reader = new FileReader()
-            reader.onload = (event) => {
-              setUploadedFile(event.target?.result as string)
-              setUploadedFileName(file.name)
-              setShowFileBounce(true)
-              setTimeout(() => setShowFileBounce(false), 400)
-            }
-            reader.readAsDataURL(file)
+            void attachFile(file)
             break
           }
         }
       }
     },
-    [playClickSound],
+    [attachFile, playClickSound],
   )
 
+  const uploadedFileKind = uploadedFile ? classifyDataUrl(uploadedFile) : null
   const currentModel = AI_MODELS.find((m) => m.id === selectedModel) || AI_MODELS[0]
   const isWorkspace = variant === "workspace"
 
   if (isWorkspace) {
     return (
       <div className="pointer-events-auto">
+        {uploadedFile && (
+          <div className="mb-2 flex w-fit max-w-full items-center gap-2 rounded-xl border border-[#333] bg-[#1a1a1a] px-2 py-1.5">
+            {uploadedFileKind === "image" ? (
+              <Image
+                src={uploadedFile}
+                alt="Uploaded attachment"
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded object-cover"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded bg-[#262626] text-[10px] font-semibold uppercase text-[#aaa]">
+                {uploadedFileKind}
+              </div>
+            )}
+            <span className="truncate text-[12px] text-[#ccc]">{uploadedFileName}</span>
+            <button
+              type="button"
+              onClick={removeFile}
+              className="rounded p-1 text-[#777] hover:bg-[#262626] hover:text-[#ddd]"
+              aria-label="Remove attachment"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2 rounded-2xl border border-[#2f2f2f] bg-[#1c1c1c] px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*, application/pdf, text/plain"
+            accept={JARVIS_ATTACHMENT_ACCEPT}
             onChange={handleFileSelect}
             className="hidden"
             aria-label="Upload file"
@@ -397,6 +433,7 @@ export function Composer({
             disabled={isStreaming || disabled}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#777] transition-colors hover:bg-[#262626] hover:text-[#ddd] disabled:opacity-40"
             aria-label="Add attachment"
+            title="JPEG, HEIC, PNG, WebP, PDF, HTML"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -668,7 +705,7 @@ export function Composer({
             {uploadedFile && (
               <div className={cn("relative shrink-0", showFileBounce && "image-bounce")}>
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden border border-stone-200 dark:border-zinc-800 bg-stone-100 dark:bg-zinc-800 flex items-center justify-center">
-                  {uploadedFile.startsWith("data:image/") ? (
+                  {uploadedFileKind === "image" ? (
                     <Image
                       src={uploadedFile}
                       alt="Uploaded image"
@@ -680,7 +717,7 @@ export function Composer({
                     <div className="flex flex-col items-center justify-center text-stone-500 w-full h-full p-1 text-center" title={uploadedFileName || "Document"}>
                       <FileText className="w-4 h-4 mb-0.5 shrink-0" />
                       <span className="text-[9px] font-medium uppercase truncate w-full">
-                        {uploadedFileName?.split('.').pop() || "DOC"}
+                        {uploadedFileKind || uploadedFileName?.split(".").pop() || "DOC"}
                       </span>
                     </div>
                   )}
@@ -758,7 +795,7 @@ export function Composer({
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*, application/pdf, text/plain"
+              accept={JARVIS_ATTACHMENT_ACCEPT}
               onChange={handleFileSelect}
               className="hidden"
               aria-label="Upload file"

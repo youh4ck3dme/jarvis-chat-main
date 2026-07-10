@@ -20,6 +20,11 @@ import {
   runBuildPipeline,
   type PipelineChatMessage,
 } from "@/lib/chat/build-pipeline"
+import {
+  classifyDataUrl,
+  getDefaultAttachmentPrompt,
+  splitAttachmentPayload,
+} from "@/lib/chat/jarvis-attachments"
 import { BuildTelemetry } from "@/components/workspace/build-telemetry"
 import { WorkspaceFooter, type WorkspaceView } from "@/components/workspace/workspace-footer"
 import { WorkspaceHeader } from "@/components/workspace/workspace-header"
@@ -119,11 +124,15 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 }
 
-function toPipelineMessage(message: Pick<Message, "role" | "content" | "imageData">): PipelineChatMessage {
+function toPipelineMessage(
+  message: Pick<Message, "role" | "content" | "imageData" | "attachment" | "attachmentName">,
+): PipelineChatMessage {
   return {
     role: message.role,
     content: message.content,
     imageData: message.imageData,
+    attachment: message.attachment,
+    attachmentName: message.attachmentName,
   }
 }
 
@@ -489,8 +498,11 @@ export function ChatShell() {
   // Send a message to the AI
   const sendMessage = useCallback(
     async (content: string, attachment?: string, attachmentName?: string) => {
-      const imageData = attachment?.startsWith("data:image/") ? attachment : undefined
-      const fileAttachment = attachment && !imageData ? attachment : undefined
+      const { imageData, fileAttachment } = splitAttachmentPayload(attachment)
+      const attachmentKind = attachment ? classifyDataUrl(attachment) : null
+      const defaultAttachmentPrompt = attachmentKind
+        ? getDefaultAttachmentPrompt(attachmentKind)
+        : "Analyze this document"
       if ((!content.trim() && !attachment) || isStreaming) return
 
       const trimmedContent = content.trim()
@@ -501,9 +513,11 @@ export function ChatShell() {
         const lockedUserMessage: Message = {
           id: generateId(),
           role: "user",
-          content: trimmedContent || (attachment?.startsWith("data:image/") ? "Describe this image" : "Analyze this document"),
+          content: trimmedContent || defaultAttachmentPrompt,
           createdAt: new Date(),
-          imageData: attachment?.startsWith("data:image/") ? attachment : undefined,
+          imageData,
+          attachment: fileAttachment,
+          attachmentName: fileAttachment ? attachmentName : undefined,
         }
         const hintMessage = createNarrativeBeat(generateId(), JARVIS_BUILDER_LOCKED_HINT)
         setMessages((prev) => [...prev, lockedUserMessage, hintMessage])
@@ -546,7 +560,7 @@ export function ChatShell() {
         ({
           id: generateId(),
           role: "user",
-          content: content.trim() || (imageData ? "Describe this image" : "Analyze this document"),
+          content: content.trim() || defaultAttachmentPrompt,
           createdAt: new Date(),
           imageData,
           attachment: fileAttachment,
@@ -876,7 +890,16 @@ export function ChatShell() {
       const index = messages.findIndex((m) => m.id === lastUserMessage.id)
       setMessages(messages.slice(0, index))
       setError(null)
-      setTimeout(() => sendMessage(lastUserMessage.content, lastUserMessage.imageData), 100)
+      const retryAttachment = lastUserMessage.imageData ?? lastUserMessage.attachment
+      setTimeout(
+        () =>
+          sendMessage(
+            lastUserMessage.content,
+            retryAttachment,
+            lastUserMessage.attachmentName,
+          ),
+        100,
+      )
     }
   }, [messages, sendMessage])
 

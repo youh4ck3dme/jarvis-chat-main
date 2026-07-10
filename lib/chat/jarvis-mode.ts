@@ -3,6 +3,8 @@ export type JarvisMode = "chat" | "builder";
 export const JARVIS_MODE_STORAGE_KEY = "jarvis-mode";
 export const JARVIS_BUILDER_UNLOCKED_KEY = "jarvis-builder-unlocked";
 
+import { JARVIS_ATTACHMENT_SYSTEM_PROMPT } from "./jarvis-attachments";
+
 export const JARVIS_CHAT_SYSTEM_PROMPT = `You are Jarvis — a helpful, concise AI assistant in a chat workspace.
 
 Rules:
@@ -11,7 +13,9 @@ Rules:
 - Do NOT generate HTML, CSS, JavaScript, or full code artifacts unless the user explicitly asks for code.
 - Do NOT wrap responses in markdown code fences unless showing a small snippet the user requested.
 - Keep replies focused and readable. Use short paragraphs or bullet lists when helpful.
-- You are in Chat mode — conversation first, not automatic app building.`;
+- You are in Chat mode — conversation first, not automatic app building.
+
+${JARVIS_ATTACHMENT_SYSTEM_PROMPT}`;
 
 export function isValidJarvisMode(value: string | null | undefined): value is JarvisMode {
   return value === "chat" || value === "builder";

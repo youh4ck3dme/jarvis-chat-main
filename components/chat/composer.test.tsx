@@ -17,6 +17,18 @@ vi.mock("./audio-waveform", () => ({
   AudioWaveform: () => <div data-testid="audio-waveform" />,
 }))
 
+vi.mock("@/lib/chat/jarvis-attachments", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/chat/jarvis-attachments")>()
+  return {
+    ...actual,
+    readAttachmentFromFile: vi.fn().mockResolvedValue({
+      dataUrl: "data:image/png;base64,ZmFrZQ==",
+      fileName: "diagram.png",
+      kind: "image" as const,
+    }),
+  }
+})
+
 const defaultProps = {
   onSend: vi.fn(),
   onStop: vi.fn(),
@@ -85,19 +97,6 @@ describe("Composer", () => {
     const user = userEvent.setup()
     const imageDataUrl = "data:image/png;base64,ZmFrZQ=="
 
-    class MockFileReader {
-      onload: ((event: ProgressEvent<FileReader>) => void) | null = null
-      readAsDataURL() {
-        queueMicrotask(() => {
-          this.onload?.({
-            target: { result: imageDataUrl },
-          } as ProgressEvent<FileReader>)
-        })
-      }
-    }
-
-    vi.stubGlobal("FileReader", MockFileReader)
-
     render(<Composer {...defaultProps} onSend={onSend} />)
 
     const fileInput = screen.getByLabelText("Upload file") as HTMLInputElement
@@ -113,7 +112,29 @@ describe("Composer", () => {
     await user.click(screen.getByRole("button", { name: "Send message" }))
 
     expect(onSend).toHaveBeenCalledWith("Check this", imageDataUrl, "diagram.png")
-    vi.unstubAllGlobals()
+  })
+
+  it("accepts html and pdf attachments through the shared reader", async () => {
+    const { readAttachmentFromFile } = await import("@/lib/chat/jarvis-attachments")
+    const mockedReader = vi.mocked(readAttachmentFromFile)
+
+    mockedReader.mockResolvedValueOnce({
+      dataUrl: "data:text/html;base64,PGgxPk9rPC9oMT4=",
+      fileName: "landing.html",
+      kind: "html",
+    })
+
+    const onSend = vi.fn()
+    render(<Composer {...defaultProps} onSend={onSend} />)
+
+    const fileInput = screen.getByLabelText("Upload file") as HTMLInputElement
+    fireEvent.change(fileInput, {
+      target: { files: [new File(["<h1>Ok</h1>"], "landing.html", { type: "text/html" })] },
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText("html")).toBeInTheDocument()
+    })
   })
 
   it("calls onStop while streaming", async () => {
