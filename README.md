@@ -389,22 +389,26 @@ Stav projektu: [`todo.md`](todo.md)
 
 ## Linear sync
 
-Všetky úlohy (hotové + backlog) sú v `scripts/linear-backlog.json` s popismi.
+| Súbor | Účel |
+|-------|------|
+| `scripts/linear-backlog.json` | 20 zdokumentovaných issues |
+| `scripts/linear.config.json` | Stabilné URL (team **YOU**, workspace youh4ck3dme) |
+| `.env.local` | `LINEAR_API_KEY` (gitignored) |
 
-### Nastavenie
-
-1. Linear → **Settings → API** → vytvor Personal API Key  
-2. Zisti Team ID (Settings → Team → copy UUID) alebo použij team key (`JAR`)
+**Board:** https://linear.app/youh4ck3dme/team/YOU  
+**API keys:** https://linear.app/settings/api
 
 ```bash
-export LINEAR_API_KEY="lin_api_..."
-export LINEAR_TEAM_ID="uuid-tvojho-teamu"   # alebo LINEAR_TEAM_KEY=JAR
+# .env.local
+LINEAR_API_KEY=lin_api_...
+LINEAR_TEAM_KEY=YOU
 
-pnpm linear:sync:dry    # náhľad
-pnpm linear:sync        # vytvorí chýbajúce issues v projekte JARVIS
+pnpm linear:status      # overí pripojenie + koľko issues je synced
+pnpm linear:sync:dry    # náhľad bez API
+pnpm linear:sync        # vytvorí len chýbajúce issues (idempotentné)
 ```
 
-Existujúce issues (rovnaký title) sa preskočia — sync je idempotentný.
+Existujúce issues (rovnaký title) sa preskočia. Pri 429 rate limit script retryuje.
 
 ---
 

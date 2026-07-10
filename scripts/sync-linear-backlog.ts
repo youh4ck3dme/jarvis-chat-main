@@ -1,96 +1,61 @@
 /**
  * Sync scripts/linear-backlog.json → Linear issues (GraphQL API).
  *
- * Required env:
- *   LINEAR_API_KEY   — Personal API key from Linear Settings → API
- *   LINEAR_TEAM_ID   — Team UUID (or set LINEAR_TEAM_KEY=e.g. JAR)
+ * Config: scripts/linear.config.json
+ * Secrets: .env.local → LINEAR_API_KEY, optional LINEAR_TEAM_KEY / LINEAR_TEAM_ID
  *
  * Usage:
  *   pnpm linear:sync
  *   pnpm linear:sync --dry-run
+ *   pnpm linear:status
  */
 import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 
-type BacklogIssue = {
-  title: string
-  description: string
-  priority?: number
-  labels?: string[]
-}
+import {
+  applyEnvRecord,
+  buildProjectUrl,
+  linearGraphqlWithRetry,
+  loadEnvLocalFile,
+  parseLinearBacklog,
+  parseLinearConfig,
+  resolveRepoPaths,
+  type LinearBacklogIssue,
+  type LinearConfig,
+} from "../lib/ops/linear-backlog-sync"
 
-type BacklogFile = {
-  projectName: string
-  projectDescription?: string
-  issues: BacklogIssue[]
-}
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const repoRoot = resolve(__dirname, "..")
+const paths = resolveRepoPaths(repoRoot)
 
-const LINEAR_API = "https://api.linear.app/graphql"
-const dryRun = process.argv.includes("--dry-run")
+const args = new Set(process.argv.slice(2))
+const dryRun = args.has("--dry-run")
+const statusOnly = args.has("--status")
 
-function loadEnvLocal(): void {
-  try {
-    const envPath = resolve(__dirname, "../.env.local")
-    const content = readFileSync(envPath, "utf-8")
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue
-      const [key, ...rest] = trimmed.split("=")
-      const value = rest.join("=").trim()
-      if (key && value && !process.env[key]) {
-        process.env[key] = value
-      }
-    }
-  } catch {
-    // .env.local optional
-  }
-}
-
-async function linearRequest<T>(query: string, variables: Record<string, unknown>): Promise<T> {
+function requireApiKey(): string {
   const apiKey = process.env.LINEAR_API_KEY
   if (!apiKey) {
     throw new Error(
-      "Missing LINEAR_API_KEY. Create one at https://linear.app/settings/api and run:\n  LINEAR_API_KEY=lin_api_... LINEAR_TEAM_ID=... pnpm linear:sync",
+      "Missing LINEAR_API_KEY.\n" +
+        "1. https://linear.app/settings/api\n" +
+        "2. Add to .env.local:\n" +
+        "   LINEAR_API_KEY=lin_api_...\n" +
+        "   LINEAR_TEAM_KEY=YOU",
     )
   }
-
-  const response = await fetch(LINEAR_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: apiKey,
-    },
-    body: JSON.stringify({ query, variables }),
-  })
-
-  const payload = (await response.json()) as {
-    data?: T
-    errors?: { message: string }[]
-  }
-
-  if (!response.ok || payload.errors?.length) {
-    const detail = payload.errors?.map((e) => e.message).join("; ") || response.statusText
-    throw new Error(`Linear API error: ${detail}`)
-  }
-
-  return payload.data as T
+  return apiKey
 }
 
-async function resolveTeamId(): Promise<string> {
-  const teamId = process.env.LINEAR_TEAM_ID
-  if (teamId) return teamId
+async function resolveTeamId(apiKey: string, config: LinearConfig): Promise<string> {
+  if (process.env.LINEAR_TEAM_ID) return process.env.LINEAR_TEAM_ID
 
-  const teamKey = process.env.LINEAR_TEAM_KEY ?? "YOU"
-  const data = await linearRequest<{
+  const teamKey = process.env.LINEAR_TEAM_KEY ?? config.teamKey
+  const data = await linearGraphqlWithRetry<{
     teams: { nodes: { id: string; key: string; name: string }[] }
-  }>(
-    `query { teams { nodes { id key name } } }`,
-    {},
-  )
+  }>(apiKey, `query { teams { nodes { id key name } } }`)
 
-  const match = data.teams.nodes.find(
-    (team) => team.key.toLowerCase() === teamKey.toLowerCase(),
-  )
+  const match = data.teams.nodes.find((t) => t.key.toLowerCase() === teamKey.toLowerCase())
   if (!match) {
     const available = data.teams.nodes.map((t) => `${t.key} (${t.name})`).join(", ")
     throw new Error(`Team ${teamKey} not found. Available: ${available}`)
@@ -98,17 +63,19 @@ async function resolveTeamId(): Promise<string> {
   return match.id
 }
 
-async function ensureProject(teamId: string, name: string, description?: string): Promise<string> {
-  const existing = await linearRequest<{
+async function ensureProject(
+  apiKey: string,
+  teamId: string,
+  name: string,
+  description?: string,
+): Promise<string> {
+  const existing = await linearGraphqlWithRetry<{
     team: { projects: { nodes: { id: string; name: string }[] } }
-  }>(
-    `query($teamId: String!) { team(id: $teamId) { projects { nodes { id name } } } }`,
-    { teamId },
-  )
+  }>(apiKey, `query($teamId: String!) { team(id: $teamId) { projects { nodes { id name } } } }`, {
+    teamId,
+  })
 
-  const found = existing.team.projects.nodes.find(
-    (p) => p.name.toLowerCase() === name.toLowerCase(),
-  )
+  const found = existing.team.projects.nodes.find((p) => p.name.toLowerCase() === name.toLowerCase())
   if (found) return found.id
 
   if (dryRun) {
@@ -116,32 +83,25 @@ async function ensureProject(teamId: string, name: string, description?: string)
     return "dry-run-project-id"
   }
 
-  const created = await linearRequest<{
+  const created = await linearGraphqlWithRetry<{
     projectCreate: { project: { id: string } }
   }>(
-    `mutation($input: ProjectCreateInput!) {
-      projectCreate(input: $input) { project { id } }
-    }`,
+    apiKey,
+    `mutation($input: ProjectCreateInput!) { projectCreate(input: $input) { project { id } } }`,
     {
-      input: {
-        teamIds: [teamId],
-        name,
-        description: description ?? "",
-      },
+      input: { teamIds: [teamId], name, description: description ?? "" },
     },
   )
-
   return created.projectCreate.project.id
 }
 
-async function listExistingTitles(teamId: string): Promise<Set<string>> {
-  const data = await linearRequest<{
+async function listExistingTitles(apiKey: string, teamId: string): Promise<Set<string>> {
+  const data = await linearGraphqlWithRetry<{
     team: { issues: { nodes: { title: string }[] } }
   }>(
+    apiKey,
     `query($teamId: String!) {
-      team(id: $teamId) {
-        issues(first: 250, orderBy: updatedAt) { nodes { title } }
-      }
+      team(id: $teamId) { issues(first: 250, orderBy: updatedAt) { nodes { title } } }
     }`,
     { teamId },
   )
@@ -149,18 +109,22 @@ async function listExistingTitles(teamId: string): Promise<Set<string>> {
 }
 
 async function createIssue(
+  apiKey: string,
   teamId: string,
   projectId: string,
-  issue: BacklogIssue,
-): Promise<void> {
+  issue: LinearBacklogIssue,
+): Promise<string | null> {
   if (dryRun) {
     console.log(`[dry-run] create: ${issue.title}`)
-    return
+    return null
   }
 
-  await linearRequest(
+  const result = await linearGraphqlWithRetry<{
+    issueCreate: { issue: { identifier: string; url: string } }
+  }>(
+    apiKey,
     `mutation($input: IssueCreateInput!) {
-      issueCreate(input: $input) { success issue { identifier url } }
+      issueCreate(input: $input) { issue { identifier url } }
     }`,
     {
       input: {
@@ -172,35 +136,60 @@ async function createIssue(
       },
     },
   )
-  console.log(`✅ ${issue.title}`)
+  return result.issueCreate.issue.url
+}
+
+async function runStatus(apiKey: string, config: LinearConfig): Promise<void> {
+  const teamId = await resolveTeamId(apiKey, config)
+  const data = await linearGraphqlWithRetry<{
+    viewer: { name: string }
+    team: { name: string; issues: { nodes: { title: string }[] } }
+  }>(
+    apiKey,
+    `query($teamId: String!) {
+      viewer { name }
+      team(id: $teamId) { name issues(first: 250) { nodes { title } } }
+    }`,
+    { teamId },
+  )
+
+  const backlog = parseLinearBacklog(readFileSync(paths.backlog, "utf-8"))
+  const existing = new Set(data.team.issues.nodes.map((i) => i.title))
+  const synced = backlog.issues.filter((i) => existing.has(i.title)).length
+  const missing = backlog.issues.length - synced
+
+  console.log(`✅ Linear connected as ${data.viewer.name}`)
+  console.log(`Team: ${data.team.name} (${config.teamKey})`)
+  console.log(`Backlog: ${synced}/${backlog.issues.length} issues present, ${missing} missing`)
+  console.log(`Board: ${config.teamUrl}`)
+  console.log(`Project: ${buildProjectUrl(config, config.projectName)}`)
 }
 
 async function main(): Promise<void> {
-  loadEnvLocal()
-  const backlogPath = resolve(__dirname, "linear-backlog.json")
-  const backlog = JSON.parse(readFileSync(backlogPath, "utf-8")) as BacklogFile
+  applyEnvRecord(loadEnvLocalFile(paths.envLocal))
+  const config = parseLinearConfig(readFileSync(paths.config, "utf-8"))
+  const backlog = parseLinearBacklog(readFileSync(paths.backlog, "utf-8"))
+
+  if (statusOnly) {
+    await runStatus(requireApiKey(), config)
+    return
+  }
 
   console.log(`Linear sync — ${backlog.issues.length} issues${dryRun ? " (dry-run)" : ""}\n`)
 
   if (dryRun && !process.env.LINEAR_API_KEY) {
-    console.log(`Project: ${backlog.projectName}`)
-    console.log(`${backlog.projectDescription ?? ""}\n`)
     for (const issue of backlog.issues) {
       console.log(`[dry-run] ${issue.title}`)
-      console.log(`  priority: ${issue.priority ?? 3} | labels: ${(issue.labels ?? []).join(", ")}`)
-      console.log(`  ${issue.description.split("\n")[0]}`)
     }
-    console.log(`\nDone — dry-run ${backlog.issues.length} issues (set LINEAR_API_KEY to push)`)
+    console.log(`\nDone — dry-run ${backlog.issues.length} issues`)
+    console.log(`Set LINEAR_API_KEY in .env.local → ${config.apiSettingsUrl}`)
     return
   }
 
-  const teamId = await resolveTeamId()
-  const projectId = await ensureProject(
-    teamId,
-    backlog.projectName,
-    backlog.projectDescription,
-  )
-  const existing = await listExistingTitles(teamId)
+  const apiKey = requireApiKey()
+  const teamId = await resolveTeamId(apiKey, config)
+  const projectId = await ensureProject(apiKey, teamId, backlog.projectName, backlog.projectDescription)
+  const existing = await listExistingTitles(apiKey, teamId)
 
   let created = 0
   let skipped = 0
@@ -211,11 +200,14 @@ async function main(): Promise<void> {
       skipped += 1
       continue
     }
-    await createIssue(teamId, projectId, issue)
+    const url = await createIssue(apiKey, teamId, projectId, issue)
+    console.log(url ? `✅ ${issue.title}\n   ${url}` : `✅ ${issue.title}`)
     created += 1
   }
 
   console.log(`\nDone — created: ${created}, skipped: ${skipped}`)
+  console.log(`Linear board: ${config.teamUrl}`)
+  console.log(`JARVIS project: ${buildProjectUrl(config, backlog.projectName)}`)
 }
 
 main().catch((error: unknown) => {

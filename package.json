@@ -30,7 +30,8 @@
     "desktop:stack": "bash scripts/jarvis-stack.sh",
     "icons:generate": "desktop-agent/.venv/bin/python scripts/generate-jarvis-icons.py",
     "linear:sync": "tsx scripts/sync-linear-backlog.ts",
-    "linear:sync:dry": "tsx scripts/sync-linear-backlog.ts --dry-run"
+    "linear:sync:dry": "tsx scripts/sync-linear-backlog.ts --dry-run",
+    "linear:status": "tsx scripts/sync-linear-backlog.ts --status"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.8",
