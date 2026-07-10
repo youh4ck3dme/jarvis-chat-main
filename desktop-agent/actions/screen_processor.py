@@ -3,21 +3,37 @@ Action: screen_processor
 Captures a screenshot or webcam photo on macOS and analyzes it using OpenRouter Vision.
 Runs in a separate thread and speaks the description directly to the user.
 """
+import json
 import os
 import time
 import subprocess
 import logging
 import threading
 from pathlib import Path
+from jarvis_voice import IRON_MAN_JARVIS_MACOS_TTS_VOICE
 from or_client import client as or_client
 
 logger = logging.getLogger("screen_processor")
 
+def _macos_tts_voice() -> str:
+    try:
+        bridge_path = Path(__file__).resolve().parent.parent / "config" / "bridge.json"
+        voice = json.loads(bridge_path.read_text(encoding="utf-8")).get(
+            "macos_tts_voice",
+            IRON_MAN_JARVIS_MACOS_TTS_VOICE,
+        )
+        return str(voice).strip() or IRON_MAN_JARVIS_MACOS_TTS_VOICE
+    except Exception:
+        return IRON_MAN_JARVIS_MACOS_TTS_VOICE
+
+
 def speak_macos(text: str):
-    """Speaks text using macOS native text-to-speech engine."""
+    """Speaks text using macOS native TTS — Daniel = British male (Iron Man JARVIS style)."""
+    voice = _macos_tts_voice()
+
     def _say():
         try:
-            subprocess.run(["say", text])
+            subprocess.run(["say", "-v", voice, text], check=False)
         except Exception as e:
             logger.error(f"say command failed: {e}")
     threading.Thread(target=_say, daemon=True).start()

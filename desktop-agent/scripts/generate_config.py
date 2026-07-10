@@ -40,6 +40,8 @@ def main():
         "DESKTOP_AGENT_CONVERSATION_ID",
         "DESKTOP_AGENT_WEB_BASE_URL",
         "DESKTOP_AGENT_LLM_PROVIDER",
+        "DESKTOP_AGENT_VOICE",
+        "DESKTOP_AGENT_MACOS_TTS_VOICE",
     )
     for key in env_keys:
         if key in os.environ:
@@ -83,6 +85,8 @@ def main():
         "health_port": int(env_vars.get("DESKTOP_AGENT_PORT", "8765")),
         "web_base_url": env_vars.get("DESKTOP_AGENT_WEB_BASE_URL", "http://127.0.0.1:3141"),
         "conversation_id": env_vars.get("DESKTOP_AGENT_CONVERSATION_ID", "desktop-voice-session"),
+        "live_voice": env_vars.get("DESKTOP_AGENT_VOICE", "Schedar"),
+        "macos_tts_voice": env_vars.get("DESKTOP_AGENT_MACOS_TTS_VOICE", "Daniel"),
         "memory_sync_enabled": True,
         "memory_sync_interval_sec": 60,
     }

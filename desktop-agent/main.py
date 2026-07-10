@@ -5,7 +5,19 @@ import sys
 import traceback
 from pathlib import Path
 
-import sounddevice as sd
+try:
+    import sounddevice as sd
+except ModuleNotFoundError:
+    venv_python = Path(__file__).resolve().parent / ".venv" / "bin" / "python"
+    print(
+        "❌ ModuleNotFoundError: sounddevice (and other deps) are installed in desktop-agent/.venv only.\n"
+        f"   Use: {venv_python} main.py\n"
+        "   Or:  ./run.sh\n"
+        "   Or:  pnpm desktop:run   (from jarvis-chat-main root)\n"
+        "   Setup: pnpm desktop:setup",
+        file=sys.stderr,
+    )
+    raise SystemExit(1) from None
 from google import genai
 from google.genai import types
 from ui import JarvisUI
@@ -32,6 +44,7 @@ from actions.dev_agent         import dev_agent
 from actions.web_search        import web_search as web_search_action
 from actions.computer_control  import computer_control
 from actions.game_updater      import game_updater
+from jarvis_voice import IRON_MAN_JARVIS_LIVE_VOICE
 
 
 def get_base_dir():
@@ -42,8 +55,10 @@ def get_base_dir():
 
 BASE_DIR        = get_base_dir()
 API_CONFIG_PATH = BASE_DIR / "config" / "api_keys.json"
+BRIDGE_CONFIG_PATH = BASE_DIR / "config" / "bridge.json"
 PROMPT_PATH     = BASE_DIR / "core" / "prompt.txt"
 LIVE_MODEL          = "models/gemini-2.5-flash-native-audio-preview-12-2025"
+DEFAULT_LIVE_VOICE  = IRON_MAN_JARVIS_LIVE_VOICE
 CHANNELS            = 1
 SEND_SAMPLE_RATE    = 16000
 RECEIVE_SAMPLE_RATE = 24000
@@ -53,6 +68,18 @@ CHUNK_SIZE          = 1024
 def _get_api_key() -> str:
     with open(API_CONFIG_PATH, "r", encoding="utf-8") as f:
         return json.load(f)["gemini_api_key"]
+
+
+def _load_bridge_config() -> dict:
+    try:
+        return json.loads(BRIDGE_CONFIG_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _live_voice_name() -> str:
+    voice = str(_load_bridge_config().get("live_voice", DEFAULT_LIVE_VOICE)).strip()
+    return voice or DEFAULT_LIVE_VOICE
 
 
 def _load_system_prompt() -> str:
@@ -570,7 +597,7 @@ class JarvisLive:
             speech_config=types.SpeechConfig(
                 voice_config=types.VoiceConfig(
                     prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                        voice_name="Charon"
+                        voice_name=_live_voice_name()
                     )
                 )
             ),
@@ -882,13 +909,12 @@ def main():
         
     start_health_server(port)
 
-    # Use face.png if it exists, otherwise symlink or fallback
-    face_img = "face.png"
-    assets_face = BASE_DIR / "assets" / "face.png"
-    if assets_face.exists():
-        face_img = str(assets_face)
+    assets_dir = BASE_DIR / "assets"
+    face_img = str(assets_dir / "face.png") if (assets_dir / "face.png").exists() else "face.png"
+    icon_img = assets_dir / "jarvis-desktop-icon.png"
+    icon_path = str(icon_img) if icon_img.exists() else None
 
-    ui = JarvisUI(face_img)
+    ui = JarvisUI(face_img, icon_path=icon_path)
 
     def runner():
         ui.wait_for_api_key()

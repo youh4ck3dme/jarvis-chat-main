@@ -75,6 +75,8 @@ def create_app() -> FastAPI:
             "agent_version": AGENT_VERSION,
             "platform": platform.system().lower(),
             "gemini_live_model": "models/gemini-2.5-flash-native-audio-preview-12-2025",
+            "live_voice": bridge.get("live_voice", "Schedar"),
+            "macos_tts_voice": bridge.get("macos_tts_voice", "Daniel"),
             "conversation_id": bridge.get("conversation_id", "desktop-voice-session"),
             "memory_sync": {
                 "enabled": _memory_sync_enabled,

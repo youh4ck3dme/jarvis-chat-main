@@ -22,10 +22,13 @@
     "refresh:baseline-browsers": "pnpm add -D baseline-browser-mapping@latest",
     "desktop:setup": "cd desktop-agent && make setup",
     "desktop:run": "cd desktop-agent && make run",
+    "desktop:app": "cd desktop-agent && make app",
     "desktop:gen-config": "cd desktop-agent && make gen-config",
     "desktop:sync-prompt": "bash scripts/sync-jarvis-prompt.sh",
     "desktop:health": "curl -s http://127.0.0.1:8765/health | python3 -m json.tool",
-    "desktop:stack": "bash scripts/jarvis-stack.sh"
+    "desktop:voice-smoke": "cd desktop-agent && .venv/bin/python scripts/jarvis-voice-smoke.py",
+    "desktop:stack": "bash scripts/jarvis-stack.sh",
+    "icons:generate": "desktop-agent/.venv/bin/python scripts/generate-jarvis-icons.py"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.8",

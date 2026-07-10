@@ -1,4 +1,4 @@
-.PHONY: setup run test sync-prompt gen-config lint clean
+.PHONY: setup run test sync-prompt gen-config lint clean app voice-smoke
 
 VENV := .venv
 PY := $(VENV)/bin/python
@@ -21,6 +21,12 @@ sync-prompt:
 
 run:
 	$(PY) main.py
+
+app:
+	bash scripts/build-macos-app.sh
+
+voice-smoke:
+	$(PY) scripts/jarvis-voice-smoke.py
 
 test:
 	$(PY) -m pytest tests/ -v
