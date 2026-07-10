@@ -55,6 +55,8 @@ import type { BuildPlan } from "@/types/build"
 import { OrbMindMap } from "@/components/workspace/orb-mind-map"
 import { readApiErrorMessage } from "@/lib/api-response"
 import {
+  clearBuildHistoryForSession,
+  countBuildHistory,
   listBuildHistory,
   saveBuildHistory,
   type BuildHistoryRecord,
@@ -201,6 +203,9 @@ export function ChatShell() {
   const [builderUnlockDialogOpen, setBuilderUnlockDialogOpen] = useState(false)
   const pendingBuildPromptRef = useRef<string | null>(null)
   const resumeAfterUnlockRef = useRef(false)
+  const pendingSendBatchRef = useRef<
+    { content: string; attachment: string; attachmentName: string }[]
+  >([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const [memoryConversationId, setMemoryConversationId] = useState<string | null>(null)
@@ -251,9 +256,12 @@ export function ChatShell() {
   }, [mounted, isLoaded, jarvisMode, isStreaming])
 
   useEffect(() => {
-    if (!mounted) return
-    listBuildHistory(50).then((records) => setBuildHistoryCount(records.length))
-  }, [mounted])
+    if (!mounted || !activeSessionId) {
+      setBuildHistoryCount(0)
+      return
+    }
+    void countBuildHistory(activeSessionId).then(setBuildHistoryCount)
+  }, [mounted, activeSessionId])
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 767px)")
@@ -805,6 +813,7 @@ export function ChatShell() {
 
         if (evaluation && artifact) {
           const saved = await saveBuildHistory({
+            sessionId: conversationId,
             userPrompt: userMessage.content,
             evaluation,
             trace,
@@ -812,7 +821,7 @@ export function ChatShell() {
             planSummary: trace.phases.find((phase) => phase.phase === "planner")?.detail,
           })
           if (saved) {
-            setBuildHistoryCount((count) => Math.min(count + 1, 50))
+            void countBuildHistory(conversationId).then(setBuildHistoryCount)
           }
         }
 
@@ -850,6 +859,23 @@ export function ChatShell() {
   )
 
   sendMessageRef.current = sendMessage
+
+  const sendMessageBatch = useCallback(
+    (items: { content: string; attachment: string; attachmentName: string }[]) => {
+      if (items.length === 0 || isStreaming) return
+      const [first, ...rest] = items
+      pendingSendBatchRef.current = rest
+      void sendMessage(first.content, first.attachment, first.attachmentName)
+    },
+    [isStreaming, sendMessage],
+  )
+
+  useEffect(() => {
+    if (isStreaming || pendingSendBatchRef.current.length === 0) return
+    const [next, ...rest] = pendingSendBatchRef.current
+    pendingSendBatchRef.current = rest
+    void sendMessage(next.content, next.attachment, next.attachmentName)
+  }, [isStreaming, sendMessage])
 
   const handleQuickSend = useCallback(
     (prompt: string) => {
@@ -985,6 +1011,9 @@ export function ChatShell() {
 
       clearConversationMemory(sessionId).catch((err: unknown) => {
         console.warn("Failed to clear session memory:", err)
+      })
+      clearBuildHistoryForSession(sessionId).catch((err: unknown) => {
+        console.warn("Failed to clear session build history:", err)
       })
     },
     [isStreaming, resetWorkspaceUi],
@@ -1151,6 +1180,7 @@ export function ChatShell() {
         hasArtifact={hasArtifact}
         showArtifactWorkspace={isBuildActive}
         onSend={sendMessage}
+        onSendBatch={sendMessageBatch}
         onStop={stopStreaming}
         isStreaming={isStreaming}
         disabled={!!error}

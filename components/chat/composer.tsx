@@ -119,8 +119,23 @@ export function isModelAvailable(
   return Boolean(key)
 }
 
+export type ComposerAttachmentItem = {
+  id: string
+  dataUrl: string
+  fileName: string
+}
+
+export type ComposerSendItem = {
+  content: string
+  attachment: string
+  attachmentName: string
+}
+
+const MAX_COMPOSER_ATTACHMENTS = 10
+
 interface ComposerProps {
   onSend: (content: string, attachment?: string, attachmentName?: string) => void
+  onSendBatch?: (items: ComposerSendItem[]) => void
   onStop: () => void
   isStreaming: boolean
   disabled?: boolean
@@ -140,8 +155,16 @@ interface ComposerProps {
   enableBuilderQuickActions?: boolean
 }
 
+function createAttachmentId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
 export function Composer({
   onSend,
+  onSendBatch,
   onStop,
   isStreaming,
   disabled,
@@ -158,9 +181,10 @@ export function Composer({
   const isMobile = useIsMobile()
   const [value, setValue] = useState("")
   const [isRecording, setIsRecording] = useState(false)
-  const [uploadedFile, setUploadedFile] = useState<string | null>(null)
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
+  const [pendingAttachments, setPendingAttachments] = useState<ComposerAttachmentItem[]>([])
   const [showFileBounce, setShowFileBounce] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const dragDepthRef = useRef(0)
   const [hasAnimated, setHasAnimated] = useState(false)
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -273,8 +297,7 @@ export function Composer({
 
   const clearComposerInput = useCallback(() => {
     setValue("")
-    setUploadedFile(null)
-    setUploadedFileName(null)
+    setPendingAttachments([])
     baseTextRef.current = ""
     finalTranscriptsRef.current = ""
     if (textareaRef.current) {
@@ -297,25 +320,46 @@ export function Composer({
   )
 
   const handleSend = useCallback(() => {
-    if ((!value.trim() && !uploadedFile) || isStreaming || disabled) return
+    if ((!value.trim() && pendingAttachments.length === 0) || isStreaming || disabled) return
     playClickSound()
 
     if (isRecording && recognitionRef.current) {
       recognitionRef.current.stop()
       setIsRecording(false)
     }
-    const attachmentKind = uploadedFile ? classifyDataUrl(uploadedFile) : null
-    const fallbackPrompt = attachmentKind ? getDefaultAttachmentPrompt(attachmentKind) : "Analyze this document"
-    onSend(value || fallbackPrompt, uploadedFile || undefined, uploadedFileName || undefined)
+
+    if (pendingAttachments.length > 1 && onSendBatch) {
+      const items: ComposerSendItem[] = pendingAttachments.map((attachment, index) => {
+        const kind = classifyDataUrl(attachment.dataUrl)
+        const fallbackPrompt = kind ? getDefaultAttachmentPrompt(kind) : "Analyze this document"
+        return {
+          content: index === 0 ? value.trim() || fallbackPrompt : fallbackPrompt,
+          attachment: attachment.dataUrl,
+          attachmentName: attachment.fileName,
+        }
+      })
+      onSendBatch(items)
+    } else {
+      const primaryAttachment = pendingAttachments[0]
+      const attachmentKind = primaryAttachment ? classifyDataUrl(primaryAttachment.dataUrl) : null
+      const fallbackPrompt = attachmentKind
+        ? getDefaultAttachmentPrompt(attachmentKind)
+        : "Analyze this document"
+      onSend(
+        value || fallbackPrompt,
+        primaryAttachment?.dataUrl,
+        primaryAttachment?.fileName,
+      )
+    }
+
     setValue("")
-    setUploadedFile(null)
-    setUploadedFileName(null)
+    setPendingAttachments([])
     baseTextRef.current = ""
     finalTranscriptsRef.current = ""
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
     }
-  }, [value, uploadedFile, uploadedFileName, isStreaming, disabled, onSend, isRecording, playClickSound])
+  }, [value, pendingAttachments, isStreaming, disabled, onSend, onSendBatch, isRecording, playClickSound])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -327,38 +371,97 @@ export function Composer({
     [handleSend],
   )
 
-  const attachFile = useCallback(
-    async (file: File) => {
+  const attachFiles = useCallback(async (files: FileList | File[]) => {
+    const fileArray = Array.from(files)
+    if (fileArray.length === 0) return
+
+    const parsedAttachments: ComposerAttachmentItem[] = []
+
+    for (const file of fileArray) {
+      if (parsedAttachments.length + pendingAttachments.length >= MAX_COMPOSER_ATTACHMENTS) {
+        break
+      }
+
       try {
         const parsed = await readAttachmentFromFile(file)
-        setUploadedFile(parsed.dataUrl)
-        setUploadedFileName(parsed.fileName)
-        setShowFileBounce(true)
-        setTimeout(() => setShowFileBounce(false), 400)
+        parsedAttachments.push({
+          id: createAttachmentId(),
+          dataUrl: parsed.dataUrl,
+          fileName: parsed.fileName,
+        })
       } catch (error) {
         console.error("Unsupported attachment:", error)
       }
-    },
-    [],
-  )
+    }
+
+    if (parsedAttachments.length === 0) return
+
+    setPendingAttachments((current) =>
+      [...current, ...parsedAttachments].slice(0, MAX_COMPOSER_ATTACHMENTS),
+    )
+    setShowFileBounce(true)
+    setTimeout(() => setShowFileBounce(false), 400)
+  }, [pendingAttachments.length])
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       playClickSound()
 
-      const file = e.target.files?.[0]
-      if (file) {
-        void attachFile(file)
+      const files = e.target.files
+      if (files && files.length > 0) {
+        void attachFiles(files)
       }
       e.target.value = ""
     },
-    [attachFile, playClickSound],
+    [attachFiles, playClickSound],
   )
 
-  const removeFile = useCallback(() => {
-    setUploadedFile(null)
-    setUploadedFileName(null)
+  const removeAttachment = useCallback((attachmentId: string) => {
+    setPendingAttachments((current) => current.filter((attachment) => attachment.id !== attachmentId))
   }, [])
+
+  const hasFileDrag = useCallback((event: React.DragEvent) => {
+    return Array.from(event.dataTransfer.types).includes("Files")
+  }, [])
+
+  const handleDragEnter = useCallback(
+    (event: React.DragEvent) => {
+      if (!hasFileDrag(event) || isStreaming || disabled) return
+      event.preventDefault()
+      dragDepthRef.current += 1
+      setIsDragOver(true)
+    },
+    [disabled, hasFileDrag, isStreaming],
+  )
+
+  const handleDragLeave = useCallback((event: React.DragEvent) => {
+    event.preventDefault()
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1)
+    if (dragDepthRef.current === 0) {
+      setIsDragOver(false)
+    }
+  }, [])
+
+  const handleDragOver = useCallback(
+    (event: React.DragEvent) => {
+      if (!hasFileDrag(event) || isStreaming || disabled) return
+      event.preventDefault()
+      event.dataTransfer.dropEffect = "copy"
+    },
+    [disabled, hasFileDrag, isStreaming],
+  )
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent) => {
+      if (!hasFileDrag(event) || isStreaming || disabled) return
+      event.preventDefault()
+      dragDepthRef.current = 0
+      setIsDragOver(false)
+      playClickSound()
+      void attachFiles(event.dataTransfer.files)
+    },
+    [attachFiles, disabled, hasFileDrag, isStreaming, playClickSound],
+  )
 
   const handlePaste = useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -372,52 +475,115 @@ export function Composer({
           if (file) {
             e.preventDefault()
             playClickSound()
-            void attachFile(file)
+            void attachFiles([file])
             break
           }
         }
       }
     },
-    [attachFile, playClickSound],
+    [attachFiles, playClickSound],
   )
 
-  const uploadedFileKind = uploadedFile ? classifyDataUrl(uploadedFile) : null
+  const renderAttachmentChip = (
+    attachment: ComposerAttachmentItem,
+    variant: "workspace" | "default",
+  ) => {
+    const attachmentKind = classifyDataUrl(attachment.dataUrl)
+
+    if (variant === "workspace") {
+      return (
+        <div
+          key={attachment.id}
+          className="flex w-fit max-w-full items-center gap-2 rounded-xl border border-[#333] bg-[#1a1a1a] px-2 py-1.5"
+        >
+          {attachmentKind === "image" ? (
+            <Image
+              src={attachment.dataUrl}
+              alt="Uploaded attachment"
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded object-cover"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-[#262626] text-[10px] font-semibold uppercase text-[#aaa]">
+              {attachmentKind}
+            </div>
+          )}
+          <span className="truncate text-[12px] text-[#ccc]">{attachment.fileName}</span>
+          <button
+            type="button"
+            onClick={() => removeAttachment(attachment.id)}
+            className="rounded p-1 text-[#777] hover:bg-[#262626] hover:text-[#ddd]"
+            aria-label={`Remove attachment ${attachment.fileName}`}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )
+    }
+
+    return (
+      <div key={attachment.id} className={cn("relative shrink-0", showFileBounce && "image-bounce")}>
+        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-stone-200 bg-stone-100 dark:border-zinc-800 dark:bg-zinc-800 md:h-12 md:w-12">
+          {attachmentKind === "image" ? (
+            <Image
+              src={attachment.dataUrl}
+              alt="Uploaded attachment"
+              width={48}
+              height={48}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div
+              className="flex h-full w-full flex-col items-center justify-center p-1 text-center text-stone-500"
+              title={attachment.fileName}
+            >
+              <FileText className="mb-0.5 h-4 w-4 shrink-0" />
+              <span className="w-full truncate text-[9px] font-medium uppercase">
+                {attachmentKind || attachment.fileName.split(".").pop() || "DOC"}
+              </span>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => removeAttachment(attachment.id)}
+          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-stone-800 text-white transition-colors hover:bg-stone-900 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+          aria-label={`Remove attachment ${attachment.fileName}`}
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    )
+  }
+
+  const canSend = Boolean(value.trim() || pendingAttachments.length > 0)
   const currentModel = AI_MODELS.find((m) => m.id === selectedModel) || AI_MODELS[0]
   const isWorkspace = variant === "workspace"
 
   if (isWorkspace) {
     return (
-      <div className="pointer-events-auto">
-        {uploadedFile && (
-          <div className="mb-2 flex w-fit max-w-full items-center gap-2 rounded-xl border border-[#333] bg-[#1a1a1a] px-2 py-1.5">
-            {uploadedFileKind === "image" ? (
-              <Image
-                src={uploadedFile}
-                alt="Uploaded attachment"
-                width={32}
-                height={32}
-                className="h-8 w-8 rounded object-cover"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded bg-[#262626] text-[10px] font-semibold uppercase text-[#aaa]">
-                {uploadedFileKind}
-              </div>
-            )}
-            <span className="truncate text-[12px] text-[#ccc]">{uploadedFileName}</span>
-            <button
-              type="button"
-              onClick={removeFile}
-              className="rounded p-1 text-[#777] hover:bg-[#262626] hover:text-[#ddd]"
-              aria-label="Remove attachment"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+      <div
+        className="pointer-events-auto"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {pendingAttachments.length > 0 ? (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {pendingAttachments.map((attachment) => renderAttachmentChip(attachment, "workspace"))}
           </div>
-        )}
-        <div className="flex items-center gap-2 rounded-2xl border border-[#2f2f2f] bg-[#1c1c1c] px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+        ) : null}
+        <div className="relative flex items-center gap-2 rounded-2xl border border-[#2f2f2f] bg-[#1c1c1c] px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+          {isDragOver ? (
+            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-emerald-500/60 bg-emerald-950/30 text-[12px] font-medium text-emerald-300">
+              Pusti súbory sem (max {MAX_COMPOSER_ATTACHMENTS})
+            </div>
+          ) : null}
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             accept={JARVIS_ATTACHMENT_ACCEPT}
             onChange={handleFileSelect}
             className="hidden"
@@ -671,12 +837,10 @@ export function Composer({
           ) : (
             <button
               onClick={handleSend}
-              disabled={(!value.trim() && !uploadedFile) || disabled}
+              disabled={!canSend || disabled}
               className={cn(
                 "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform",
-                (!value.trim() && !uploadedFile) || disabled
-                  ? "cursor-not-allowed opacity-40"
-                  : "hover:scale-105",
+                !canSend || disabled ? "cursor-not-allowed opacity-40" : "hover:scale-105",
               )}
               aria-label="Send message"
             >
@@ -696,41 +860,27 @@ export function Composer({
             "flex flex-col gap-2 md:gap-3 p-3 md:p-4 bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 transition-all duration-200 overflow-hidden relative rounded-3xl",
             "focus-within:border-stone-300 dark:focus-within:border-zinc-700 focus-within:ring-2 focus-within:ring-stone-200 dark:focus-within:ring-zinc-800",
           )}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
           style={{
             boxShadow:
               "rgba(14, 63, 126, 0.06) 0px 0px 0px 1px, rgba(42, 51, 69, 0.06) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.06) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.06) 0px 6px 6px -3px, rgba(14, 63, 126, 0.06) 0px 12px 12px -6px, rgba(14, 63, 126, 0.06) 0px 24px 24px -12px",
           }}
         >
-          <div className="flex gap-2 items-center">
-            {uploadedFile && (
-              <div className={cn("relative shrink-0", showFileBounce && "image-bounce")}>
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden border border-stone-200 dark:border-zinc-800 bg-stone-100 dark:bg-zinc-800 flex items-center justify-center">
-                  {uploadedFileKind === "image" ? (
-                    <Image
-                      src={uploadedFile}
-                      alt="Uploaded image"
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-stone-500 w-full h-full p-1 text-center" title={uploadedFileName || "Document"}>
-                      <FileText className="w-4 h-4 mb-0.5 shrink-0" />
-                      <span className="text-[9px] font-medium uppercase truncate w-full">
-                        {uploadedFileKind || uploadedFileName?.split(".").pop() || "DOC"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={removeFile}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-stone-800 hover:bg-stone-900 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white rounded-full flex items-center justify-center transition-colors"
-                  aria-label="Remove attachment"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+          {isDragOver ? (
+            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-3xl border-2 border-dashed border-emerald-500/60 bg-emerald-50/80 text-sm font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+              Drop files here (max {MAX_COMPOSER_ATTACHMENTS})
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap items-center gap-2">
+            {pendingAttachments.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {pendingAttachments.map((attachment) => renderAttachmentChip(attachment, "default"))}
               </div>
-            )}
+            ) : null}
 
             <textarea
               ref={textareaRef}
@@ -777,12 +927,10 @@ export function Composer({
             ) : (
               <button
                 onClick={handleSend}
-                disabled={(!value.trim() && !uploadedFile) || disabled}
+                disabled={!canSend || disabled}
                 className={cn(
                   "relative h-9 w-9 shrink-0 transition-all rounded-full flex items-center justify-center",
-                  (!value.trim() && !uploadedFile) || disabled
-                    ? "opacity-50 cursor-not-allowed"
-                    : "cursor-pointer hover:scale-105",
+                  !canSend || disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:scale-105",
                 )}
                 aria-label="Send message"
               >
@@ -795,6 +943,7 @@ export function Composer({
             <input
               ref={fileInputRef}
               type="file"
+              multiple
               accept={JARVIS_ATTACHMENT_ACCEPT}
               onChange={handleFileSelect}
               className="hidden"

@@ -106,7 +106,7 @@ describe("Composer", () => {
     fireEvent.change(fileInput, { target: { files: [file] } })
 
     await waitFor(() => {
-      expect(screen.getByAltText("Uploaded image")).toBeInTheDocument()
+      expect(screen.getByAltText("Uploaded attachment")).toBeInTheDocument()
     })
 
     await user.click(screen.getByRole("button", { name: "Send message" }))
@@ -146,6 +146,70 @@ describe("Composer", () => {
     await user.click(screen.getByRole("button", { name: "Stop generating" }))
 
     expect(onStop).toHaveBeenCalledTimes(1)
+  })
+
+  it("supports selecting multiple attachments before send", async () => {
+    const { readAttachmentFromFile } = await import("@/lib/chat/jarvis-attachments")
+    const mockedReader = vi.mocked(readAttachmentFromFile)
+
+    mockedReader
+      .mockResolvedValueOnce({
+        dataUrl: "data:image/png;base64,ZmFrZQ==",
+        fileName: "diagram.png",
+        kind: "image",
+      })
+      .mockResolvedValueOnce({
+        dataUrl: "data:application/pdf;base64,ZmFrZQ==",
+        fileName: "brief.pdf",
+        kind: "pdf",
+      })
+
+    const onSendBatch = vi.fn()
+    render(<Composer {...defaultProps} onSendBatch={onSendBatch} />)
+
+    const fileInput = screen.getByLabelText("Upload file") as HTMLInputElement
+    fireEvent.change(fileInput, {
+      target: {
+        files: [
+          new File(["fake"], "diagram.png", { type: "image/png" }),
+          new File(["fake"], "brief.pdf", { type: "application/pdf" }),
+        ],
+      },
+    })
+
+    await waitFor(() => {
+      expect(screen.getAllByAltText("Uploaded attachment")).toHaveLength(1)
+      expect(screen.getByText("pdf")).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }))
+
+    expect(onSendBatch).toHaveBeenCalledWith([
+      {
+        content: "Describe and analyze this image in detail.",
+        attachment: "data:image/png;base64,ZmFrZQ==",
+        attachmentName: "diagram.png",
+      },
+      {
+        content: "Read and analyze this PDF document.",
+        attachment: "data:application/pdf;base64,ZmFrZQ==",
+        attachmentName: "brief.pdf",
+      },
+    ])
+  })
+
+  it("shows a drop overlay when files are dragged over the composer", () => {
+    render(<Composer {...defaultProps} />)
+
+    const dropTarget = screen.getByRole("textbox", { name: "Message input" }).parentElement
+      ?.parentElement
+    expect(dropTarget).toBeTruthy()
+
+    fireEvent.dragEnter(dropTarget!, {
+      dataTransfer: { types: ["Files"], files: [] },
+    })
+
+    expect(screen.getByText(/Drop files here/i)).toBeInTheDocument()
   })
 
   it("plays click audio when sending a message", async () => {

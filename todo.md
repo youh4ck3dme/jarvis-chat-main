@@ -36,7 +36,7 @@
 - [x] `lib/chat/jarvis-attachments.ts` — HEIC→JPEG, MIME routing, system prompt
 - [x] Composer accept všetkých formátov; API multimodal pre image/PDF, inline HTML
 - [x] Export tlačidlá v assistant správach (HTML/PNG/PDF)
-- [x] Testy: **210** unit + **11** E2E
+- [x] Testy: **216** unit + **11** E2E
 
 ### P16 — Ops & bezpečnosť (Prompt A)
 - [x] Builder heslo zmenené z `2366` → **`223513900`**
@@ -52,7 +52,7 @@
 |-----|------|
 | Supabase sync | Vyžaduje prihlásenie (magic link) + env na Vercel |
 | Chat sessions | localStorage primárne; cloud sync pod `auth.users.id` |
-| Build history | Globálna (IndexedDB), nie per-session |
+| Build history | Per-session (IndexedDB), max 50 na chat |
 | Story nudge | 15s delay v Chat mode |
 | Playwright snapshot | `darwin.png` — môže sa líšiť na Linux CI |
 | Globálny gitignore | `~/.gitignore_global` blokuje `app/api/build/` — výnimka v `.gitignore` |
@@ -66,9 +66,9 @@
 - [x] Redeploy produkcie po zmene hesla — overené: `223513900` OK, `2366` zamietnuté
 
 ### P2 — UX
-- [ ] História buildov per-session
-- [ ] Drag & drop + hromadný upload príloh
-- [ ] Jasnejší copy v menu: nový chat ≠ vymazanie pamäte
+- [x] História buildov per-session
+- [x] Drag & drop + hromadný upload príloh
+- [x] Jasnejší copy v menu: nový chat ≠ vymazanie pamäte
 
 ### P3 — Technický dlh
 - [ ] Playwright snapshot cross-platform (Linux baseline)
@@ -91,7 +91,7 @@
 
 ```bash
 pnpm dev                    # http://127.0.0.1:3141/chat
-pnpm test                   # 210 Vitest
+pnpm test                   # 216 Vitest
 pnpm test:e2e:iphone        # 11 Playwright
 pnpm test:all               # Vitest + E2E
 pnpm build                  # production build

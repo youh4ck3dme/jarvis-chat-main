@@ -148,6 +148,7 @@ describe("runBuildPipeline + saveBuildHistory", () => {
     expect(result.artifact).toBeTruthy()
 
     const saved = await saveBuildHistory({
+      sessionId: "session-test",
       userPrompt: "Build a coffee shop page",
       evaluation: result.evaluation!,
       trace: result.trace,

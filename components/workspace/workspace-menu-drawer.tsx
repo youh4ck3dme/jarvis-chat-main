@@ -115,12 +115,15 @@ export function WorkspaceMenuDrawer({
   const loadHistory = useCallback(async () => {
     setIsLoadingHistory(true)
     try {
-      const records = await listBuildHistory(50)
+      const records = await listBuildHistory({
+        sessionId: activeSessionId ?? undefined,
+        limit: 50,
+      })
       setHistoryRecords(records)
     } finally {
       setIsLoadingHistory(false)
     }
-  }, [])
+  }, [activeSessionId])
 
   useEffect(() => {
     if (!open) {
@@ -128,7 +131,7 @@ export function WorkspaceMenuDrawer({
       return
     }
     void loadHistory()
-  }, [open, loadHistory])
+  }, [open, loadHistory, activeSessionId])
 
   const closeAndRun = (action: () => void) => {
     onOpenChange(false)
@@ -163,7 +166,8 @@ export function WorkspaceMenuDrawer({
             {view === "main" && "Navigácia, história, pamäť a export"}
             {view === "conversations" && `${chatSessions.length} uložených konverzácií`}
             {view === "memory" && "Pamäť viazaná na každú konverzáciu samostatne"}
-            {view === "history" && `${buildHistoryCount} uložených záznamov (max 50)`}
+            {view === "history" &&
+              `${buildHistoryCount} buildov v tejto konverzácii (max 50 na chat)`}
             {view === "help" && "Planner → Stream → Evaluator → Refine → Preview"}
           </SheetDescription>
         </SheetHeader>
@@ -174,7 +178,7 @@ export function WorkspaceMenuDrawer({
               <MenuAction
                 icon={MessageSquarePlus}
                 label="Nový chat"
-                description="Začne novú konverzáciu — stará zostane v zozname"
+                description="Nová konverzácia — pamäť a buildy ostávajú v pôvodnom chate"
                 onClick={() => closeAndRun(onNewChat)}
               />
               <MenuAction
@@ -192,15 +196,15 @@ export function WorkspaceMenuDrawer({
                 label="História buildov"
                 description={
                   buildHistoryCount > 0
-                    ? `${buildHistoryCount} uložených buildov`
-                    : "Zatiaľ žiadne buildy"
+                    ? `${buildHistoryCount} buildov v aktuálnom chate`
+                    : "Buildy viazané na aktuálnu konverzáciu"
                 }
                 onClick={() => setView("history")}
               />
               <MenuAction
                 icon={Brain}
                 label="Pamäť Jarvisa"
-                description="Prehľad pamäte pre každú konverzáciu"
+                description="Pamäť je per konverzácia — nový chat ju nemaže"
                 onClick={() => setView("memory")}
               />
               <MenuAction
@@ -345,7 +349,7 @@ export function WorkspaceMenuDrawer({
                 <p className="text-[12px] text-[#666]">Načítavam históriu…</p>
               ) : historyRecords.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-[#333] bg-[#1a1a1a] px-3 py-6 text-center text-[12px] text-[#666]">
-                  Zatiaľ žiadne buildy. Pošli prompt a výsledok sa uloží sem.
+                  Zatiaľ žiadne buildy v tejto konverzácii. Po build prompte sa výsledok uloží sem.
                 </p>
               ) : (
                 historyRecords.map((record) => (

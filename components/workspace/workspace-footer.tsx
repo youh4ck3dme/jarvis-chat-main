@@ -2,7 +2,7 @@
 
 import { ChevronLeft, Code2, Eye, Play } from "lucide-react"
 
-import { Composer, type AIModel } from "@/components/chat/composer"
+import { Composer, type AIModel, type ComposerSendItem } from "@/components/chat/composer"
 import { cn } from "@/lib/utils"
 
 import type { ArtifactTab } from "@/components/chat/chat-shell"
@@ -18,6 +18,7 @@ interface WorkspaceFooterProps {
   /** Show Preview/Code tabs during planner/stream even before HTML exists */
   showArtifactWorkspace?: boolean
   onSend: (content: string, attachment?: string, attachmentName?: string) => void
+  onSendBatch?: (items: ComposerSendItem[]) => void
   onStop: () => void
   isStreaming: boolean
   disabled?: boolean
@@ -42,6 +43,7 @@ export function WorkspaceFooter({
   hasArtifact,
   showArtifactWorkspace = false,
   onSend,
+  onSendBatch,
   onStop,
   isStreaming,
   disabled,
@@ -126,6 +128,7 @@ export function WorkspaceFooter({
         <Composer
           variant="workspace"
           onSend={onSend}
+          onSendBatch={onSendBatch}
           onStop={onStop}
           isStreaming={isStreaming}
           disabled={disabled}
