@@ -102,7 +102,7 @@ export function OrbMindMap({
   return (
     <div
       className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center overflow-hidden bg-[#050505]",
+        "absolute inset-0 flex flex-col items-center justify-center overflow-hidden bg-canvas",
         className,
       )}
       data-testid="orb-mind-map"

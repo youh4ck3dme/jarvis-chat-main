@@ -39,8 +39,8 @@ export default function AuthCallbackPage() {
   }, [router]);
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-[#111111] px-6 text-center text-[#e8e8e8]">
-      <p className="text-sm text-[#ccc]">{message}</p>
+    <main className="flex min-h-dvh items-center justify-center bg-canvas px-6 text-center text-fg">
+      <p className="text-sm text-fg/80">{message}</p>
     </main>
   );
 }

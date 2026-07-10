@@ -57,8 +57,8 @@ const MEMORY_TYPE_STYLES: Record<MemoryType, { badge: string; card: string }> = 
     card: "border-pink-900/30 bg-pink-950/20",
   },
   context: {
-    badge: "bg-[#2a2a2a] text-[#aaa] border-[#333]",
-    card: "border-[#2a2a2a] bg-[#1a1a1a]",
+    badge: "bg-border/50 text-subtle border-border",
+    card: "border-border bg-surface",
   },
   summarization: {
     badge: "bg-indigo-950/60 text-indigo-400 border-indigo-900/50",
@@ -186,17 +186,17 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
     >
       <SheetContent
         side="right"
-        className="flex w-full flex-col border-[#2a2a2a] bg-[#141414] p-0 text-[#e8e8e8] sm:max-w-md [&>button]:rounded-lg [&>button]:border [&>button]:border-[#2a2a2a] [&>button]:bg-[#1a1a1a] [&>button]:text-[#888] [&>button]:opacity-100 [&>button]:hover:bg-[#222] [&>button]:hover:text-[#ddd]"
+        className="flex w-full flex-col border-border bg-background p-0 text-fg sm:max-w-md [&>button]:rounded-lg [&>button]:border [&>button]:border-border [&>button]:bg-surface [&>button]:text-muted-foreground [&>button]:opacity-100 [&>button]:hover:bg-surface [&>button]:hover:text-fg/80"
       >
-        <SheetHeader className="border-b border-[#2a2a2a] px-4 py-4">
+        <SheetHeader className="border-b border-border px-4 py-4">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] text-emerald-400">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-emerald-400">
                 <Brain className="h-4 w-4" />
               </span>
               <div>
-                <SheetTitle className="text-[15px] text-[#f0f0f0]">Pamäť Jarvisa</SheetTitle>
-                <SheetDescription className="text-[12px] text-[#777]">
+                <SheetTitle className="text-[15px] text-fg">Pamäť Jarvisa</SheetTitle>
+                <SheetDescription className="text-[12px] text-muted-foreground">
                   {sessionTitle
                     ? `Konverzácia: ${sessionTitle} · lokálne v prehliadači`
                     : "Dlhodobý kontext konverzácie (lokálne v prehliadači)"}
@@ -206,38 +206,38 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
           </div>
         </SheetHeader>
 
-        <div className="border-b border-[#2a2a2a] px-4 py-3">
+        <div className="border-b border-border px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] uppercase tracking-wide text-[#666]">Záznamov</p>
-              <p className="text-2xl font-semibold text-[#f0f0f0]">{memoryData.stats.totalMemories}</p>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Záznamov</p>
+              <p className="text-2xl font-semibold text-fg">{memoryData.stats.totalMemories}</p>
             </div>
             <div className="text-right">
-              <p className="text-[11px] uppercase tracking-wide text-[#666]">Aktualizované</p>
-              <p className="text-[12px] font-medium text-[#aaa]">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Aktualizované</p>
+              <p className="text-[12px] font-medium text-subtle">
                 {memoryData.stats.lastUpdated ? formatDate(memoryData.stats.lastUpdated) : "Nikdy"}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="space-y-3 border-b border-[#2a2a2a] px-4 py-3">
+        <div className="space-y-3 border-b border-border px-4 py-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#666]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Hľadať v pamäti…"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-9 w-full rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] pl-9 pr-3 text-[13px] text-[#ececec] placeholder:text-[#666] focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
+                className="h-9 w-full rounded-xl border border-border bg-surface pl-9 pr-3 text-[13px] text-fg placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
               />
             </div>
             <Button
               onClick={() => void handleClearAll()}
               variant="ghost"
               size="icon"
-              className="h-9 w-9 shrink-0 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:border-red-900/50 hover:bg-red-950/30 hover:text-red-400"
+              className="h-9 w-9 shrink-0 rounded-xl border border-border bg-surface text-muted-foreground hover:border-red-900/50 hover:bg-red-950/30 hover:text-red-400"
               aria-label="Vymazať celú pamäť"
             >
               <Trash2 className="h-4 w-4" />
@@ -253,8 +253,8 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
                 className={cn(
                   "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
                   selectedType === filter.id
-                    ? "border-[#3a3a3a] bg-[#222] text-[#f0f0f0]"
-                    : "border-[#2a2a2a] bg-[#1a1a1a] text-[#777] hover:border-[#333] hover:text-[#bbb]",
+                    ? "border-border bg-surface text-fg"
+                    : "border-border bg-surface text-muted-foreground hover:border-border hover:text-fg/70",
                 )}
               >
                 {filter.label}
@@ -266,14 +266,14 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
         <ScrollArea className="min-h-0 flex-1 px-4 py-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#333] border-t-emerald-500" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-emerald-500" />
             </div>
           ) : memories.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#333] bg-[#1a1a1a] px-4 py-10 text-center">
-              <p className="text-[13px] font-medium text-[#aaa]">
+            <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-10 text-center">
+              <p className="text-[13px] font-medium text-subtle">
                 {searchQuery ? "Žiadne zhody vo vyhľadávaní" : "Zatiaľ žiadna pamäť"}
               </p>
-              <p className="mt-1 text-[12px] text-[#666]">
+              <p className="mt-1 text-[12px] text-muted-foreground">
                 Po rozhovore sa tu objavia fakty, preferencie a kontext.
               </p>
             </div>
@@ -305,7 +305,7 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-[#666]">{memory.importance}% dôležitosť</span>
+                      <span className="text-[10px] text-muted-foreground">{memory.importance}% dôležitosť</span>
                     </div>
 
                     <button
@@ -317,7 +317,7 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
                     >
                       <p
                         className={cn(
-                          "text-[13px] leading-relaxed text-[#ddd]",
+                          "text-[13px] leading-relaxed text-fg/80",
                           !isExpanded && "line-clamp-2",
                         )}
                       >
@@ -328,8 +328,8 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
                     </button>
 
                     {isExpanded ? (
-                      <div className="mt-2 border-t border-[#2a2a2a]/80 pt-2">
-                        <p className="text-[11px] text-[#777]">
+                      <div className="mt-2 border-t border-border/80 pt-2">
+                        <p className="text-[11px] text-muted-foreground">
                           {formatDate(memory.createdAt)} · Istota{" "}
                           {Math.round(memory.metadata.confidence * 100)}%
                         </p>
@@ -338,7 +338,7 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
                             {memory.metadata.tags.map((tag) => (
                               <span
                                 key={tag}
-                                className="rounded-full border border-[#333] bg-[#1a1a1a] px-2 py-0.5 text-[10px] text-[#888]"
+                                className="rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] text-muted-foreground"
                               >
                                 {tag}
                               </span>
@@ -352,7 +352,7 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
                       <button
                         type="button"
                         onClick={() => void handleDeleteEntry(memory.id)}
-                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#777] transition-colors hover:bg-red-950/30 hover:text-red-400"
+                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-red-950/30 hover:text-red-400"
                         aria-label="Zmazať záznam"
                       >
                         <Trash2 className="h-3 w-3" />
@@ -366,8 +366,8 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
           )}
         </ScrollArea>
 
-        <div className="border-t border-[#2a2a2a] px-4 py-3">
-          <p className="text-center text-[11px] text-[#666]">
+        <div className="border-t border-border px-4 py-3">
+          <p className="text-center text-[11px] text-muted-foreground">
             Pamäť je uložená lokálne — neodosiela sa na server.
           </p>
         </div>

@@ -33,7 +33,7 @@ export function BuildTelemetry({
   const isPlanning = activePhase === "planner"
   const showStoryboard = isPlanning || Boolean(plannerPlan)
   return (
-    <div className="shrink-0 border-b border-[#2a2a2a] bg-[#111111]">
+    <div className="shrink-0 border-b border-border bg-background">
       <div className="space-y-3 px-3 py-3 md:px-4">
         <BuildMetrics
           htmlChars={htmlChars}

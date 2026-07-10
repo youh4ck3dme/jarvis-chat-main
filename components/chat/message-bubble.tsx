@@ -202,7 +202,7 @@ export function MessageBubble({ message, isStreaming = false, onEdit, onDelete }
                 )}
               </div>
             ) : message.narrative ? (
-              <p className="border-l-2 border-emerald-500/35 pl-3 text-sm italic leading-7 text-[#9a9aaa]">
+              <p className="border-l-2 border-border pl-3 text-sm italic leading-7 text-subtle">
                 {message.content}
               </p>
             ) : (

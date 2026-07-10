@@ -18,7 +18,7 @@ export function PlannerPhaseOverlay({
   return (
     <div
       className={cn(
-        "absolute inset-0 z-20 flex flex-col items-center justify-center overflow-hidden bg-[#0a0a0f]/92 backdrop-blur-sm",
+        "absolute inset-0 z-20 flex flex-col items-center justify-center overflow-hidden bg-background/92 backdrop-blur-sm",
         className,
       )}
       data-testid="planner-phase-overlay"

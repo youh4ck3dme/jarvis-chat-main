@@ -55,7 +55,7 @@ export function WorkspaceHeader({
   return (
     <header
       className={cn(
-        "flex min-h-12 shrink-0 items-center justify-between gap-1 border-b border-[#2a2a2a] bg-[#141414] px-2 pt-[env(safe-area-inset-top)] sm:h-12 sm:gap-2 sm:px-3 md:px-4",
+        "z-20 flex min-h-12 shrink-0 items-center justify-between gap-1 border-b border-border/60 bg-background/80 px-2 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:h-12 sm:gap-2 sm:px-3 md:px-4",
         className,
       )}
       data-testid="workspace-header"
@@ -64,14 +64,14 @@ export function WorkspaceHeader({
         <button
           type="button"
           onClick={onOpenMenu}
-          className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] transition-colors hover:bg-[#222] hover:text-[#ddd] sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+          className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface text-muted-foreground transition-colors hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
           aria-label="Open workspace menu"
         >
           <Menu className="h-4 w-4" />
         </button>
 
         <span
-          className="jarvis-header-title-mobile max-w-[6.5rem] truncate text-[12px] font-medium text-[#c8c8c8] sm:hidden"
+          className="jarvis-header-title-mobile max-w-[6.5rem] truncate text-[12px] font-medium text-fg/80 sm:hidden"
           title={projectName}
         >
           {projectName}
@@ -86,17 +86,17 @@ export function WorkspaceHeader({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="hidden items-center gap-1 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-1.5 text-[13px] font-medium text-[#e0e0e0] transition-colors hover:border-[#333] hover:bg-[#222] sm:inline-flex"
+              className="hidden items-center gap-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-[13px] font-medium text-fg transition-colors hover:border-border hover:bg-surface sm:inline-flex"
               aria-label="Project menu"
             >
               <span className="max-w-[10rem] truncate">{projectName}</span>
-              <ChevronDown className="h-3.5 w-3.5 text-[#666]" />
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuPortal>
             <DropdownMenuContent
               align="start"
-              className="z-[9999] w-56 rounded-xl border border-[#333] bg-[#1c1c1c] p-2 text-[#e8e8e8] shadow-xl"
+              className="z-[9999] w-56 rounded-xl border border-border bg-panel p-2 text-fg shadow-xl"
             >
               {isRenaming ? (
                 <div className="space-y-2 px-1 py-1">
@@ -107,7 +107,7 @@ export function WorkspaceHeader({
                       if (event.key === "Enter") commitRename()
                       if (event.key === "Escape") setIsRenaming(false)
                     }}
-                    className="w-full rounded-lg border border-[#333] bg-[#111] px-2.5 py-1.5 text-[13px] text-[#ececec] focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                    className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-ring/40"
                     aria-label="Project name"
                     autoFocus
                   />
@@ -124,16 +124,16 @@ export function WorkspaceHeader({
                 <>
                   <DropdownMenuItem
                     onClick={() => setIsRenaming(true)}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-border/50"
                   >
-                    <Pencil className="h-3.5 w-3.5 text-[#888]" />
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                     Premenovať projekt
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={onOpenMenu}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-border/50"
                   >
-                    <Menu className="h-3.5 w-3.5 text-[#888]" />
+                    <Menu className="h-3.5 w-3.5 text-muted-foreground" />
                     Workspace menu
                   </DropdownMenuItem>
                 </>
@@ -156,7 +156,7 @@ export function WorkspaceHeader({
         onClick={onOpenSettings}
         variant="ghost"
         size="icon"
-        className="h-11 w-11 min-h-11 min-w-11 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:bg-[#222] hover:text-[#ddd] sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+        className="h-11 w-11 min-h-11 min-w-11 rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
         aria-label="Open settings"
       >
         <Settings className="h-4 w-4" />

@@ -40,35 +40,41 @@
 }
 
 .dark {
-  --jarvis-bg: #111111;
-  --jarvis-surface: #1a1a1a;
-  --jarvis-surface-raised: #1c1c1c;
-  --jarvis-header: #141414;
-  --jarvis-border: #2a2a2a;
+  --jarvis-canvas: #050505;
+  --jarvis-bg: #000000;
+  --jarvis-panel: #0a0a0a;
+  --jarvis-surface: #111111;
+  --jarvis-surface-raised: #111111;
+  --jarvis-header: #000000;
+  --jarvis-border: #222222;
   --jarvis-border-subtle: #222222;
-  --jarvis-text: #ececec;
-  --jarvis-text-muted: #888888;
+  --jarvis-border-focus: #555555;
+  --jarvis-text: #ededed;
+  --jarvis-fg: #ededed;
+  --jarvis-text-muted: #666666;
+  --jarvis-text-secondary: #a1a1a1;
+  --jarvis-scrollbar: #333333;
   --jarvis-accent-chat: #10b981;
   --jarvis-accent-builder: #f59e0b;
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #000000;
+  --foreground: #ededed;
+  --card: #0a0a0a;
+  --card-foreground: #ededed;
+  --popover: #0a0a0a;
+  --popover-foreground: #ededed;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #111111;
+  --secondary-foreground: #ededed;
+  --muted: #111111;
+  --muted-foreground: #666666;
+  --accent: #111111;
+  --accent-foreground: #ededed;
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  --border: #222222;
+  --input: #222222;
+  --ring: #555555;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -86,7 +92,12 @@
 
 @theme inline {
   --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", Menlo, ui-monospace, monospace;
+  --color-canvas: var(--jarvis-canvas);
+  --color-panel: var(--jarvis-panel);
+  --color-surface: var(--jarvis-surface);
+  --color-fg: var(--jarvis-fg);
+  --color-subtle: var(--jarvis-text-secondary);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -130,13 +141,30 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-canvas text-fg antialiased;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--jarvis-scrollbar);
+    border-radius: 4px;
   }
 }
 
-/* Dark chat: force high-contrast, almost-white readable text */
+/* Vercel-style chat typography */
 .dark .jarvis-chat {
-  color: #f4f4f5;
+  color: var(--jarvis-text-secondary);
 }
 
 .dark .jarvis-chat .assistant-message,
@@ -145,27 +173,76 @@
 .dark .jarvis-chat .markdown-content em,
 .dark .jarvis-chat .markdown-content span,
 .dark .jarvis-chat .user-message-text {
-  color: #fafafa;
+  color: var(--jarvis-fg);
 }
 
 .dark .jarvis-chat .role-label {
-  color: #d4d4d8;
+  color: var(--jarvis-fg);
 }
 
 .dark .jarvis-chat .message-meta {
-  color: #a1a1aa;
+  color: var(--jarvis-text-muted);
 }
 
 .dark .jarvis-chat .composer-input {
-  color: #fafafa;
+  color: var(--jarvis-fg);
 }
 
 .dark .jarvis-chat .composer-input::placeholder {
-  color: #71717a;
+  color: var(--jarvis-text-muted);
 }
 
 .dark .jarvis-chat .composer-hint {
-  color: #d4d4d8;
+  color: var(--jarvis-text-secondary);
+}
+
+/* Vercel-style subtle glowing borders on focus */
+.focus-ring {
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.focus-ring:focus-within {
+  border-color: var(--jarvis-border-focus);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* Syntax highlighting — minimalist monochrome */
+.token.tag {
+  color: #888;
+}
+
+.token.attr {
+  color: #ccc;
+}
+
+.token.string {
+  color: var(--jarvis-fg);
+}
+
+.token.comment {
+  color: #444;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: var(--jarvis-text-muted);
 }
 
 /* Replace gray gradient with colorful animated gradient for AI streaming responses */
@@ -686,9 +763,11 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background:
-    radial-gradient(ellipse 80% 45% at 50% -5%, rgba(16, 185, 129, 0.07), transparent 55%),
-    radial-gradient(ellipse 55% 35% at 85% 100%, rgba(139, 92, 246, 0.05), transparent 50%);
+  background: radial-gradient(
+    ellipse 70% 40% at 50% 0%,
+    rgba(255, 255, 255, 0.03),
+    transparent 60%
+  );
 }
 
 .jarvis-workspace > * {
@@ -697,18 +776,20 @@
 }
 
 .jarvis-landing-hero {
-  background: radial-gradient(ellipse 70% 50% at 50% 38%, rgba(16, 185, 129, 0.1), transparent 68%);
+  background: radial-gradient(
+    ellipse 70% 50% at 50% 38%,
+    rgba(255, 255, 255, 0.04),
+    transparent 68%
+  );
 }
 
 .jarvis-composer-shell {
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 .jarvis-starter-chip {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(26, 26, 26, 0.92);
+  border: 1px solid var(--jarvis-border);
+  background: var(--jarvis-panel);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition:
@@ -723,8 +804,8 @@
 
 @media (hover: hover) {
   .jarvis-starter-chip:hover {
-    border-color: rgba(16, 185, 129, 0.35);
-    background: rgba(30, 30, 30, 0.95);
+    border-color: var(--jarvis-border-focus);
+    background: var(--jarvis-surface);
   }
 }
 

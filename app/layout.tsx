@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
+import { Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
@@ -9,6 +9,14 @@ const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
+  weight: ["400", "500", "600"],
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jetbrains-mono",
+  weight: ["400", "500"],
 })
 
 export const metadata: Metadata = {
@@ -26,6 +34,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
+        url: "/icons/jarvis-mobile-512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+      {
         url: "/favicon-32x32.png",
         sizes: "32x32",
         type: "image/png",
@@ -37,12 +50,19 @@ export const metadata: Metadata = {
       },
     ],
     apple: "/apple-touch-icon.png",
+    other: [
+      {
+        rel: "icon",
+        url: "/icons/jarvis-desktop.svg",
+        type: "image/svg+xml",
+      },
+    ],
   },
   manifest: "/site.webmanifest",
 }
 
 export const viewport: Viewport = {
-  themeColor: "#111111",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -56,8 +76,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="sk" suppressHydrationWarning className={`dark ${inter.variable}`}>
-      <body className="font-sans antialiased bg-[#111111] text-[#e8e8e8]">
+    <html lang="sk" suppressHydrationWarning className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className="font-sans bg-canvas text-fg selection:bg-white selection:text-black">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
           {children}
         </ThemeProvider>

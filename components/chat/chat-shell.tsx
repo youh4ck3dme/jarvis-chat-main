@@ -1086,7 +1086,7 @@ export function ChatShell() {
   const showBuildTelemetry = isBuildActive
 
   const artifactPanel = (
-    <div className="flex h-full min-h-0 flex-col bg-[#111111]">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       {showBuildTelemetry ? (
         <BuildTelemetry
           buildTrace={buildTrace}
@@ -1121,7 +1121,7 @@ export function ChatShell() {
   )
 
   return (
-    <div className="jarvis-workspace flex h-dvh flex-col overflow-hidden bg-[#111111] text-[#e8e8e8]">
+    <div className="jarvis-workspace flex h-dvh flex-col overflow-hidden bg-background text-fg">
       <WorkspaceHeader
         projectName={projectName}
         onProjectNameChange={handleProjectNameChange}
@@ -1175,7 +1175,7 @@ export function ChatShell() {
                   onClick={clearChat}
                   variant="ghost"
                   size="icon"
-                  className="absolute left-3 top-3 z-10 h-11 w-11 min-h-11 min-w-11 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:bg-[#222] hover:text-[#ddd] sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+                  className="absolute left-3 top-3 z-10 h-11 w-11 min-h-11 min-w-11 rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
                   aria-label="Reset chat"
                 >
                   <MessageSquareDashed className="h-4 w-4" />
@@ -1199,12 +1199,12 @@ export function ChatShell() {
         {mounted && !isMobile ? (
           <ResizablePanelGroup direction="horizontal" className="h-full">
             <ResizablePanel defaultSize={42} minSize={28}>
-              <div className="relative flex h-full flex-col border-r border-[#2a2a2a] bg-[#111111]">
+              <div className="relative flex h-full flex-col border-r border-border bg-background">
                 <Button
                   onClick={clearChat}
                   variant="ghost"
                   size="icon"
-                  className="absolute left-3 top-3 z-10 h-11 w-11 min-h-11 min-w-11 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-[#888] hover:bg-[#222] hover:text-[#ddd] sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+                  className="absolute left-3 top-3 z-10 h-11 w-11 min-h-11 min-w-11 rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
                   aria-label="Reset chat"
                 >
                   <MessageSquareDashed className="h-4 w-4" />
@@ -1223,7 +1223,7 @@ export function ChatShell() {
               </div>
             </ResizablePanel>
 
-            <ResizableHandle className="w-px bg-[#2a2a2a]" />
+            <ResizableHandle className="w-px bg-border/50" />
 
             <ResizablePanel defaultSize={58} minSize={32}>
               {artifactPanel}
@@ -1256,7 +1256,7 @@ export function ChatShell() {
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
           <div
-            className="relative flex w-full max-w-md flex-col gap-4 rounded-2xl border border-[#333] bg-[#1a1a1a] p-6 text-[#e8e8e8] shadow-2xl"
+            className="relative flex w-full max-w-md flex-col gap-4 rounded-2xl border border-border bg-surface p-6 text-fg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center pb-2 border-b border-stone-100 dark:border-zinc-800">

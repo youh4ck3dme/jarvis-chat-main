@@ -1,13 +1,19 @@
 {
-  "name": "Jarvis",
-  "short_name": "Jarvis",
-  "description": "Chat a Builder workspace s live HTML preview",
+  "name": "JARVIS",
+  "short_name": "JARVIS",
+  "description": "JARVIS — chat, Builder a hlasový desktop agent",
   "start_url": "/chat",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#111111",
-  "background_color": "#111111",
+  "theme_color": "#000000",
+  "background_color": "#050505",
   "icons": [
+    {
+      "src": "/icons/jarvis-mobile-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
@@ -15,13 +21,13 @@
       "purpose": "any"
     },
     {
-      "src": "/android-chrome-512x512.png",
+      "src": "/icons/jarvis-mobile-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/android-chrome-512x512.png",
+      "src": "/icons/jarvis-mobile-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

@@ -76,17 +76,17 @@ export function JarvisModeControl({
   return (
     <>
       <div
-        className="flex max-w-[9.5rem] shrink-0 items-center gap-0.5 rounded-full border border-white/10 bg-white/[0.04] p-0.5 sm:max-w-none sm:gap-1"
+        className="flex max-w-[9.5rem] shrink-0 items-center gap-0.5 rounded-lg border border-border bg-surface p-0.5 sm:max-w-none sm:gap-1"
         data-testid="jarvis-mode-control"
       >
         <button
           type="button"
           onClick={handleSwitchToChat}
           className={cn(
-            "flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium transition-colors sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-1.5 sm:px-2.5",
+            "flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-all sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-1.5 sm:px-2.5",
             mode === "chat"
-              ? "bg-emerald-500/20 text-emerald-300"
-              : "text-white/45 hover:text-white/70"
+              ? "bg-border/50 text-fg shadow-sm"
+              : "text-muted-foreground hover:text-fg"
           )}
           data-testid="jarvis-mode-chat"
         >
@@ -105,10 +105,10 @@ export function JarvisModeControl({
             }
           }}
           className={cn(
-            "flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium transition-colors sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-1.5 sm:px-2.5",
+            "flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-all sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-1.5 sm:px-2.5",
             mode === "builder"
-              ? "bg-amber-500/20 text-amber-300"
-              : "text-white/45 hover:text-white/70"
+              ? "bg-border/50 text-fg shadow-sm"
+              : "text-muted-foreground hover:text-fg"
           )}
           data-testid="jarvis-mode-builder"
           title={builderUnlocked ? "Builder režim" : "Odomkni Builder heslom"}
@@ -123,7 +123,7 @@ export function JarvisModeControl({
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="border-white/10 bg-[#0d0d12] text-white sm:max-w-md">
+        <DialogContent className="border-white/10 bg-panel text-white sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
               <Unlock className="h-4 w-4 text-amber-400" />

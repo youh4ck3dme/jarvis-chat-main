@@ -82,18 +82,18 @@ export function StoryboardStrip({ plan, isPlanning, className }: StoryboardStrip
 
   return (
     <section
-      className={cn("border-t border-[#2a2a2a] bg-[#0f0f12] px-3 py-3 md:px-4", className)}
+      className={cn("border-t border-border bg-panel px-3 py-3 md:px-4", className)}
       data-testid="storyboard-strip"
       aria-live="polite"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[#777]">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Storyboard · Planner
         </h3>
         {isPlanning ? (
           <span className="text-[10px] font-medium text-emerald-400/80">Fáza 1</span>
         ) : (
-          <span className="text-[10px] font-medium text-[#555]">Plán hotový</span>
+          <span className="text-[10px] font-medium text-muted-foreground">Plán hotový</span>
         )}
       </div>
 
@@ -114,7 +114,7 @@ export function StoryboardStrip({ plan, isPlanning, className }: StoryboardStrip
                     ? "storyboard-card-active z-10 scale-105 border-emerald-500/50 bg-[#1a2420] shadow-lg shadow-emerald-900/20"
                     : isDone
                       ? "border-[#2f3f35] bg-[#171c19]"
-                      : "border-[#2a2a2a] bg-[#151515]",
+                      : "border-border bg-panel",
                   isPending && "opacity-45",
                   !isPlanning && !isDone && "opacity-70",
                 )}
@@ -126,20 +126,20 @@ export function StoryboardStrip({ plan, isPlanning, className }: StoryboardStrip
                     "mb-2 flex h-14 items-center justify-center rounded-lg border border-dashed",
                     isActive
                       ? "border-emerald-500/30 bg-emerald-500/5"
-                      : "border-[#333] bg-[#111]",
+                      : "border-border bg-background",
                   )}
                 >
                   <Icon
                     className={cn(
                       "h-5 w-5 transition-colors",
-                      isActive ? "text-emerald-400" : isDone ? "text-[#888]" : "text-[#555]",
+                      isActive ? "text-emerald-400" : isDone ? "text-muted-foreground" : "text-muted-foreground",
                     )}
                   />
                 </div>
                 <p
                   className={cn(
                     "truncate text-center text-[11px] font-semibold",
-                    isActive ? "text-emerald-200" : "text-[#ccc]",
+                    isActive ? "text-emerald-200" : "text-fg/80",
                   )}
                 >
                   {formatSectionLabel(section)}
@@ -158,7 +158,7 @@ export function StoryboardStrip({ plan, isPlanning, className }: StoryboardStrip
       <p
         className={cn(
           "mt-2.5 min-h-[1.25rem] text-[12px] transition-opacity",
-          isPlanning ? "text-emerald-300/90" : "text-[#888]",
+          isPlanning ? "text-emerald-300/90" : "text-muted-foreground",
         )}
         data-testid="storyboard-status"
       >

@@ -59,44 +59,44 @@ export function BuildReasoningPanel({
       </div>
 
       {historyCount > 0 ? (
-        <p className="text-[11px] text-[#666]">
+        <p className="text-[11px] text-muted-foreground">
           IndexedDB história: {historyCount} uložených buildov (max 50).
         </p>
       ) : null}
 
       {!hasBuildActivity ? (
-        <p className="text-[12px] text-[#666]">Zatiaľ nebol build. Pošli prompt a metriky sa zobrazia tu.</p>
+        <p className="text-[12px] text-muted-foreground">Zatiaľ nebol build. Pošli prompt a metriky sa zobrazia tu.</p>
       ) : (
         <ol className="space-y-2">
           {buildTrace?.phases.map((entry, index) => (
             <li
               key={`${entry.phase}-${index}`}
-              className="flex items-start gap-2 rounded-lg border border-[#2a2a2a] bg-[#151515] px-3 py-2"
+              className="flex items-start gap-2 rounded-lg border border-border bg-panel px-3 py-2"
             >
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2a2a2a] text-[10px] font-semibold text-[#aaa]">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-border/50 text-[10px] font-semibold text-subtle">
                 {index + 1}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <StrategyBadge label={formatPhaseLabel(entry.phase)} active />
-                  <span className="text-[11px] text-[#888]">{formatLatency(entry.latencyMs)}</span>
+                  <span className="text-[11px] text-muted-foreground">{formatLatency(entry.latencyMs)}</span>
                 </div>
                 {entry.detail ? (
-                  <p className="mt-1 text-[11px] leading-relaxed text-[#777]">{entry.detail}</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{entry.detail}</p>
                 ) : null}
               </div>
             </li>
           ))}
 
           {isStreaming ? (
-            <li className="flex items-start gap-2 rounded-lg border border-dashed border-[#333] bg-[#151515] px-3 py-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2a2a2a] text-[10px] font-semibold text-[#aaa]">
+            <li className="flex items-start gap-2 rounded-lg border border-dashed border-border bg-panel px-3 py-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-border/50 text-[10px] font-semibold text-subtle">
                 {(buildTrace?.phases.length ?? 0) + 1}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <StrategyBadge label="Stream" active />
-                  <span className="text-[11px] text-[#888]">in progress…</span>
+                  <span className="text-[11px] text-muted-foreground">in progress…</span>
                 </div>
               </div>
             </li>
@@ -120,17 +120,17 @@ export function BuildReasoningPanel({
   if (!collapsible) {
     return (
       <section className="px-3 pb-3 md:px-4">
-        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#777]">Build Trace</h3>
+        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Build Trace</h3>
         {content}
       </section>
     )
   }
 
   return (
-    <Collapsible defaultOpen={defaultOpen} className="bg-[#111111]">
+    <Collapsible defaultOpen={defaultOpen} className="bg-background">
       <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2.5 text-left md:px-4">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-[#777]">Build Trace</span>
-        <ChevronDown className="h-4 w-4 text-[#666] transition-transform [[data-state=open]_&]:rotate-180" />
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Build Trace</span>
+        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent className={cn("px-3 pb-3 md:px-4")}>{content}</CollapsibleContent>
     </Collapsible>

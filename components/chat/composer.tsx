@@ -561,7 +561,7 @@ export function Composer({
       return (
         <div
           key={attachment.id}
-          className="flex w-fit max-w-full items-center gap-2 rounded-xl border border-[#333] bg-[#1a1a1a] px-2 py-1.5"
+          className="flex w-fit max-w-full items-center gap-2 rounded-xl border border-border bg-surface px-2 py-1.5"
         >
           {attachmentKind === "image" ? (
             <Image
@@ -572,15 +572,15 @@ export function Composer({
               className="h-8 w-8 rounded object-cover"
             />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-[#262626] text-[10px] font-semibold uppercase text-[#aaa]">
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-surface text-[10px] font-semibold uppercase text-subtle">
               {attachmentKind}
             </div>
           )}
-          <span className="truncate text-[12px] text-[#ccc]">{attachment.fileName}</span>
+          <span className="truncate text-[12px] text-fg/80">{attachment.fileName}</span>
           <button
             type="button"
             onClick={() => removeAttachment(attachment.id)}
-            className="rounded p-1 text-[#777] hover:bg-[#262626] hover:text-[#ddd]"
+            className="rounded p-1 text-muted-foreground hover:bg-surface hover:text-fg/80"
             aria-label={`Remove attachment ${attachment.fileName}`}
           >
             <X className="h-3.5 w-3.5" />
@@ -645,7 +645,7 @@ export function Composer({
             {pendingAttachments.map((attachment) => renderAttachmentChip(attachment, "workspace"))}
           </div>
         ) : null}
-        <div className="jarvis-composer-shell relative flex items-center gap-2 rounded-2xl border border-[#2f2f2f] bg-[#1c1c1c]/95 px-3 py-2.5 backdrop-blur-sm">
+        <div className="jarvis-composer-shell focus-ring relative flex items-center gap-2 rounded-2xl border border-border bg-panel p-1 backdrop-blur-sm">
           {isDragOver ? (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-emerald-500/60 bg-emerald-950/30 text-[12px] font-medium text-emerald-300">
               Pusti súbory sem (max {MAX_COMPOSER_ATTACHMENTS})
@@ -670,7 +670,7 @@ export function Composer({
             disabled={isStreaming || disabled}
             className={cn(
               workspaceIconBtn,
-              "text-[#777] transition-colors hover:bg-[#262626] hover:text-[#ddd] disabled:opacity-40",
+              "text-muted-foreground transition-colors hover:bg-surface hover:text-fg/80 disabled:opacity-40",
             )}
             aria-label="Add attachment"
             title="JPEG, HEIC, PNG, WebP, PDF, HTML"
@@ -685,7 +685,7 @@ export function Composer({
                 disabled={isStreaming || disabled}
                 className={cn(
                   workspaceIconBtn,
-                  "text-[#777] transition-colors hover:bg-[#262626] hover:text-[#ddd] disabled:opacity-40",
+                  "text-muted-foreground transition-colors hover:bg-surface hover:text-fg/80 disabled:opacity-40",
                 )}
                 aria-label="More options"
               >
@@ -697,38 +697,38 @@ export function Composer({
               side="top"
               sideOffset={8}
               collisionPadding={12}
-              className="z-[9999] max-h-[min(70vh,420px)] w-56 overflow-y-auto rounded-xl border border-[#333] bg-[#1c1c1c] px-2 py-2 text-[#e8e8e8] shadow-xl"
+              className="z-[9999] max-h-[min(70vh,420px)] w-56 overflow-y-auto rounded-xl border border-border bg-panel px-2 py-2 text-fg shadow-xl"
             >
               {enableBuilderQuickActions && hasArtifact ? (
                 <>
                   <DropdownMenuItem
                     onClick={() => handleQuickSend(QUICK_PROMPTS.completePage)}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-border/50"
                   >
                     <Wand2 className="h-3.5 w-3.5 text-emerald-400" />
                     Dokonči stránku
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleQuickSend(QUICK_PROMPTS.addScript)}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-border/50"
                   >
                     <Code2 className="h-3.5 w-3.5 text-sky-400" />
                     Pridaj script
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleQuickSend(QUICK_PROMPTS.simplify)}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-border/50"
                   >
                     <Minimize2 className="h-3.5 w-3.5 text-amber-400" />
                     Zjednoduš layout
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-[#333]" />
+                  <DropdownMenuSeparator className="bg-border" />
                 </>
               ) : null}
 
               {enableBuilderQuickActions ? (
                 <>
-                  <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#666]">
+                  <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Pridaj sekciu
                   </DropdownMenuLabel>
                   {(["addContact", "addPricing", "addFaq", "addFooter"] as QuickPromptKey[]).map(
@@ -736,9 +736,9 @@ export function Composer({
                       <DropdownMenuItem
                         key={key}
                         onClick={() => handleQuickSend(QUICK_PROMPTS[key])}
-                        className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                        className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-border/50"
                       >
-                        <Plus className="h-3.5 w-3.5 text-[#888]" />
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                         {key === "addContact" && "Contact"}
                         {key === "addPricing" && "Pricing"}
                         {key === "addFaq" && "FAQ"}
@@ -751,8 +751,8 @@ export function Composer({
 
               {isMobile ? (
                 <>
-                  <DropdownMenuSeparator className="bg-[#333]" />
-                  <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#666]">
+                  <DropdownMenuSeparator className="bg-border" />
+                  <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Zmeniť model
                   </DropdownMenuLabel>
                   {AI_MODELS.map((model) => {
@@ -767,9 +767,9 @@ export function Composer({
                           onModelChange(model.id)
                         }}
                         className={cn(
-                          "cursor-pointer rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]",
+                          "cursor-pointer rounded-lg px-2 py-2 text-[13px] hover:bg-border/50",
                           isDisabled && "opacity-40",
-                          selectedModel === model.id && !isDisabled && "bg-[#2a2a2a] font-medium",
+                          selectedModel === model.id && !isDisabled && "bg-border/50 font-medium",
                         )}
                       >
                         {model.name}
@@ -779,13 +779,13 @@ export function Composer({
                 </>
               ) : null}
 
-              <DropdownMenuSeparator className="bg-[#333]" />
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem
                 onClick={() => {
                   playClickSound()
                   toggleRecording()
                 }}
-                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-border/50"
               >
                 <Mic className="h-3.5 w-3.5" />
                 {isRecording ? "Zastaviť diktovanie" : "Hlasový vstup"}
@@ -795,7 +795,7 @@ export function Composer({
                   playClickSound()
                   clearComposerInput()
                 }}
-                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-[#2a2a2a]"
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-[13px] hover:bg-border/50"
               >
                 <Eraser className="h-3.5 w-3.5" />
                 Vymazať input
@@ -816,8 +816,8 @@ export function Composer({
             disabled={isStreaming || disabled}
             rows={1}
             className={cn(
-              "composer-input min-h-[36px] max-h-[120px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-5 text-[#ececec]",
-              "placeholder:text-[#666] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+              "composer-input min-h-[36px] max-h-[120px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-5 text-fg",
+              "placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
             )}
             aria-label="Message input"
           />
@@ -827,7 +827,7 @@ export function Composer({
               <button
                 type="button"
                 disabled={isStreaming || disabled}
-                className="hidden h-8 shrink-0 items-center gap-1 rounded-lg border border-[#333] bg-[#222] px-2.5 text-[12px] font-medium text-[#ccc] transition-colors hover:bg-[#2a2a2a] disabled:opacity-40 sm:inline-flex"
+                className="hidden h-8 shrink-0 items-center gap-1 rounded-lg border border-border bg-surface px-2.5 text-[12px] font-medium text-fg/80 transition-colors hover:bg-border/50 disabled:opacity-40 sm:inline-flex"
               >
                 Build
                 <ChevronDown className="h-3 w-3" />
@@ -838,7 +838,7 @@ export function Composer({
                 align="end"
                 side="top"
                 sideOffset={8}
-                className="z-[9999] w-44 rounded-xl border border-[#333] bg-[#1c1c1c] px-2 py-2 text-[#e8e8e8] shadow-xl"
+                className="z-[9999] w-44 rounded-xl border border-border bg-panel px-2 py-2 text-fg shadow-xl"
               >
                 {AI_MODELS.map((model) => {
                   const isDisabled = !isModelAvailable(model, apiKeys)
@@ -858,13 +858,13 @@ export function Composer({
                       className={cn(
                         "flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px]",
                         isDisabled && "pointer-events-none opacity-40",
-                        selectedModel === model.id && !isDisabled && "bg-[#2a2a2a] font-medium",
+                        selectedModel === model.id && !isDisabled && "bg-border/50 font-medium",
                       )}
                     >
                       <Image src={model.icon || "/placeholder.svg"} alt={model.name} width={16} height={16} className="h-4 w-4 rounded-sm object-contain" />
                       <span className="flex flex-col items-start leading-tight">
                         <span>{model.name}{model.tier === "fast" ? " ⚡" : ""}</span>
-                        <span className="text-[10px] text-[#666]">{model.hint}</span>
+                        <span className="text-[10px] text-muted-foreground">{model.hint}</span>
                       </span>
                     </DropdownMenuItem>
                   )
@@ -882,7 +882,7 @@ export function Composer({
               "transition-colors",
               isRecording
                 ? "bg-red-500/20 text-red-400"
-                : "text-[#888] hover:bg-[#262626] hover:text-[#ddd]",
+                : "text-muted-foreground hover:bg-surface hover:text-fg/80",
             )}
             aria-label={isRecording ? "Stop recording" : "Start voice input"}
           >
@@ -898,7 +898,7 @@ export function Composer({
             <button
               type="button"
               onClick={onPlayPreview}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#3a3a3a] bg-[#222] text-[#ddd] transition-colors hover:bg-[#2a2a2a] hover:text-white"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-fg/80 transition-colors hover:bg-border/50 hover:text-white"
               aria-label="Open live preview"
             >
               <Play className="h-3.5 w-3.5 fill-current" />

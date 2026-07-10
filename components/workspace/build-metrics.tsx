@@ -44,8 +44,8 @@ export function StrategyBadge({ label, active = false }: StrategyBadgeProps) {
       className={cn(
         "rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide",
         active
-          ? "border border-[#3d3d3d] bg-[#2a2a2a] text-[#e8e8e8]"
-          : "border border-[#2a2a2a] bg-[#1a1a1a] text-[#666]",
+          ? "border border-border bg-border/50 text-fg"
+          : "border border-border bg-surface text-muted-foreground",
       )}
     >
       {label}
@@ -60,9 +60,9 @@ type MetricTileProps = {
 
 export function MetricTile({ label, value }: MetricTileProps) {
   return (
-    <div className="rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-2">
-      <dt className="text-[10px] font-semibold uppercase tracking-wider text-[#777]">{label}</dt>
-      <dd className="mt-1 text-sm font-semibold text-[#f0f0f0]">{value}</dd>
+    <div className="rounded-lg border border-border bg-surface px-3 py-2">
+      <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-sm font-semibold text-fg">{value}</dd>
     </div>
   )
 }

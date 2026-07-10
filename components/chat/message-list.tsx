@@ -75,13 +75,13 @@ function WorkspaceLanding({
         <div className="orb-intro mb-5">
           <AnimatedOrb size={72} className="shadow-[0_0_48px_rgba(16,185,129,0.18)]" />
         </div>
-        <p className="text-blur-intro mb-3 text-[22px] font-semibold tracking-tight text-[#ececec]">
+        <p className="text-blur-intro mb-3 text-[22px] font-semibold tracking-tight text-fg">
           Ahoj, som Jarvis
         </p>
-        <p className="text-blur-intro-delay max-w-md text-[14px] italic leading-7 text-[#8a8a9a]">
+        <p className="text-blur-intro-delay max-w-md text-[14px] italic leading-7 text-subtle">
           {JARVIS_STORY_OPENING}
         </p>
-        <p className="mt-4 max-w-sm text-[13px] leading-6 text-[#666]">
+        <p className="mt-4 max-w-sm text-[13px] leading-6 text-muted-foreground">
           Začni rozhovor — alebo vyber rýchly štart nižšie.
         </p>
       </div>
@@ -93,7 +93,7 @@ function WorkspaceLanding({
               key={starter.prompt}
               type="button"
               onClick={() => onLandingPrompt(starter.prompt)}
-              className="jarvis-starter-chip pointer-events-auto min-h-11 rounded-full px-4 py-2 text-[13px] font-medium text-[#d4d4d4]"
+              className="jarvis-starter-chip pointer-events-auto min-h-11 rounded-full px-4 py-2 text-[13px] font-medium text-fg/80"
             >
               {starter.label}
             </button>

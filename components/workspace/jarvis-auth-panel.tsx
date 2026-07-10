@@ -21,7 +21,7 @@ export function JarvisAuthPanel({ authConfigured, className }: JarvisAuthPanelPr
     return (
       <div
         className={cn(
-          "rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-3 text-[12px] text-[#777]",
+          "rounded-xl border border-border bg-surface px-3 py-3 text-[12px] text-muted-foreground",
           className,
         )}
         data-testid="jarvis-auth-unconfigured"
@@ -33,8 +33,8 @@ export function JarvisAuthPanel({ authConfigured, className }: JarvisAuthPanelPr
 
   if (isLoading) {
     return (
-      <div className={cn("rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-3", className)}>
-        <p className="text-[12px] text-[#888]">Načítavam prihlásenie…</p>
+      <div className={cn("rounded-xl border border-border bg-surface px-3 py-3", className)}>
+        <p className="text-[12px] text-muted-foreground">Načítavam prihlásenie…</p>
       </div>
     );
   }
@@ -62,7 +62,7 @@ export function JarvisAuthPanel({ authConfigured, className }: JarvisAuthPanelPr
           type="button"
           variant="outline"
           size="sm"
-          className="w-full border-[#3a3a3a] bg-[#1a1a1a] text-[#ddd] hover:bg-[#222]"
+          className="w-full border-border bg-surface text-fg/80 hover:bg-surface"
           onClick={() => void signOut()}
         >
           <LogOut className="mr-2 h-3.5 w-3.5" />
@@ -75,7 +75,7 @@ export function JarvisAuthPanel({ authConfigured, className }: JarvisAuthPanelPr
   return (
     <form
       className={cn(
-        "space-y-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-3",
+        "space-y-2 rounded-xl border border-border bg-surface px-3 py-3",
         className,
       )}
       data-testid="jarvis-auth-sign-in"
@@ -85,10 +85,10 @@ export function JarvisAuthPanel({ authConfigured, className }: JarvisAuthPanelPr
       }}
     >
       <div className="flex items-start gap-2">
-        <LogIn className="mt-0.5 h-4 w-4 shrink-0 text-[#aaa]" />
+        <LogIn className="mt-0.5 h-4 w-4 shrink-0 text-subtle" />
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-medium text-[#ececec]">Prihlásenie pre cloud sync</p>
-          <p className="text-[11px] text-[#777]">
+          <p className="text-[13px] font-medium text-fg">Prihlásenie pre cloud sync</p>
+          <p className="text-[11px] text-muted-foreground">
             Magic link na email — rovnaké dáta na telefóne aj počítači
           </p>
         </div>
@@ -99,7 +99,7 @@ export function JarvisAuthPanel({ authConfigured, className }: JarvisAuthPanelPr
         value={email}
         onChange={(event) => setEmail(event.target.value)}
         placeholder="tvoj@email.com"
-        className="w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-[13px] text-[#eee] outline-none ring-emerald-500/30 focus:ring-2"
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-fg outline-none ring-ring/30 focus:ring-2"
         aria-label="Email pre prihlásenie"
       />
       <Button
@@ -111,7 +111,7 @@ export function JarvisAuthPanel({ authConfigured, className }: JarvisAuthPanelPr
         {isSubmitting ? "Odosielam…" : "Poslať magic link"}
       </Button>
       {statusMessage ? (
-        <p className="text-[11px] leading-relaxed text-[#9a9a9a]">{statusMessage}</p>
+        <p className="text-[11px] leading-relaxed text-subtle">{statusMessage}</p>
       ) : null}
     </form>
   );
