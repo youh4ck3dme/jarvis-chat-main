@@ -10,6 +10,12 @@ import { cn } from "@/lib/utils"
 import { JARVIS_STORY_OPENING } from "@/lib/chat/jarvis-story"
 import { AnimatedOrb } from "./animated-orb"
 
+const LANDING_STARTERS = [
+  { label: "Ahoj Jarvis", prompt: "Ahoj Jarvis" },
+  { label: "Čo vieš postaviť?", prompt: "Čo vieš postaviť?" },
+  { label: "Landing page", prompt: "Urob mi landing page" },
+] as const
+
 interface MessageListProps {
   messages: Message[]
   isStreaming: boolean
@@ -18,6 +24,7 @@ interface MessageListProps {
   isLoaded: boolean
   onEditMessage?: (id: string, newContent: string) => void
   onDeleteMessage?: (id: string) => void
+  onLandingPrompt?: (prompt: string) => void
   variant?: "default" | "workspace"
 }
 
@@ -49,21 +56,50 @@ export function markIntroPlayed(): void {
   }
 }
 
-function WorkspaceLanding({ className }: { className?: string }) {
+function WorkspaceLanding({
+  className,
+  onLandingPrompt,
+}: {
+  className?: string
+  onLandingPrompt?: (prompt: string) => void
+}) {
   return (
     <div
       data-testid="jarvis-empty-state"
-      className={`pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-4 text-center ${className ?? ""}`}
+      className={cn(
+        "jarvis-landing-hero absolute inset-0 flex flex-col items-center justify-center px-4 text-center",
+        className,
+      )}
     >
-      <p className="mb-3 text-[22px] font-semibold tracking-tight text-[#ececec]">
-        Hi, my name is Jarvis
-      </p>
-      <p className="max-w-md text-[14px] italic leading-7 text-[#8a8a9a]">
-        {JARVIS_STORY_OPENING}
-      </p>
-      <p className="mt-4 max-w-sm text-[13px] leading-6 text-[#555]">
-        Začni obyčajným rozhovorom — o chvíľu sa možno spýtam, čo by si chcel postaviť.
-      </p>
+      <div className="pointer-events-none flex flex-col items-center">
+        <div className="orb-intro mb-5">
+          <AnimatedOrb size={72} className="shadow-[0_0_48px_rgba(16,185,129,0.18)]" />
+        </div>
+        <p className="text-blur-intro mb-3 text-[22px] font-semibold tracking-tight text-[#ececec]">
+          Ahoj, som Jarvis
+        </p>
+        <p className="text-blur-intro-delay max-w-md text-[14px] italic leading-7 text-[#8a8a9a]">
+          {JARVIS_STORY_OPENING}
+        </p>
+        <p className="mt-4 max-w-sm text-[13px] leading-6 text-[#666]">
+          Začni rozhovor — alebo vyber rýchly štart nižšie.
+        </p>
+      </div>
+
+      {onLandingPrompt ? (
+        <div className="mt-6 flex w-full max-w-sm flex-wrap items-center justify-center gap-2">
+          {LANDING_STARTERS.map((starter) => (
+            <button
+              key={starter.prompt}
+              type="button"
+              onClick={() => onLandingPrompt(starter.prompt)}
+              className="jarvis-starter-chip pointer-events-auto min-h-11 rounded-full px-4 py-2 text-[13px] font-medium text-[#d4d4d4]"
+            >
+              {starter.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -76,6 +112,7 @@ export function MessageList({
   isLoaded,
   onEditMessage,
   onDeleteMessage,
+  onLandingPrompt,
   variant = "default",
 }: MessageListProps) {
   const isWorkspace = variant === "workspace"
@@ -185,7 +222,7 @@ export function MessageList({
   if (!isLoaded && isWorkspace) {
     return (
       <div className="absolute inset-0 overflow-hidden overscroll-none border-none pt-14 md:pt-14">
-        <WorkspaceLanding />
+        <WorkspaceLanding onLandingPrompt={onLandingPrompt} />
       </div>
     )
   }
@@ -216,7 +253,9 @@ export function MessageList({
       aria-label="Chat messages"
       aria-live={showStaticWorkspaceLanding ? "off" : "polite"}
     >
-      {showStaticWorkspaceLanding ? <WorkspaceLanding /> : null}
+      {showStaticWorkspaceLanding ? (
+        <WorkspaceLanding onLandingPrompt={onLandingPrompt} />
+      ) : null}
 
       {/* Empty state (default variant only) */}
       {!isWorkspace && isEmptyLanding ? (

@@ -25,19 +25,15 @@ test.describe("UX polish (P17)", () => {
   })
 
   test("composer shows drop overlay on drag enter", async ({ page }) => {
-    const composer = page.locator('[data-testid="workspace-footer"]')
-    await expect(composer).toBeVisible()
+    const dropZone = page.getByTestId("composer-drop-zone")
+    await expect(dropZone).toBeVisible()
 
-    await page.evaluate(() => {
-      const footer = document.querySelector('[data-testid="workspace-footer"]')
-      const dropTarget = footer?.querySelector(".pointer-events-auto")
-      if (!dropTarget) return
-
-      const event = new Event("dragenter", { bubbles: true })
-      Object.defineProperty(event, "dataTransfer", {
-        value: { types: ["Files"], files: [], dropEffect: "none" },
-      })
-      dropTarget.dispatchEvent(event)
+    await dropZone.dispatchEvent("dragenter", {
+      dataTransfer: await page.evaluateHandle(() => {
+        const transfer = new DataTransfer()
+        transfer.items.add(new File(["demo"], "demo.txt", { type: "text/plain" }))
+        return transfer
+      }),
     })
 
     await expect(page.getByText(/Pusti súbory sem/i)).toBeVisible()

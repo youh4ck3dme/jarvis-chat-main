@@ -80,8 +80,8 @@ describe("MessageList", () => {
     render(<MessageList {...baseProps} messages={[]} isLoaded={false} variant="workspace" />)
 
     expect(screen.getByTestId("jarvis-empty-state")).toBeInTheDocument()
-    expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument()
-    expect(screen.queryByTestId("animated-orb")).not.toBeInTheDocument()
+    expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
+    expect(screen.getByTestId("animated-orb")).toBeInTheDocument()
   })
 
   it("does not play intro audio in workspace landing", () => {

@@ -89,6 +89,7 @@ import {
 import { extractFromMessage, updateConversationSummary, clearConversationMemory, buildAICcontext } from "@/lib/memory"
 import { DEFAULT_AI_MODEL, getDefaultAiModel } from "@/lib/default-model"
 import { isProviderAuthError } from "@/lib/resolve-api-key"
+import { readIsMobileViewport } from "@/lib/workspace/mobile-detect"
 
 export type ArtifactTab = "preview" | "code"
 
@@ -183,7 +184,7 @@ export function ChatShell() {
   const [mounted, setMounted] = useState(false)
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("chat")
   const [artifactTab, setArtifactTab] = useState<ArtifactTab>("preview")
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(readIsMobileViewport)
   const [buildEvaluation, setBuildEvaluation] = useState<BuildEvaluation | null>(null)
   const [buildTrace, setBuildTrace] = useState<BuildTrace | null>(null)
   const [buildHistoryCount, setBuildHistoryCount] = useState(0)
@@ -1110,7 +1111,7 @@ export function ChatShell() {
       ) : null}
 
       <div className="min-h-0 flex-1">
-        {isMobile ? (
+        {!mounted || isMobile ? (
           <div className="h-full">
             {showChatPanel && (
               <div className="relative flex h-full flex-col">
@@ -1132,12 +1133,14 @@ export function ChatShell() {
                   variant="workspace"
                   onEditMessage={handleEditMessage}
                   onDeleteMessage={handleDeleteMessage}
+                  onLandingPrompt={sendMessage}
                 />
               </div>
             )}
-            {showArtifactPanel && artifactPanel}
+            {mounted && showArtifactPanel && artifactPanel}
           </div>
-        ) : (
+        ) : null}
+        {mounted && !isMobile ? (
           <ResizablePanelGroup direction="horizontal" className="h-full">
             <ResizablePanel defaultSize={42} minSize={28}>
               <div className="relative flex h-full flex-col border-r border-[#2a2a2a] bg-[#111111]">
@@ -1159,6 +1162,7 @@ export function ChatShell() {
                   variant="workspace"
                   onEditMessage={handleEditMessage}
                   onDeleteMessage={handleDeleteMessage}
+                  onLandingPrompt={sendMessage}
                 />
               </div>
             </ResizablePanel>
@@ -1169,7 +1173,7 @@ export function ChatShell() {
               {artifactPanel}
             </ResizablePanel>
           </ResizablePanelGroup>
-        )}
+        ) : null}
       </div>
 
       <WorkspaceFooter

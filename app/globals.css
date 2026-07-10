@@ -40,6 +40,16 @@
 }
 
 .dark {
+  --jarvis-bg: #111111;
+  --jarvis-surface: #1a1a1a;
+  --jarvis-surface-raised: #1c1c1c;
+  --jarvis-header: #141414;
+  --jarvis-border: #2a2a2a;
+  --jarvis-border-subtle: #222222;
+  --jarvis-text: #ececec;
+  --jarvis-text-muted: #888888;
+  --jarvis-accent-chat: #10b981;
+  --jarvis-accent-builder: #f59e0b;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
@@ -662,4 +672,62 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* ── Jarvis workspace polish (iPhone 17 Air) ── */
+.jarvis-workspace {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+.jarvis-workspace::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 45% at 50% -5%, rgba(16, 185, 129, 0.07), transparent 55%),
+    radial-gradient(ellipse 55% 35% at 85% 100%, rgba(139, 92, 246, 0.05), transparent 50%);
+}
+
+.jarvis-workspace > * {
+  position: relative;
+  z-index: 1;
+}
+
+.jarvis-landing-hero {
+  background: radial-gradient(ellipse 70% 50% at 50% 38%, rgba(16, 185, 129, 0.1), transparent 68%);
+}
+
+.jarvis-composer-shell {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.jarvis-starter-chip {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(26, 26, 26, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.jarvis-starter-chip:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .jarvis-starter-chip:hover {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(30, 30, 30, 0.95);
+  }
+}
+
+.jarvis-header-title-mobile {
+  letter-spacing: -0.01em;
 }

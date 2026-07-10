@@ -56,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`dark ${inter.variable}`}>
+    <html lang="sk" suppressHydrationWarning className={`dark ${inter.variable}`}>
       <body className="font-sans antialiased bg-[#111111] text-[#e8e8e8]">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
           {children}

@@ -121,7 +121,7 @@ describe("ChatShell", () => {
     render(<ChatShell />)
 
     await waitFor(() => {
-      expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument()
+      expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
     })
 
     const input = screen.getByRole("textbox", { name: "Message input" })
@@ -166,7 +166,7 @@ describe("ChatShell", () => {
     render(<ChatShell />)
 
     await waitFor(() => {
-      expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument()
+      expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
     })
 
     const input = screen.getByRole("textbox", { name: "Message input" })
@@ -204,7 +204,7 @@ describe("ChatShell", () => {
     render(<ChatShell />)
 
     await waitFor(() => {
-      expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument()
+      expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
     })
 
     const input = screen.getByRole("textbox", { name: "Message input" })
@@ -256,7 +256,7 @@ describe("ChatShell", () => {
     render(<ChatShell />)
 
     await waitFor(() => {
-      expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument()
+      expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByRole("textbox", { name: "Message input" }), {
@@ -291,7 +291,7 @@ describe("ChatShell", () => {
     render(<ChatShell />)
 
     await waitFor(() => {
-      expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument()
+      expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
     })
 
     const input = screen.getByRole("textbox", { name: "Message input" })

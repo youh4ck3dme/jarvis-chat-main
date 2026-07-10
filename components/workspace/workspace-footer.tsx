@@ -3,6 +3,7 @@
 import { ChevronLeft, Code2, Eye, Play } from "lucide-react"
 
 import { Composer, type AIModel, type ComposerSendItem } from "@/components/chat/composer"
+import { useVisualViewportPadding } from "@/hooks/use-visual-viewport-padding"
 import { cn } from "@/lib/utils"
 
 import type { ArtifactTab } from "@/components/chat/chat-shell"
@@ -54,11 +55,20 @@ export function WorkspaceFooter({
   onQuickSend,
   enableBuilderQuickActions = false,
 }: WorkspaceFooterProps) {
+  const keyboardPadding = useVisualViewportPadding()
+  const showArtifactTabs = hasArtifact || showArtifactWorkspace
+
   return (
     <footer
-      className="shrink-0 border-t border-[#2a2a2a] bg-[#111111] pb-[env(safe-area-inset-bottom)]"
+      className="shrink-0 border-t border-[#2a2a2a] bg-[#111111]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
       data-testid="workspace-footer"
+      style={
+        keyboardPadding > 0
+          ? { paddingBottom: `calc(env(safe-area-inset-bottom) + ${keyboardPadding}px)` }
+          : undefined
+      }
     >
+      {showArtifactTabs ? (
       <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[#222] px-2 py-2 sm:gap-2 sm:px-3 md:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button
           type="button"
@@ -123,8 +133,9 @@ export function WorkspaceFooter({
           </button>
         )}
       </div>
+      ) : null}
 
-      <div className="relative px-3 py-3 md:px-4">
+      <div className="relative px-3 py-2.5 md:px-4 md:py-3">
         <Composer
           variant="workspace"
           onSend={onSend}

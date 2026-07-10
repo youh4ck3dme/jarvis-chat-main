@@ -70,6 +70,13 @@ export function WorkspaceHeader({
           <Menu className="h-4 w-4" />
         </button>
 
+        <span
+          className="jarvis-header-title-mobile max-w-[6.5rem] truncate text-[12px] font-medium text-[#c8c8c8] sm:hidden"
+          title={projectName}
+        >
+          {projectName}
+        </span>
+
         <DropdownMenu
           onOpenChange={(open) => {
             if (open) setDraftName(projectName)

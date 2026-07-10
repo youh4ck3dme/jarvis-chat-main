@@ -559,10 +559,14 @@ export function Composer({
   const canSend = Boolean(value.trim() || pendingAttachments.length > 0)
   const currentModel = AI_MODELS.find((m) => m.id === selectedModel) || AI_MODELS[0]
   const isWorkspace = variant === "workspace"
+  const workspaceIconBtn =
+    "flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8 sm:rounded-lg"
+  const workspaceSendSize = isMobile ? 40 : 32
 
   if (isWorkspace) {
     return (
       <div
+        data-testid="composer-drop-zone"
         className="pointer-events-auto"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -574,7 +578,7 @@ export function Composer({
             {pendingAttachments.map((attachment) => renderAttachmentChip(attachment, "workspace"))}
           </div>
         ) : null}
-        <div className="relative flex items-center gap-2 rounded-2xl border border-[#2f2f2f] bg-[#1c1c1c] px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+        <div className="jarvis-composer-shell relative flex items-center gap-2 rounded-2xl border border-[#2f2f2f] bg-[#1c1c1c]/95 px-3 py-2.5 backdrop-blur-sm">
           {isDragOver ? (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-emerald-500/60 bg-emerald-950/30 text-[12px] font-medium text-emerald-300">
               Pusti súbory sem (max {MAX_COMPOSER_ATTACHMENTS})
@@ -597,7 +601,10 @@ export function Composer({
               fileInputRef.current?.click()
             }}
             disabled={isStreaming || disabled}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#777] transition-colors hover:bg-[#262626] hover:text-[#ddd] disabled:opacity-40"
+            className={cn(
+              workspaceIconBtn,
+              "text-[#777] transition-colors hover:bg-[#262626] hover:text-[#ddd] disabled:opacity-40",
+            )}
             aria-label="Add attachment"
             title="JPEG, HEIC, PNG, WebP, PDF, HTML"
           >
@@ -609,7 +616,10 @@ export function Composer({
               <button
                 type="button"
                 disabled={isStreaming || disabled}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#777] transition-colors hover:bg-[#262626] hover:text-[#ddd] disabled:opacity-40"
+                className={cn(
+                  workspaceIconBtn,
+                  "text-[#777] transition-colors hover:bg-[#262626] hover:text-[#ddd] disabled:opacity-40",
+                )}
                 aria-label="More options"
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -735,7 +745,7 @@ export function Composer({
             }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={isRecording ? "Listening..." : "Ask Jarvis..."}
+            placeholder={isRecording ? "Počúvam…" : "Spýtaj sa Jarvisa…"}
             disabled={isStreaming || disabled}
             rows={1}
             className={cn(
@@ -801,7 +811,8 @@ export function Composer({
             onClick={toggleRecording}
             disabled={isStreaming || disabled}
             className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+              workspaceIconBtn,
+              "transition-colors",
               isRecording
                 ? "bg-red-500/20 text-red-400"
                 : "text-[#888] hover:bg-[#262626] hover:text-[#ddd]",
@@ -828,10 +839,13 @@ export function Composer({
                 playClickSound()
                 onStop()
               }}
-              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              className={cn(
+                workspaceIconBtn,
+                "relative rounded-full",
+              )}
               aria-label="Stop generating"
             >
-              <AnimatedOrb size={32} variant="red" />
+              <AnimatedOrb size={workspaceSendSize} variant="red" />
               <Square className="absolute h-3.5 w-3.5 text-red-700" fill="currentColor" />
             </button>
           ) : (
@@ -839,12 +853,13 @@ export function Composer({
               onClick={handleSend}
               disabled={!canSend || disabled}
               className={cn(
-                "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform",
-                !canSend || disabled ? "cursor-not-allowed opacity-40" : "hover:scale-105",
+                workspaceIconBtn,
+                "relative rounded-full transition-transform",
+                !canSend || disabled ? "cursor-not-allowed opacity-40" : "hover:scale-105 active:scale-95",
               )}
               aria-label="Send message"
             >
-              <AnimatedOrb size={32} />
+              <AnimatedOrb size={workspaceSendSize} />
             </button>
           )}
         </div>

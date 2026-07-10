@@ -132,7 +132,7 @@ describe("iPhone 17 Air responsive layout", () => {
     );
 
     expect(screen.getByTestId("jarvis-empty-state")).toBeInTheDocument();
-    expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument();
+    expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument();
   });
 
   it("renders storyboard strip as horizontally scrollable on narrow screens", () => {

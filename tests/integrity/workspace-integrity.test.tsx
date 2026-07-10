@@ -62,7 +62,7 @@ describe("workspace integrity across devices", () => {
       const { container } = render(<ChatShell />);
 
       await waitFor(() => {
-        expect(screen.getByText("Hi, my name is Jarvis")).toBeInTheDocument();
+        expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument();
       });
 
       expect(screen.getByTestId("jarvis-mode-control")).toBeInTheDocument();
@@ -86,6 +86,7 @@ describe("workspace integrity across devices", () => {
     });
 
     expect(window.matchMedia("(max-width: 767px)").matches).toBe(true);
-    expect(screen.getByLabelText("Back to chat")).toBeInTheDocument();
+    expect(screen.getByTestId("workspace-footer")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Back to chat")).not.toBeInTheDocument();
   });
 });
