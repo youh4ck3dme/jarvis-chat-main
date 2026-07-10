@@ -48,7 +48,7 @@
 - [x] `lib/ops/vercel-env-manifest.ts` + `lib/ops/vercel-env-audit.ts`
 - [x] `pnpm audit:vercel-env` + `.github/workflows/vercel-env-audit.yml` (mesačne)
 - [x] Live sondy: builder unlock, Supabase status, legacy heslo `2366`
-- [ ] **Preview:** doplniť `MISTRAL_API_KEY` + model defaults (nájdené auditom — manuálne vo Vercel UI)
+- [x] **Preview:** doplniť `MISTRAL_API_KEY` + model defaults (cez `vercel env add --non-interactive`)
 
 ### P19 — Playwright layout snapshot (cross-platform)
 - [x] JSON layout metrics snapshot namiesto pixel PNG (žiadny darwin/linux drift)

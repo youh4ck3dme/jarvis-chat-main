@@ -95,6 +95,11 @@ pnpm audit:vercel-env -- --vercel-env-json /tmp/vercel-env.json
 
 # CI / API (bez CLI)
 VERCEL_TOKEN=... pnpm audit:vercel-env
+
+# Doplnenie Preview z .env.local (neinteraktívne)
+vercel env add MISTRAL_API_KEY preview --value "<hodnota>" --sensitive --yes --non-interactive
+vercel env add DEFAULT_AI_MODEL preview --value "mistral/mistral-small-latest" --yes --non-interactive
+vercel env add NEXT_PUBLIC_DEFAULT_AI_MODEL preview --value "mistral/mistral-small-latest" --yes --non-interactive
 ```
 
 GitHub Actions: `.github/workflows/vercel-env-audit.yml` — **1× mesačne** + `workflow_dispatch`.  
@@ -112,9 +117,9 @@ Audit kontroluje:
 
 | Premenná | Production | Development | Preview |
 |----------|------------|-------------|---------|
-| `MISTRAL_API_KEY` | ✅ | ✅ | ⚠️ doplniť |
-| `DEFAULT_AI_MODEL` | ✅ | ✅ | ⚠️ doplniť |
-| `NEXT_PUBLIC_DEFAULT_AI_MODEL` | ✅ | ✅ | ⚠️ doplniť |
+| `MISTRAL_API_KEY` | ✅ | ✅ | ✅ |
+| `DEFAULT_AI_MODEL` | ✅ | ✅ | ✅ |
+| `NEXT_PUBLIC_DEFAULT_AI_MODEL` | ✅ | ✅ | ✅ |
 | `BUILDER_UNLOCK_PASSWORD` | ✅ | ✅ | ✅ |
 | Supabase sync/auth | ✅ | ✅ | ✅ |
 
