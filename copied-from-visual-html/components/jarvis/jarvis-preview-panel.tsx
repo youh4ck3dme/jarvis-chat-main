@@ -1,7 +1,20 @@
 import type React from "react";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Check, Copy, Download, Monitor, ShieldCheck, Smartphone, Tablet } from "lucide-react";
+import { createPortal } from "react-dom";
+import {
+  Check,
+  Copy,
+  Download,
+  Maximize2,
+  Minimize2,
+  Monitor,
+  ShieldCheck,
+  Smartphone,
+  Tablet,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 import { DeployMenu } from "./deploy-menu-stub";
 import type { JarvisSourceBundle } from "../../lib/jarvis-workspace";
 import {
@@ -53,6 +66,7 @@ export function JarvisPreviewPanel({
   emptyPreview,
 }: JarvisPreviewPanelProps) {
   const [copied, setCopied] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [viewport, setViewport] = useState<PreviewViewport>("desktop");
   const activeViewport = useMemo(
     () => PREVIEW_VIEWPORTS.find((item) => item.id === viewport) ?? PREVIEW_VIEWPORTS[0],
@@ -68,6 +82,37 @@ export function JarvisPreviewPanel({
   );
   const sourceSummary = useMemo(() => summarizeJarvisSourceBundle(sourceBundle), [sourceBundle]);
   const visibleSectionCount = Number(showSource) + Number(showPreview);
+  const canFullscreen = Boolean(showPreview && resolvedHtmlContent);
+
+  useLockBodyScroll(isFullscreen);
+
+  const exitFullscreen = useCallback(() => {
+    setIsFullscreen(false);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!canFullscreen) return;
+    setIsFullscreen((current) => !current);
+  }, [canFullscreen]);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" || event.key === "F11") {
+        event.preventDefault();
+        exitFullscreen();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [exitFullscreen, isFullscreen]);
+
+  useEffect(() => {
+    if (canFullscreen) return;
+    setIsFullscreen(false);
+  }, [canFullscreen]);
 
   useEffect(() => {
     if (!onConsoleEntry && !onNavigationEntry) return;
@@ -156,6 +201,20 @@ export function JarvisPreviewPanel({
             })}
           </div>
 
+          {canFullscreen && (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              title="Fullscreen preview"
+              aria-label="Fullscreen preview"
+              data-testid="jarvis-preview-fullscreen-btn"
+              className="hidden h-8 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-[11px] font-medium uppercase tracking-wide text-zinc-300 transition-colors hover:bg-surface hover:text-fg md:inline-flex"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+              <span>Fullscreen</span>
+            </button>
+          )}
+
           {htmlContent && !isStreaming && (
             <>
               <button
@@ -238,7 +297,22 @@ export function JarvisPreviewPanel({
           <section className="flex min-h-0 flex-col">
             <div className="flex h-10 items-center justify-between border-b border-border/80 bg-panel px-4">
               <span className="text-xs font-medium text-zinc-300">Sandbox</span>
-              <span className="text-[11px] text-muted-foreground">{activeViewport.label}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-muted-foreground">{activeViewport.label}</span>
+                {canFullscreen && (
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    title="Fullscreen preview"
+                    aria-label="Fullscreen preview"
+                    data-testid="jarvis-preview-fullscreen-btn-sandbox"
+                    className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-[10px] font-medium uppercase tracking-wide text-zinc-300 transition-colors hover:bg-surface hover:text-fg"
+                  >
+                    <Maximize2 className="h-3 w-3" />
+                    <span className="hidden sm:inline">Fullscreen</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-auto bg-background p-4 [scrollbar-color:#3f3f46_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-700/60 [&::-webkit-scrollbar-track]:bg-transparent">
@@ -287,6 +361,67 @@ export function JarvisPreviewPanel({
           </div>
         )}
       </div>
+
+      {isFullscreen &&
+        resolvedHtmlContent &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[120] flex flex-col bg-canvas text-fg"
+            style={{ height: "100dvh", maxHeight: "100dvh" }}
+            data-testid="jarvis-preview-fullscreen"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Fullscreen HTML preview"
+          >
+            <div className="flex h-12 shrink-0 items-center justify-between border-b border-border/80 bg-panel px-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <span className="text-fg">Preview</span>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-muted-foreground">Fullscreen</span>
+                {isStreaming && (
+                  <span className="rounded-full border border-emerald-900/60 bg-emerald-950/40 px-2 py-0.5 text-[11px] text-emerald-400">
+                    Live
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={exitFullscreen}
+                  title="Exit fullscreen"
+                  aria-label="Exit fullscreen"
+                  data-testid="jarvis-preview-fullscreen-exit"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-[11px] font-medium uppercase tracking-wide text-zinc-300 transition-colors hover:bg-surface hover:text-fg"
+                >
+                  <Minimize2 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Exit</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={exitFullscreen}
+                  title="Close fullscreen"
+                  aria-label="Close fullscreen"
+                  className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-zinc-300 transition-colors hover:bg-surface hover:text-fg"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 bg-white">
+              <iframe
+                srcDoc={resolvedHtmlContent}
+                sandbox="allow-scripts"
+                className="h-full w-full border-none"
+                style={{ height: "100%", minHeight: 0 }}
+                title="Jarvis Fullscreen Preview"
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
