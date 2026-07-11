@@ -11,10 +11,11 @@ describe("speech-recognition", () => {
     expect(msg).toContain("Desktop JARVIS")
   })
 
-  it("describes network error with make run hint when agent offline", () => {
+  it("describes network error without dev CLI hints when agent offline", () => {
     const msg = getSpeechRecognitionErrorMessage("network", { desktopAgentOnline: false })
     expect(msg).toContain("Desktop JARVIS")
-    expect(msg).toContain("make run")
+    expect(msg).not.toContain("make run")
+    expect(msg).not.toContain("pnpm")
   })
 
   it("describes microphone permission errors", () => {

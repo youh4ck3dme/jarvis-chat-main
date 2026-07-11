@@ -293,6 +293,12 @@ export function Composer({
     setHasAnimated(true)
   }, [])
 
+  useEffect(() => {
+    if (!speechError) return
+    const timer = window.setTimeout(() => setSpeechError(null), 8000)
+    return () => window.clearTimeout(timer)
+  }, [speechError])
+
   const playClickSound = useCallback(() => {
     const audio = new Audio(SOUND_CLICK_URL)
     audio.volume = 0.5
@@ -321,11 +327,6 @@ export function Composer({
         setMediaStream(null)
       }
     } else {
-      if (desktopAgentState === "offline") {
-        setSpeechError("Pre hlas použij Desktop JARVIS (pnpm desktop:run). Web diktovanie vyžaduje Google STT.")
-        return
-      }
-
       playRecordSound()
       setSpeechError(null)
       speechRetryRef.current = 0
@@ -808,6 +809,7 @@ export function Composer({
             ref={textareaRef}
             value={value}
             onChange={(e) => {
+              if (speechError) setSpeechError(null)
               setValue(e.target.value)
               handleInput()
             }}
@@ -974,6 +976,7 @@ export function Composer({
               ref={textareaRef}
               value={value}
               onChange={(e) => {
+                if (speechError) setSpeechError(null)
                 setValue(e.target.value)
                 handleInput()
               }}

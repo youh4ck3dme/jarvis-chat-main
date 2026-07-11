@@ -31,9 +31,9 @@ export function getSpeechRecognitionErrorMessage(
   switch (error) {
     case "network":
       if (desktopOnline) {
-        return "Web diktovanie nedostupné (Google STT sieť). Použi Desktop JARVIS — Gemini Live hlas beží lokálne."
+        return "Web diktovanie nie je dostupné. Na Macu môžeš použiť Desktop JARVIS (Gemini Live hlas)."
       }
-      return "Web diktovanie nedostupné — prehliadač sa nevie pripojiť k Google Speech API. Skontroluj internet/VPN, alebo spusti Desktop JARVIS (make run)."
+      return "Web diktovanie nie je dostupné (Google Speech API). Skús iný prehliadač, VPN vypnúť, alebo na Macu Desktop JARVIS."
 
     case "not-allowed":
     case "service-not-allowed":
