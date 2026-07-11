@@ -79,7 +79,11 @@ describe("MessageList", () => {
   it("keeps workspace landing static while history hydrates", () => {
     render(<MessageList {...baseProps} messages={[]} isLoaded={false} variant="workspace" />)
 
-    expect(screen.getByTestId("jarvis-empty-state")).toBeInTheDocument()
+    const landing = screen.getByTestId("jarvis-empty-state")
+    expect(landing).toBeInTheDocument()
+    expect(landing).toHaveClass("jarvis-landing-static")
+    expect(landing.querySelector(".orb-intro")).toBeNull()
+    expect(landing.querySelector(".text-blur-intro")).toBeNull()
     expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
     expect(screen.getByTestId("animated-orb")).toBeInTheDocument()
   })

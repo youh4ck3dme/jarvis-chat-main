@@ -66,21 +66,18 @@ function WorkspaceLanding({
   return (
     <div
       data-testid="jarvis-empty-state"
-      className={cn(
-        "jarvis-landing-hero absolute inset-0 flex flex-col items-center justify-center px-4 text-center",
-        className,
-      )}
+      className={cn("jarvis-landing-static jarvis-landing-hero px-4 text-center", className)}
     >
-      <div className="pointer-events-none flex flex-col items-center">
-        <div className="orb-intro mb-5">
-          <AnimatedOrb size={72} className="shadow-[0_0_48px_rgba(16,185,129,0.18)]" />
+      <div className="jarvis-landing-content pointer-events-none flex flex-col items-center">
+        <div className="mb-5">
+          <AnimatedOrb
+            size={72}
+            motion="static"
+            className="shadow-[0_0_48px_rgba(16,185,129,0.18)]"
+          />
         </div>
-        <p className="text-blur-intro mb-3 text-[22px] font-semibold tracking-tight text-fg">
-          Ahoj, som Jarvis
-        </p>
-        <p className="text-blur-intro-delay max-w-md text-[14px] italic leading-7 text-subtle">
-          {JARVIS_STORY_OPENING}
-        </p>
+        <p className="mb-3 text-[22px] font-semibold tracking-tight text-fg">Ahoj, som Jarvis</p>
+        <p className="max-w-md text-[14px] italic leading-7 text-subtle">{JARVIS_STORY_OPENING}</p>
         <p className="mt-4 max-w-sm text-[13px] leading-6 text-muted-foreground">
           Začni rozhovor — alebo vyber rýchly štart nižšie.
         </p>

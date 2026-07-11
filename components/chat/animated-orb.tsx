@@ -2,11 +2,21 @@
 
 import type React from "react"
 
+import { cn } from "@/lib/utils"
+
 export function AnimatedOrb({
   className,
   variant = "default",
   size = 32,
-}: { className?: string; variant?: "default" | "red"; size?: number }) {
+  motion = "live",
+}: {
+  className?: string
+  variant?: "default" | "red"
+  size?: number
+  /** `static` disables hue/orbit motion — for fixed landing screens */
+  motion?: "live" | "static"
+}) {
+  const isStatic = motion === "static"
   const colors =
     variant === "red"
       ? {
@@ -35,12 +45,12 @@ export function AnimatedOrb({
 
   return (
     <div
-      className={`relative rounded-full overflow-hidden ${className}`}
+      className={cn("relative overflow-hidden rounded-full", isStatic && "orb-static", className)}
       style={{
         width: size,
         height: size,
         backgroundColor: colors.bg,
-        animation: "orb-hue-rotate 8s linear infinite",
+        animation: isStatic ? undefined : "orb-hue-rotate 8s linear infinite",
         boxShadow: "rgba(17, 12, 46, 0.15) 0px 48px 100px 0px",
       }}
       aria-hidden="true"
@@ -51,7 +61,7 @@ export function AnimatedOrb({
         style={
           {
             "--orb-blur": `${blurAmount}px`,
-            animation: "orb-hue-rotate-blur 6s linear infinite reverse",
+            animation: isStatic ? undefined : "orb-hue-rotate-blur 6s linear infinite reverse",
           } as React.CSSProperties
         }
       >

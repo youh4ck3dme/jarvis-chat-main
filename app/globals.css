@@ -931,6 +931,45 @@
   );
 }
 
+/* Workspace home — fixed vertical anchor (no centering bounce when footer resizes) */
+.jarvis-landing-static {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: clamp(4.5rem, 14vh, 6.5rem);
+  padding-bottom: 11rem;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  transform: none !important;
+  animation: none !important;
+  will-change: auto;
+}
+
+.jarvis-landing-static .jarvis-landing-content,
+.jarvis-landing-static .jarvis-landing-content * {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.orb-static .orb-circle-1,
+.orb-static .orb-circle-2,
+.orb-static .orb-circle-3,
+.orb-static .orb-circle-4,
+.orb-static .orb-circle-5 {
+  animation: none !important;
+  transform: none !important;
+}
+
+.jarvis-workspace--landing .procedural-noise-grain {
+  animation: none;
+}
+
 .jarvis-composer-shell {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }

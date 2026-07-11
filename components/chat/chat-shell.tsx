@@ -14,6 +14,7 @@ import {
   prepareJarvisPreviewHtml,
 } from "@/copied-from-visual-html/lib/jarvis-artifacts"
 import { readExperienceHint, recordBuildEvaluation } from "@/lib/agents/build-experience"
+import { cn } from "@/lib/utils"
 import type { BuildEvaluation, BuildTrace } from "@/types/build"
 import {
   buildIncompleteHtmlError,
@@ -1124,8 +1125,15 @@ export function ChatShell() {
     </div>
   )
 
+  const isWorkspaceLanding = messages.length === 0 && !isStreaming && !error
+
   return (
-    <div className="jarvis-workspace flex h-dvh flex-col overflow-hidden bg-background text-fg">
+    <div
+      className={cn(
+        "jarvis-workspace flex h-dvh flex-col overflow-hidden bg-background text-fg",
+        isWorkspaceLanding && "jarvis-workspace--landing",
+      )}
+    >
       <div className="mesh-grid-texture" aria-hidden />
       <WorkspaceHeader
         projectName={projectName}
