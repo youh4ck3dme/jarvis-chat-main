@@ -125,7 +125,7 @@ export function BuildReasoningPanel({
   if (!collapsible) {
     return (
       <section className="px-3 pb-3 md:px-4">
-        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Build Trace</h3>
+        <h3 className="jarvis-system-title mb-2 text-muted-foreground">Build Trace</h3>
         {content}
       </section>
     )
@@ -134,7 +134,7 @@ export function BuildReasoningPanel({
   return (
     <Collapsible defaultOpen={defaultOpen} className="bg-background">
       <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2.5 text-left md:px-4">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Build Trace</span>
+        <span className="jarvis-system-title text-muted-foreground">Build Trace</span>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent className={cn("px-3 pb-3 md:px-4")}>{content}</CollapsibleContent>

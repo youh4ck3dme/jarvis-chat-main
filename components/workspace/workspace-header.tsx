@@ -71,7 +71,7 @@ export function WorkspaceHeader({
         </button>
 
         <span
-          className="jarvis-header-title-mobile max-w-[6.5rem] truncate text-[12px] font-medium text-fg/80 sm:hidden"
+          className="jarvis-system-title jarvis-header-title-mobile max-w-[6.5rem] truncate text-[10px] text-fg/80 sm:hidden"
           title={projectName}
         >
           {projectName}

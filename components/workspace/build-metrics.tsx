@@ -42,7 +42,7 @@ export function StrategyBadge({ label, active = false }: StrategyBadgeProps) {
   return (
     <span
       className={cn(
-        "rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide",
+        "jarvis-system-status rounded-full px-2.5 py-1 uppercase",
         active
           ? "border border-border bg-border/50 text-fg"
           : "border border-border bg-surface text-muted-foreground",
@@ -60,9 +60,9 @@ type MetricTileProps = {
 
 export function MetricTile({ label, value }: MetricTileProps) {
   return (
-    <div className="rounded-lg border border-border bg-surface px-3 py-2">
-      <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-sm font-semibold text-fg">{value}</dd>
+    <div className="rounded-lg border border-border bg-surface/80 px-3 py-2 backdrop-blur-sm">
+      <dt className="jarvis-system-status uppercase">{label}</dt>
+      <dd className="jarvis-metric-readout mt-1 text-fg">{value}</dd>
     </div>
   )
 }

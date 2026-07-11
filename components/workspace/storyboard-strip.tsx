@@ -90,13 +90,11 @@ export function StoryboardStrip({ plan, isPlanning, className }: StoryboardStrip
       aria-live="polite"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Storyboard · Planner
-        </h3>
+        <h3 className="jarvis-system-title text-muted-foreground">Storyboard · Planner</h3>
         {isPlanning ? (
-          <span className="text-[10px] font-medium text-emerald-400/80">Fáza 1</span>
+          <span className="jarvis-system-status text-emerald-400/80">Fáza 1</span>
         ) : (
-          <span className="text-[10px] font-medium text-muted-foreground">Plán hotový</span>
+          <span className="jarvis-system-status text-muted-foreground">Plán hotový</span>
         )}
       </div>
 

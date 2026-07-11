@@ -1126,6 +1126,7 @@ export function ChatShell() {
 
   return (
     <div className="jarvis-workspace flex h-dvh flex-col overflow-hidden bg-background text-fg">
+      <div className="mesh-grid-texture" aria-hidden />
       <WorkspaceHeader
         projectName={projectName}
         onProjectNameChange={handleProjectNameChange}
@@ -1386,6 +1387,7 @@ export function ChatShell() {
           </div>
         </div>
       )}
+      <div className="procedural-noise-grain" aria-hidden />
     </div>
   )
 }
