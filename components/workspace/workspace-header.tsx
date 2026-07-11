@@ -55,7 +55,7 @@ export function WorkspaceHeader({
   return (
     <header
       className={cn(
-        "z-20 flex min-h-12 shrink-0 items-center justify-between gap-1 border-b border-border/60 bg-background/80 px-2 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:h-12 sm:gap-2 sm:px-3 md:px-4",
+        "safe-top z-20 flex min-h-12 shrink-0 items-center justify-between gap-1 border-b border-border/60 bg-background/80 px-2 backdrop-blur-md sm:h-12 sm:gap-2 sm:px-3 md:px-4",
         className,
       )}
       data-testid="workspace-header"

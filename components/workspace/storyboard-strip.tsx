@@ -82,7 +82,10 @@ export function StoryboardStrip({ plan, isPlanning, className }: StoryboardStrip
 
   return (
     <section
-      className={cn("border-t border-border bg-panel px-3 py-3 md:px-4", className)}
+      className={cn(
+        "animate-slide-up border-t border-border bg-panel px-3 py-3 md:px-4",
+        className,
+      )}
       data-testid="storyboard-strip"
       aria-live="polite"
     >
@@ -158,9 +161,10 @@ export function StoryboardStrip({ plan, isPlanning, className }: StoryboardStrip
       <p
         className={cn(
           "mt-2.5 min-h-[1.25rem] text-[12px] transition-opacity",
-          isPlanning ? "text-emerald-300/90" : "text-muted-foreground",
+          isPlanning ? "animate-fade-in text-emerald-300/90" : "text-muted-foreground",
         )}
         data-testid="storyboard-status"
+        key={isPlanning ? planningStep.statusMessage : statusMessage}
       >
         {statusMessage}
       </p>

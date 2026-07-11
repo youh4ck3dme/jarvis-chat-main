@@ -60,11 +60,13 @@ export function WorkspaceFooter({
 
   return (
     <footer
-      className="shrink-0 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
+      className="safe-bottom shrink-0 border-t border-border bg-background/95 backdrop-blur-md"
       data-testid="workspace-footer"
       style={
         keyboardPadding > 0
-          ? { paddingBottom: `calc(env(safe-area-inset-bottom) + ${keyboardPadding}px)` }
+          ? {
+              paddingBottom: `calc(max(1rem, env(safe-area-inset-bottom)) + ${keyboardPadding}px)`,
+            }
           : undefined
       }
     >

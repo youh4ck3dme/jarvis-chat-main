@@ -146,8 +146,9 @@ export function WorkspaceMenuDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-full border-border bg-background text-fg sm:max-w-sm"
+        className="w-full border-border bg-background p-0 text-fg sm:max-w-sm"
       >
+        <div className="animate-slide-right flex min-h-0 flex-1 flex-col gap-4 p-4">
         <SheetHeader className="border-b border-border pb-4">
           {view !== "main" ? (
             <button
@@ -425,6 +426,7 @@ export function WorkspaceMenuDrawer({
               </p>
             </div>
           ) : null}
+        </div>
         </div>
       </SheetContent>
     </Sheet>

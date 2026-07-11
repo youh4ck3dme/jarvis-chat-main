@@ -44,6 +44,11 @@ export function BuildReasoningPanel({
 
   const content = (
     <div className="space-y-3">
+      {isStreaming ? (
+        <div className="h-0.5 overflow-hidden rounded-full bg-border/60" aria-hidden>
+          <div className="h-full w-1/3 rounded-full bg-emerald-500/70 animate-loading-bar" />
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-center gap-1.5">
         {PIPELINE_STEPS.map((step) => (
           <StrategyBadge
@@ -89,7 +94,7 @@ export function BuildReasoningPanel({
           ))}
 
           {isStreaming ? (
-            <li className="flex items-start gap-2 rounded-lg border border-dashed border-border bg-panel px-3 py-2">
+            <li className="animate-fade-in flex items-start gap-2 rounded-lg border border-dashed border-border bg-panel px-3 py-2">
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-border/50 text-[10px] font-semibold text-subtle">
                 {(buildTrace?.phases.length ?? 0) + 1}
               </span>

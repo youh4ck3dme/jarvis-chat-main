@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 
+import { cn } from "@/lib/utils"
+
 interface AudioWaveformProps {
   isRecording: boolean
   stream?: MediaStream | null
@@ -88,16 +90,25 @@ export function AudioWaveform({ isRecording, stream }: AudioWaveformProps) {
     }
   }, [isRecording, stream])
 
+  const usesLiveLevels = Boolean(isRecording && stream)
+
   return (
-    <div className="flex items-center justify-center gap-[3px] h-8 flex-1 px-2">
+    <div
+      className="flex h-8 flex-1 items-center justify-center gap-[3px] px-2 animate-fade-in"
+      aria-hidden={!isRecording}
+    >
       {levels.map((level, index) => (
         <div
           key={index}
-          className="bg-zinc-400 rounded-full transition-all duration-75"
-          style={{
-            width: "3px",
-            height: `${Math.max(4, level * 28)}px`,
-          }}
+          className={cn(
+            "w-[3px] rounded-full bg-zinc-400",
+            usesLiveLevels ? "transition-all duration-75" : "h-3 animate-audio-bar",
+          )}
+          style={
+            usesLiveLevels
+              ? { height: `${Math.max(4, level * 28)}px` }
+              : { animationDelay: `${index * 0.08}s` }
+          }
         />
       ))}
     </div>

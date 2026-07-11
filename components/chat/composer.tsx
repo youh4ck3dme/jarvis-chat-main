@@ -991,7 +991,7 @@ export function Composer({
             />
 
             {isRecording && (
-              <div className="shrink-0 w-24">
+              <div className="w-24 shrink-0 animate-fade-in">
                 <AudioWaveform isRecording={isRecording} stream={mediaStream} />
               </div>
             )}

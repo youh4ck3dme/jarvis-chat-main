@@ -189,6 +189,7 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
         side="right"
         className="flex w-full flex-col border-border bg-background p-0 text-fg sm:max-w-md [&>button]:rounded-lg [&>button]:border [&>button]:border-border [&>button]:bg-surface [&>button]:text-muted-foreground [&>button]:opacity-100 [&>button]:hover:bg-surface [&>button]:hover:text-fg/80"
       >
+        <div className="animate-slide-left flex min-h-0 flex-1 flex-col">
         <SheetHeader className="border-b border-border px-4 py-4">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="flex items-center gap-3">
@@ -371,6 +372,7 @@ export function MemoryPanel({ conversationId, sessionTitle, isOpen, onClose }: M
           <p className="text-center text-[11px] text-muted-foreground">
             Pamäť je uložená lokálne — neodosiela sa na server.
           </p>
+        </div>
         </div>
       </SheetContent>
     </Sheet>
