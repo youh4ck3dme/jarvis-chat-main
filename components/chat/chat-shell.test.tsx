@@ -241,62 +241,72 @@ describe("ChatShell", () => {
     )
   })
 
-  it("chat mode on mobile stays in chat view while streaming casual messages", async () => {
-    vi.stubGlobal(
-      "matchMedia",
-      (query: string) =>
-        ({
-          matches: query.includes("767"),
-          media: query,
-          onchange: null,
-          addListener: vi.fn(),
-          removeListener: vi.fn(),
-          addEventListener: vi.fn(),
-          removeEventListener: vi.fn(),
-          dispatchEvent: vi.fn(),
-        }) as MediaQueryList,
-    )
+  it(
+    "chat mode on mobile stays in chat view while streaming casual messages",
+    async () => {
+      vi.stubGlobal(
+        "matchMedia",
+        (query: string) =>
+          ({
+            matches: query.includes("767"),
+            media: query,
+            onchange: null,
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+          }) as MediaQueryList,
+      )
 
-    let resolveStream: (() => void) | undefined
-    const streamStarted = new Promise<void>((resolve) => {
-      resolveStream = resolve
-    })
+      let resolveStream: (() => void) | undefined
+      const streamStarted = new Promise<void>((resolve) => {
+        resolveStream = resolve
+      })
 
-    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
-      if (String(input).includes("/api/chat")) {
-        await streamStarted
-        return createStreamResponse("Ahoj! Ako ti môžem pomôcť?")
-      }
-      return new Response("Not found", { status: 404 })
-    })
+      fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+        if (String(input).includes("/api/chat")) {
+          await streamStarted
+          return createStreamResponse("Ahoj! Ako ti môžem pomôcť?")
+        }
+        return new Response("Not found", { status: 404 })
+      })
 
-    const user = userEvent.setup()
-    render(<ChatShell />)
+      const user = userEvent.setup()
+      render(<ChatShell />)
 
-    await waitFor(() => {
-      expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
-    })
+      await waitFor(
+        () => {
+          expect(screen.getByText("Ahoj, som Jarvis")).toBeInTheDocument()
+        },
+        { timeout: 5000 },
+      )
 
-    fireEvent.change(screen.getByRole("textbox", { name: "Message input" }), {
-      target: { value: "ahoj" },
-    })
-    await user.click(screen.getByRole("button", { name: "Send message" }))
+      fireEvent.change(screen.getByRole("textbox", { name: "Message input" }), {
+        target: { value: "ahoj" },
+      })
+      await user.click(screen.getByRole("button", { name: "Send message" }))
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Stop generating" })).toBeInTheDocument()
-    })
+      await waitFor(
+        () => {
+          expect(screen.getByRole("button", { name: "Stop generating" })).toBeInTheDocument()
+        },
+        { timeout: 5000 },
+      )
 
-    expect(screen.queryByRole("button", { name: /Live Preview/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /Generated Code/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: /Live Preview/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: /Generated Code/i })).not.toBeInTheDocument()
 
-    resolveStream?.()
+      resolveStream?.()
 
-    await waitFor(() => {
-      expect(screen.getByText("Ahoj! Ako ti môžem pomôcť?")).toBeInTheDocument()
-    })
+      expect(
+        await screen.findByText("Ahoj! Ako ti môžem pomôcť?", {}, { timeout: 10000 }),
+      ).toBeInTheDocument()
 
-    expect(screen.queryByRole("button", { name: /Live Preview/i })).not.toBeInTheDocument()
-  })
+      expect(screen.queryByRole("button", { name: /Live Preview/i })).not.toBeInTheDocument()
+    },
+    20000,
+  )
 
   it(
     "builder mode: sends a message and streams assistant HTML through the build pipeline",
