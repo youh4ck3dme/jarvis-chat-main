@@ -1132,8 +1132,8 @@ export function ChatShell() {
   return (
     <div
       className={cn(
-        "jarvis-workspace flex flex-col overflow-hidden bg-background text-fg",
-        isWorkspaceLanding ? "jarvis-workspace--landing" : "h-dvh",
+        "jarvis-workspace flex h-dvh max-h-dvh flex-col overflow-hidden bg-background text-fg",
+        isWorkspaceLanding && "jarvis-workspace--landing",
       )}
     >
       <div className="mesh-grid-texture" aria-hidden />
@@ -1185,7 +1185,7 @@ export function ChatShell() {
         {!mounted || isMobile ? (
           <div className="h-full">
             {showChatPanel && (
-              <div className="relative flex h-full flex-col">
+              <div className="relative flex h-full min-h-0 flex-col">
                 <Button
                   onClick={clearChat}
                   variant="ghost"

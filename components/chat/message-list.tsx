@@ -218,8 +218,8 @@ export function MessageList({
 
   if (!isLoaded && isWorkspace) {
     return (
-      <div className="absolute inset-0 overflow-hidden overscroll-none border-none pt-14 md:pt-14">
-        <WorkspaceLanding onLandingPrompt={onLandingPrompt} />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-none">
+        <WorkspaceLanding className="min-h-0 flex-1" onLandingPrompt={onLandingPrompt} />
       </div>
     )
   }
@@ -232,27 +232,32 @@ export function MessageList({
     )
   }
 
+  if (isWorkspace && showStaticWorkspaceLanding) {
+    return (
+      <div
+        className="flex min-h-0 flex-1 touch-none flex-col overflow-hidden overscroll-none border-none"
+        role="log"
+        aria-label="Chat messages"
+        aria-live="off"
+      >
+        <WorkspaceLanding className="min-h-0 flex-1" onLandingPrompt={onLandingPrompt} />
+      </div>
+    )
+  }
+
   return (
     <div
       ref={containerRef}
-      onScroll={showStaticWorkspaceLanding ? undefined : handleScroll}
+      onScroll={handleScroll}
       className={
         isWorkspace
-          ? cn(
-              "absolute inset-0 border-none",
-              showStaticWorkspaceLanding
-                ? "touch-none overflow-hidden overscroll-none"
-                : "space-y-3 overflow-y-auto px-4 pb-4 pt-14 md:px-5 [scrollbar-color:#333_transparent] [scrollbar-width:thin]",
-            )
+          ? "min-h-0 flex-1 space-y-3 overflow-y-auto border-none px-4 pb-4 pt-14 md:px-5 [scrollbar-color:#333_transparent] [scrollbar-width:thin]"
           : "absolute inset-0 overflow-y-auto space-y-4 border-none px-4 pb-36 pt-16 md:px-6"
       }
       role="log"
       aria-label="Chat messages"
-      aria-live={showStaticWorkspaceLanding ? "off" : "polite"}
+      aria-live="polite"
     >
-      {showStaticWorkspaceLanding ? (
-        <WorkspaceLanding onLandingPrompt={onLandingPrompt} />
-      ) : null}
 
       {/* Empty state (default variant only) */}
       {!isWorkspace && isEmptyLanding ? (
@@ -315,9 +320,7 @@ export function MessageList({
         </div>
       )}
 
-      {!showStaticWorkspaceLanding ? (
-        <div ref={bottomRef} aria-hidden="true" className="h-20" />
-      ) : null}
+      <div ref={bottomRef} aria-hidden="true" className="h-20" />
     </div>
   )
 }

@@ -308,6 +308,11 @@
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
+/* Mobile composer dock — flush to screen bottom, home-indicator inset only */
+.safe-bottom-dock {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Syntax highlighting — minimalist monochrome */
 .token.tag {
   color: #888;
@@ -947,16 +952,13 @@
 }
 
 .jarvis-landing-static {
-  position: absolute;
-  top: 4.0625rem;
-  right: 0;
-  bottom: 11.5rem;
-  left: 0;
   display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding-top: 2rem;
+  justify-content: center;
+  padding: 1.5rem 1rem 0.75rem;
   overflow: hidden;
   overscroll-behavior: none;
   touch-action: manipulation;

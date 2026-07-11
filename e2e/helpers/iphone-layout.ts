@@ -76,7 +76,7 @@ export async function collectIphoneLayoutMetrics(page: Page): Promise<IphoneLayo
       header: pick('[data-testid="workspace-header"]'),
       emptyState: pick('[data-testid="jarvis-empty-state"]'),
       footer: pick('[data-testid="workspace-footer"]'),
-      composer: pick('[aria-label="Message input"]'),
+      composer: pick(".jarvis-composer-shell") ?? pick('[aria-label="Message input"]'),
       touchTargets: selectors.map((selector) => {
         const element = document.querySelector(selector)
         if (!element) return { selector, size: 0 }
@@ -104,7 +104,8 @@ export function assertIphoneLayoutMetrics(
 
   expect(metrics.header!.bottom).toBeLessThanOrEqual(metrics.emptyState!.top + 2)
   expect(metrics.emptyState!.bottom).toBeLessThanOrEqual(metrics.footer!.top + 2)
-  expect(metrics.footer!.bottom).toBeLessThanOrEqual(metrics.viewportHeight + 1)
+  expect(metrics.footer!.bottom).toBe(metrics.viewportHeight)
+  expect(metrics.composer!.width).toBeGreaterThanOrEqual(metrics.viewportWidth - 4)
 
   for (const region of [metrics.header, metrics.emptyState, metrics.footer, metrics.composer]) {
     expect(region!.left).toBeGreaterThanOrEqual(0)

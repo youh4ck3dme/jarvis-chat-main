@@ -637,18 +637,24 @@ export function Composer({
     return (
       <div
         data-testid="composer-drop-zone"
-        className="pointer-events-auto"
+        className="pointer-events-auto w-full"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
         {pendingAttachments.length > 0 ? (
-          <div className="mb-2 flex flex-wrap gap-2">
+          <div className="mb-2 flex flex-wrap gap-2 px-2 md:px-0">
             {pendingAttachments.map((attachment) => renderAttachmentChip(attachment, "workspace"))}
           </div>
         ) : null}
-        <div className="jarvis-composer-shell focus-ring relative flex items-end gap-2 rounded-2xl border border-border bg-panel p-2 backdrop-blur-sm transition-none">
+        <div
+          className={cn(
+            "jarvis-composer-shell focus-ring relative flex w-full items-end gap-1.5 border border-border bg-panel backdrop-blur-sm transition-none",
+            "max-md:rounded-none max-md:border-x-0 max-md:border-b-0 max-md:p-2",
+            "md:gap-2 md:rounded-2xl md:p-2",
+          )}
+        >
           {isDragOver ? (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-emerald-500/60 bg-emerald-950/30 text-[12px] font-medium text-emerald-300">
               Pusti súbory sem (max {MAX_COMPOSER_ATTACHMENTS})
@@ -820,7 +826,7 @@ export function Composer({
             disabled={isStreaming || disabled}
             rows={3}
             className={cn(
-              "composer-input min-h-[72px] max-h-[240px] flex-1 resize-none bg-transparent py-3 text-[14px] leading-5 text-fg",
+              "composer-input min-h-[72px] max-h-[240px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[14px] leading-5 text-fg",
               "placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
             )}
             aria-label="Message input"
@@ -831,10 +837,18 @@ export function Composer({
               <button
                 type="button"
                 disabled={isStreaming || disabled}
-                className="hidden h-8 shrink-0 items-center gap-1 rounded-lg border border-border bg-surface px-2.5 text-[12px] font-medium text-fg/80 transition-colors hover:bg-border/50 disabled:opacity-40 sm:inline-flex"
+                aria-label={`AI model: ${currentModel.name}`}
+                className="hidden h-8 max-w-[9rem] shrink-0 items-center gap-1.5 rounded-lg border border-border bg-surface px-2 text-[12px] font-medium text-fg/80 transition-colors hover:bg-border/50 disabled:opacity-40 sm:inline-flex"
               >
-                Build
-                <ChevronDown className="h-3 w-3" />
+                <Image
+                  src={currentModel.icon || "/placeholder.svg"}
+                  alt=""
+                  width={16}
+                  height={16}
+                  className="h-4 w-4 shrink-0 rounded-sm object-contain"
+                />
+                <span className="truncate">{currentModel.name}</span>
+                <ChevronDown className="h-3 w-3 shrink-0" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
@@ -892,11 +906,6 @@ export function Composer({
           >
             {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           </button>
-          {speechError ? (
-            <p className="max-w-[220px] text-[10px] leading-snug text-amber-400/90" role="status">
-              {speechError}
-            </p>
-          ) : null}
 
           {showPlayButton && onPlayPreview && (
             <button
@@ -941,6 +950,11 @@ export function Composer({
             </button>
           )}
         </div>
+        {speechError ? (
+          <p className="px-2 pt-1 text-[10px] leading-snug text-amber-400/90 md:px-0" role="status">
+            {speechError}
+          </p>
+        ) : null}
       </div>
     )
   }

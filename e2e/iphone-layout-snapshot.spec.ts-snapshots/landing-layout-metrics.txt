@@ -12,28 +12,28 @@
     "height": 65
   },
   "emptyState": {
-    "top": 130,
-    "bottom": 589,
+    "top": 65,
+    "bottom": 794,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 459
+    "height": 729
   },
   "footer": {
-    "top": 773,
+    "top": 794,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 139
+    "height": 118
   },
   "composer": {
-    "top": 793,
-    "bottom": 877,
-    "left": 125,
-    "right": 295,
-    "width": 170,
-    "height": 84
+    "top": 795,
+    "bottom": 896,
+    "left": 0,
+    "right": 420,
+    "width": 420,
+    "height": 101
   },
   "touchTargets": [
     {

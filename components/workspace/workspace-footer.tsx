@@ -3,6 +3,7 @@
 import { ChevronLeft, Code2, Eye, Play } from "lucide-react"
 
 import { Composer, type AIModel, type ComposerSendItem } from "@/components/chat/composer"
+import { useIsMobile } from "@/components/ui/use-mobile"
 import { useVisualViewportPadding } from "@/hooks/use-visual-viewport-padding"
 import { cn } from "@/lib/utils"
 
@@ -58,18 +59,23 @@ export function WorkspaceFooter({
   enableBuilderQuickActions = false,
   lockLayout = false,
 }: WorkspaceFooterProps) {
+  const isMobile = useIsMobile()
   const keyboardPadding = useVisualViewportPadding()
   const effectiveKeyboardPadding = lockLayout ? 0 : keyboardPadding
   const showArtifactTabs = hasArtifact || showArtifactWorkspace
+  const showComposerPlayButton = hasArtifact && (!isMobile || workspaceView === "chat")
 
   return (
     <footer
-      className="safe-bottom shrink-0 border-t border-border bg-background/95 backdrop-blur-md"
+      className={cn(
+        "shrink-0 border-t border-border bg-background/95 backdrop-blur-md",
+        isMobile ? "safe-bottom-dock" : "safe-bottom",
+      )}
       data-testid="workspace-footer"
       style={
         effectiveKeyboardPadding > 0
           ? {
-              paddingBottom: `calc(max(1rem, env(safe-area-inset-bottom)) + ${effectiveKeyboardPadding}px)`,
+              paddingBottom: `calc(${isMobile ? "env(safe-area-inset-bottom, 0px)" : "max(1rem, env(safe-area-inset-bottom))"} + ${effectiveKeyboardPadding}px)`,
             }
           : undefined
       }
@@ -141,7 +147,7 @@ export function WorkspaceFooter({
       </div>
       ) : null}
 
-      <div className="relative bg-gradient-to-t from-background via-background to-transparent px-3 py-2.5 md:px-4 md:py-3">
+      <div className="relative w-full bg-gradient-to-t from-background via-background to-transparent px-0 py-0 md:px-4 md:py-3">
         <Composer
           variant="workspace"
           onSend={onSend}
@@ -153,7 +159,7 @@ export function WorkspaceFooter({
           onModelChange={onModelChange}
           apiKeys={apiKeys}
           onPlayPreview={onPlayPreview}
-          showPlayButton={hasArtifact}
+          showPlayButton={showComposerPlayButton}
           hasArtifact={hasArtifact}
           onQuickSend={onQuickSend}
           enableBuilderQuickActions={enableBuilderQuickActions}
