@@ -1,0 +1,185 @@
+{
+  "viewport": {
+    "width": 420,
+    "height": 912
+  },
+  "workspace": {
+    "top": 0,
+    "bottom": 912,
+    "left": 0,
+    "right": 420,
+    "width": 420,
+    "height": 912
+  },
+  "header": {
+    "top": 0,
+    "bottom": 65,
+    "left": 0,
+    "right": 420,
+    "width": 420,
+    "height": 65
+  },
+  "emptyState": {
+    "top": 65,
+    "bottom": 810,
+    "left": 0,
+    "right": 420,
+    "width": 420,
+    "height": 745
+  },
+  "footer": {
+    "top": 810,
+    "bottom": 912,
+    "left": 0,
+    "right": 420,
+    "width": 420,
+    "height": 102
+  },
+  "composerShell": {
+    "top": 811,
+    "bottom": 912,
+    "left": 0,
+    "right": 420,
+    "width": 420,
+    "height": 101
+  },
+  "messageInput": {
+    "top": 820,
+    "bottom": 904,
+    "left": 108,
+    "right": 312,
+    "width": 204,
+    "height": 84
+  },
+  "modeControl": {
+    "top": 14,
+    "bottom": 64,
+    "left": 162,
+    "right": 258,
+    "width": 96,
+    "height": 50
+  },
+  "menuButton": {
+    "top": 17,
+    "bottom": 61,
+    "left": 8,
+    "right": 52,
+    "width": 44,
+    "height": 44
+  },
+  "settingsButton": {
+    "top": 17,
+    "bottom": 61,
+    "left": 368,
+    "right": 412,
+    "width": 44,
+    "height": 44
+  },
+  "landingOrb": {
+    "top": 279,
+    "bottom": 351,
+    "left": 174,
+    "right": 246,
+    "width": 72,
+    "height": 72
+  },
+  "landingTitle": {
+    "top": 371,
+    "bottom": 404,
+    "left": 126,
+    "right": 294,
+    "width": 168,
+    "height": 33
+  },
+  "vertical": {
+    "headerToContentGap": 0,
+    "contentToFooterGap": 0,
+    "regionHeightSum": 912,
+    "composerBottomInset": 0
+  },
+  "symmetry": {
+    "headerLeftInset": 8,
+    "headerRightInset": 8,
+    "headerInsetDelta": 0,
+    "modeControlViewportOffset": 0,
+    "landingOrbCenterOffset": 0,
+    "landingTitleCenterOffset": 0,
+    "composerShellPaddingLeft": 8,
+    "composerShellPaddingRight": 8,
+    "composerShellPaddingDelta": 0,
+    "starterRowLeftInset": 24,
+    "starterRowRightInset": 24,
+    "starterRowInsetDelta": 0
+  },
+  "composerControls": [
+    {
+      "top": 860,
+      "bottom": 904,
+      "left": 8,
+      "right": 52,
+      "width": 44,
+      "height": 44,
+      "label": "attachment"
+    },
+    {
+      "top": 860,
+      "bottom": 904,
+      "left": 58,
+      "right": 102,
+      "width": 44,
+      "height": 44,
+      "label": "more"
+    },
+    {
+      "top": 860,
+      "bottom": 904,
+      "left": 318,
+      "right": 362,
+      "width": 44,
+      "height": 44,
+      "label": "voice"
+    },
+    {
+      "top": 860,
+      "bottom": 904,
+      "left": 368,
+      "right": 412,
+      "width": 44,
+      "height": 44,
+      "label": "send"
+    }
+  ],
+  "starterChips": [
+    {
+      "top": 564,
+      "bottom": 608,
+      "left": 24,
+      "right": 125,
+      "width": 102,
+      "height": 44,
+      "label": "Ahoj Jarvis"
+    },
+    {
+      "top": 564,
+      "bottom": 608,
+      "left": 133,
+      "right": 272,
+      "width": 138,
+      "height": 44,
+      "label": "Čo vieš postaviť?"
+    },
+    {
+      "top": 564,
+      "bottom": 608,
+      "left": 280,
+      "right": 396,
+      "width": 117,
+      "height": 44,
+      "label": "Landing page"
+    }
+  ],
+  "starterChipGaps": [
+    8,
+    8
+  ]
+}

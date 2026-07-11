@@ -55,12 +55,12 @@ export function WorkspaceHeader({
   return (
     <header
       className={cn(
-        "safe-top z-20 flex min-h-12 shrink-0 items-center justify-between gap-1 border-b border-border/60 bg-background/80 px-2 backdrop-blur-md sm:h-12 sm:gap-2 sm:px-3 md:px-4",
+        "safe-top z-20 grid min-h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-1 border-b border-border/60 bg-background/80 px-2 backdrop-blur-md sm:h-12 sm:gap-2 sm:px-3 md:px-4",
         className,
       )}
       data-testid="workspace-header"
     >
-      <div className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2">
+      <div className="flex min-w-0 items-center justify-self-start gap-1.5 sm:gap-2">
         <button
           type="button"
           onClick={onOpenMenu}
@@ -143,20 +143,22 @@ export function WorkspaceHeader({
         </DropdownMenu>
       </div>
 
-      <JarvisModeControl
-        mode={jarvisMode}
-        builderUnlocked={builderUnlocked}
-        onModeChange={onJarvisModeChange}
-        onBuilderUnlock={onBuilderUnlock}
-        unlockDialogOpen={builderUnlockDialogOpen}
-        onUnlockDialogOpenChange={onBuilderUnlockDialogOpenChange}
-      />
+      <div className="flex justify-center justify-self-center">
+        <JarvisModeControl
+          mode={jarvisMode}
+          builderUnlocked={builderUnlocked}
+          onModeChange={onJarvisModeChange}
+          onBuilderUnlock={onBuilderUnlock}
+          unlockDialogOpen={builderUnlockDialogOpen}
+          onUnlockDialogOpenChange={onBuilderUnlockDialogOpenChange}
+        />
+      </div>
 
       <Button
         onClick={onOpenSettings}
         variant="ghost"
         size="icon"
-        className="h-11 w-11 min-h-11 min-w-11 rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+        className="h-11 w-11 min-h-11 min-w-11 justify-self-end rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
         aria-label="Open settings"
       >
         <Settings className="h-4 w-4" />
