@@ -46,3 +46,6 @@ desktop-agent/config/api_keys.json
 desktop-agent/.env
 desktop-agent/.pytest_cache/
 desktop-agent/data/
+desktop-agent/JARVIS.app/
+desktop-agent/build/
+desktop-agent/.DS_Store

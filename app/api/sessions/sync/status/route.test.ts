@@ -28,6 +28,7 @@ describe("GET /api/sessions/sync/status", () => {
       SUPABASE_URL: "https://example.supabase.co",
       SUPABASE_SERVICE_ROLE_KEY: "service-role",
     };
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     const response = await GET();
     const payload = await response.json();

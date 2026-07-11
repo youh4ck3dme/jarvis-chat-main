@@ -1,4 +1,4 @@
-name: Desktop Agent
+name: JARVIS Desktop Agent CI
 
 on:
   pull_request:
@@ -18,35 +18,42 @@ on:
       - "lib/prompts/**"
 
 jobs:
-  python-smoke:
+  desktop-agent-python:
     runs-on: macos-latest
-    timeout-minutes: 10
-    env:
-      MISTRAL_API_KEY: ci-placeholder-key
-      GEMINI_API_KEY: ci-placeholder-key
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Install PortAudio (pyaudio build dependency)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: desktop-agent/requirements.txt
+
+      - name: Install System Dependencies
         run: brew install portaudio
 
-      - name: Desktop agent setup
-        run: cd desktop-agent && make setup
-
-      - name: Python smoke import
+      - name: Set up Virtualenv and Install Packages
         run: |
-          cd desktop-agent && .venv/bin/python -c "
-          from or_client import client
-          from bridge.health_server import create_app
-          from memory.memory_manager import load_memory
-          assert client.available_models()['api_keys'] >= 1
-          print('desktop smoke OK')
-          "
+          cd desktop-agent
+          make setup
+        env:
+          MISTRAL_API_KEY: ci-placeholder-key
+          GEMINI_API_KEY: ci-placeholder-key
+          OPENROUTER_API_KEY: ci-placeholder-key
 
-  web-bridge:
+      - name: Run Pytest Test Suite
+        run: |
+          cd desktop-agent
+          make test
+
+  web-bridge-typescript:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
@@ -55,7 +62,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "pnpm"
+          cache: pnpm
 
-      - run: pnpm install
-      - run: pnpm vitest run lib/desktop-agent lib/prompts lib/speech-recognition
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Run Vitest Test Suite (Desktop Bridge)
+        run: pnpm vitest run lib/desktop-agent lib/prompts lib/speech-recognition

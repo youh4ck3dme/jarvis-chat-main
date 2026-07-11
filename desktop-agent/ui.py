@@ -21,7 +21,7 @@ from PyQt6.QtCore import (
 # pyrefly: ignore [missing-import]
 from PyQt6.QtGui import (
     QBrush, QColor, QDragEnterEvent, QDropEvent, QFont, QFontDatabase,
-    QKeySequence, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap,
+    QIcon, QKeySequence, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap,
     QRadialGradient, QShortcut,
 )
 # pyrefly: ignore [missing-import]
@@ -1016,11 +1016,15 @@ class MainWindow(QMainWindow):
     _log_sig   = pyqtSignal(str)
     _state_sig = pyqtSignal(str)
 
-    def __init__(self, face_path: str):
+    def __init__(self, face_path: str, icon_path: str | None = None):
         super().__init__()
         self.setWindowTitle("J.A.R.V.I.S — MARK XXXIX")
         self.setMinimumSize(_MIN_W, _MIN_H)
         self.resize(_DEFAULT_W, _DEFAULT_H)
+
+        resolved_icon = icon_path or str(BASE_DIR / "assets" / "jarvis-desktop-icon.png")
+        if Path(resolved_icon).exists():
+            self.setWindowIcon(QIcon(resolved_icon))
 
         screen = QApplication.primaryScreen().availableGeometry()
         self.move(
@@ -1495,10 +1499,10 @@ class _RootShim:
 
 
 class JarvisUI:
-    def __init__(self, face_path: str, size=None):
+    def __init__(self, face_path: str, icon_path: str | None = None, size=None):
         self._app = QApplication.instance() or QApplication(sys.argv)
         self._app.setStyle("Fusion")
-        self._win = MainWindow(face_path)
+        self._win = MainWindow(face_path, icon_path=icon_path)
         self._win.show()
         self.root = _RootShim(self._app)
 
