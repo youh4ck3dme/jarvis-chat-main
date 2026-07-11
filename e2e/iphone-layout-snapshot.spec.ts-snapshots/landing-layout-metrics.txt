@@ -5,31 +5,31 @@
   "clientWidth": 420,
   "header": {
     "top": 0,
-    "bottom": 51,
+    "bottom": 65,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 51
+    "height": 65
   },
   "emptyState": {
-    "top": 51,
-    "bottom": 837,
+    "top": 65,
+    "bottom": 821,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 786
+    "height": 756
   },
   "footer": {
-    "top": 837,
+    "top": 821,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 75
+    "height": 91
   },
   "composer": {
-    "top": 857,
-    "bottom": 893,
+    "top": 841,
+    "bottom": 877,
     "left": 121,
     "right": 299,
     "width": 178,
