@@ -13,23 +13,23 @@
   },
   "emptyState": {
     "top": 65,
-    "bottom": 794,
+    "bottom": 810,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 729
+    "height": 745
   },
   "footer": {
-    "top": 794,
+    "top": 810,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 118
+    "height": 102
   },
   "composer": {
-    "top": 795,
-    "bottom": 896,
+    "top": 811,
+    "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
