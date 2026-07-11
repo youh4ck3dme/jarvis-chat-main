@@ -1,12 +1,16 @@
 {
+  "id": "/chat",
   "name": "JARVIS",
   "short_name": "JARVIS",
-  "description": "JARVIS — chat, Builder a hlasový desktop agent",
+  "description": "JARVIS — chat, Builder workspace a live HTML preview",
   "start_url": "/chat",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
   "theme_color": "#000000",
   "background_color": "#050505",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "/icons/jarvis-mobile-180.png",
@@ -31,6 +35,14 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Chat",
+      "short_name": "Chat",
+      "url": "/chat",
+      "icons": [{ "src": "/icons/jarvis-mobile-180.png", "sizes": "180x180", "type": "image/png" }]
     }
   ]
 }

@@ -29,6 +29,9 @@
     "desktop:voice-smoke": "cd desktop-agent && .venv/bin/python scripts/jarvis-voice-smoke.py",
     "desktop:stack": "bash scripts/jarvis-stack.sh",
     "icons:generate": "desktop-agent/.venv/bin/python scripts/generate-jarvis-icons.py",
+    "pwa:app": "bash scripts/build-jarvis-pwa-app.sh",
+    "pwa:test": "vitest run lib/pwa/manifest.test.ts",
+    "pwa:smoke": "pnpm pwa:test && curl -sf http://127.0.0.1:3141/site.webmanifest | python3 -m json.tool >/dev/null && curl -sf http://127.0.0.1:3141/sw.js | head -1",
     "linear:sync": "tsx scripts/sync-linear-backlog.ts",
     "linear:sync:dry": "tsx scripts/sync-linear-backlog.ts --dry-run",
     "linear:status": "tsx scripts/sync-linear-backlog.ts --status"
