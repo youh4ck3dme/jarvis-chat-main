@@ -931,16 +931,32 @@
   );
 }
 
-/* Workspace home — fixed vertical anchor (no centering bounce when footer resizes) */
+/* Workspace home — pixel-anchored (no vh/dvh reflow when mobile chrome shifts) */
+.jarvis-workspace--landing {
+  height: 100svh;
+  max-height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+.jarvis-workspace--landing .procedural-noise-grain,
+.jarvis-workspace--landing .mesh-grid-texture {
+  animation: none !important;
+  transform: none !important;
+}
+
 .jarvis-landing-static {
   position: absolute;
-  inset: 0;
+  top: 4.0625rem;
+  right: 0;
+  bottom: 11.5rem;
+  left: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: clamp(4.5rem, 14vh, 6.5rem);
-  padding-bottom: 11rem;
+  padding-top: 2rem;
   overflow: hidden;
   overscroll-behavior: none;
   touch-action: manipulation;
@@ -964,10 +980,6 @@
 .orb-static .orb-circle-5 {
   animation: none !important;
   transform: none !important;
-}
-
-.jarvis-workspace--landing .procedural-noise-grain {
-  animation: none;
 }
 
 .jarvis-composer-shell {

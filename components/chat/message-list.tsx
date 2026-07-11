@@ -241,7 +241,7 @@ export function MessageList({
           ? cn(
               "absolute inset-0 border-none",
               showStaticWorkspaceLanding
-                ? "overflow-hidden overscroll-none"
+                ? "touch-none overflow-hidden overscroll-none"
                 : "space-y-3 overflow-y-auto px-4 pb-4 pt-14 md:px-5 [scrollbar-color:#333_transparent] [scrollbar-width:thin]",
             )
           : "absolute inset-0 overflow-y-auto space-y-4 border-none px-4 pb-36 pt-16 md:px-6"

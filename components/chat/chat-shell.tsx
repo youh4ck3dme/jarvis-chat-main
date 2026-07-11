@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 
 import { useJarvisAuth } from "@/hooks/use-jarvis-auth"
+import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll"
 import { MessageSquareDashed, Settings, X, Eye, EyeOff } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -1126,12 +1127,13 @@ export function ChatShell() {
   )
 
   const isWorkspaceLanding = messages.length === 0 && !isStreaming && !error
+  useLockBodyScroll(isWorkspaceLanding)
 
   return (
     <div
       className={cn(
-        "jarvis-workspace flex h-dvh flex-col overflow-hidden bg-background text-fg",
-        isWorkspaceLanding && "jarvis-workspace--landing",
+        "jarvis-workspace flex flex-col overflow-hidden bg-background text-fg",
+        isWorkspaceLanding ? "jarvis-workspace--landing" : "h-dvh",
       )}
     >
       <div className="mesh-grid-texture" aria-hidden />
@@ -1263,6 +1265,7 @@ export function ChatShell() {
         onPlayPreview={handlePlayPreview}
         onQuickSend={jarvisMode === "builder" ? handleQuickSend : undefined}
         enableBuilderQuickActions={jarvisMode === "builder"}
+        lockLayout={isWorkspaceLanding}
       />
 
       {/* Settings Modal */}

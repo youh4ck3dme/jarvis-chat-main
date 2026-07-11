@@ -12,12 +12,12 @@
     "height": 65
   },
   "emptyState": {
-    "top": 65,
-    "bottom": 773,
+    "top": 130,
+    "bottom": 589,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 708
+    "height": 459
   },
   "footer": {
     "top": 773,

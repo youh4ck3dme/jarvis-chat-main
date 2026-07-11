@@ -34,6 +34,8 @@ interface WorkspaceFooterProps {
   onPlayPreview: () => void
   onQuickSend?: (prompt: string) => void
   enableBuilderQuickActions?: boolean
+  /** Landing screen: keep footer height stable (ignore iOS keyboard inset). */
+  lockLayout?: boolean
 }
 
 export function WorkspaceFooter({
@@ -54,8 +56,10 @@ export function WorkspaceFooter({
   onPlayPreview,
   onQuickSend,
   enableBuilderQuickActions = false,
+  lockLayout = false,
 }: WorkspaceFooterProps) {
   const keyboardPadding = useVisualViewportPadding()
+  const effectiveKeyboardPadding = lockLayout ? 0 : keyboardPadding
   const showArtifactTabs = hasArtifact || showArtifactWorkspace
 
   return (
@@ -63,9 +67,9 @@ export function WorkspaceFooter({
       className="safe-bottom shrink-0 border-t border-border bg-background/95 backdrop-blur-md"
       data-testid="workspace-footer"
       style={
-        keyboardPadding > 0
+        effectiveKeyboardPadding > 0
           ? {
-              paddingBottom: `calc(max(1rem, env(safe-area-inset-bottom)) + ${keyboardPadding}px)`,
+              paddingBottom: `calc(max(1rem, env(safe-area-inset-bottom)) + ${effectiveKeyboardPadding}px)`,
             }
           : undefined
       }

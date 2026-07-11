@@ -648,7 +648,7 @@ export function Composer({
             {pendingAttachments.map((attachment) => renderAttachmentChip(attachment, "workspace"))}
           </div>
         ) : null}
-        <div className="jarvis-composer-shell focus-ring relative flex items-end gap-2 rounded-2xl border border-border bg-panel p-2 backdrop-blur-sm">
+        <div className="jarvis-composer-shell focus-ring relative flex items-end gap-2 rounded-2xl border border-border bg-panel p-2 backdrop-blur-sm transition-none">
           {isDragOver ? (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-emerald-500/60 bg-emerald-950/30 text-[12px] font-medium text-emerald-300">
               Pusti súbory sem (max {MAX_COMPOSER_ATTACHMENTS})
