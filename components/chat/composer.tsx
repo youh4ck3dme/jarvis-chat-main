@@ -360,7 +360,7 @@ export function Composer({
     const textarea = textareaRef.current
     if (textarea) {
       textarea.style.height = "auto"
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 400)}px`
     }
   }, [])
 
@@ -647,7 +647,7 @@ export function Composer({
             {pendingAttachments.map((attachment) => renderAttachmentChip(attachment, "workspace"))}
           </div>
         ) : null}
-        <div className="jarvis-composer-shell focus-ring relative flex items-center gap-2 rounded-2xl border border-border bg-panel p-1 backdrop-blur-sm">
+        <div className="jarvis-composer-shell focus-ring relative flex items-end gap-2 rounded-2xl border border-border bg-panel p-2 backdrop-blur-sm">
           {isDragOver ? (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-emerald-500/60 bg-emerald-950/30 text-[12px] font-medium text-emerald-300">
               Pusti súbory sem (max {MAX_COMPOSER_ATTACHMENTS})
@@ -817,9 +817,9 @@ export function Composer({
             onPaste={handlePaste}
             placeholder={isRecording ? "Počúvam…" : "Spýtaj sa Jarvisa…"}
             disabled={isStreaming || disabled}
-            rows={1}
+            rows={3}
             className={cn(
-              "composer-input min-h-[36px] max-h-[120px] flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-5 text-fg",
+              "composer-input min-h-[72px] max-h-[240px] flex-1 resize-none bg-transparent py-3 text-[14px] leading-5 text-fg",
               "placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
             )}
             aria-label="Message input"
@@ -965,7 +965,7 @@ export function Composer({
             </div>
           ) : null}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-end gap-2">
             {pendingAttachments.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {pendingAttachments.map((attachment) => renderAttachmentChip(attachment, "default"))}
@@ -984,11 +984,11 @@ export function Composer({
               onPaste={handlePaste}
               placeholder={isRecording ? "Listening..." : "Type a message... (Shift+Enter for new line)"}
               disabled={isStreaming || disabled}
-              rows={1}
+              rows={3}
               className={cn(
-                "composer-input flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-stone-800 dark:text-zinc-50 placeholder:text-stone-400 dark:placeholder:text-zinc-500",
+                "composer-input min-h-[72px] flex-1 resize-none bg-transparent px-2 py-3 text-sm text-stone-800 dark:text-zinc-50 placeholder:text-stone-400 dark:placeholder:text-zinc-500",
                 "focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
-                "max-h-[56px] overflow-y-auto",
+                "max-h-[112px] overflow-y-auto",
               )}
               aria-label="Message input"
             />
