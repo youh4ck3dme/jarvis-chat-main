@@ -41,6 +41,7 @@ import {
   readAttachmentFromFile,
 } from "@/lib/chat/jarvis-attachments"
 import Image from "next/image"
+import { SendActionsIcon } from "@/components/icons/send-actions-icon"
 import { AnimatedOrb } from "./animated-orb"
 import { AudioWaveform } from "./audio-waveform"
 import { useDesktopAgent } from "@/lib/desktop-agent/use-desktop-agent"
@@ -630,7 +631,7 @@ export function Composer({
   const isWorkspace = variant === "workspace"
   const workspaceIconBtn =
     "flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8 sm:rounded-lg"
-  const workspaceSendSize = isMobile ? 40 : 32
+  const sendIconSize = isMobile ? 22 : 20
 
   if (isWorkspace) {
     return (
@@ -920,7 +921,7 @@ export function Composer({
               )}
               aria-label="Stop generating"
             >
-              <AnimatedOrb size={workspaceSendSize} variant="red" />
+              <AnimatedOrb size={isMobile ? 40 : 32} variant="red" />
               <Square className="absolute h-3.5 w-3.5 text-red-700" fill="currentColor" />
             </button>
           ) : (
@@ -929,12 +930,14 @@ export function Composer({
               disabled={!canSend || disabled}
               className={cn(
                 workspaceIconBtn,
-                "relative rounded-full transition-transform",
-                !canSend || disabled ? "cursor-not-allowed opacity-40" : "hover:scale-105 active:scale-95",
+                "relative rounded-full border border-border bg-surface transition-all",
+                !canSend || disabled
+                  ? "cursor-not-allowed opacity-40 text-muted-foreground"
+                  : "text-emerald-400 hover:scale-105 hover:border-emerald-500/40 hover:bg-emerald-500/10 active:scale-95",
               )}
               aria-label="Send message"
             >
-              <AnimatedOrb size={workspaceSendSize} />
+              <SendActionsIcon size={sendIconSize} />
             </button>
           )}
         </div>
@@ -1020,12 +1023,14 @@ export function Composer({
                 onClick={handleSend}
                 disabled={!canSend || disabled}
                 className={cn(
-                  "relative h-9 w-9 shrink-0 transition-all rounded-full flex items-center justify-center",
-                  !canSend || disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:scale-105",
+                  "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-50 transition-all dark:border-zinc-700 dark:bg-zinc-800",
+                  !canSend || disabled
+                    ? "cursor-not-allowed opacity-50 text-stone-400 dark:text-zinc-500"
+                    : "cursor-pointer text-emerald-500 hover:scale-105 hover:border-emerald-500/40 hover:bg-emerald-500/10",
                 )}
                 aria-label="Send message"
               >
-                <AnimatedOrb size={36} />
+                <SendActionsIcon size={20} />
               </button>
             )}
           </div>
