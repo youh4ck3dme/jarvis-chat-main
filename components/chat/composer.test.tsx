@@ -54,6 +54,16 @@ describe("Composer", () => {
     expect(screen.getByPlaceholderText(/Type a message/i)).toBeInTheDocument()
   })
 
+  it("shows si:actions-line send icon in workspace variant", () => {
+    render(<Composer {...defaultProps} variant="workspace" />)
+
+    const sendButton = screen.getByRole("button", { name: "Send message" })
+    const icon = sendButton.querySelector("svg")
+    expect(icon).toBeInTheDocument()
+    expect(icon?.querySelector('path[d*="m9 7.5"]')).toBeInTheDocument()
+    expect(sendButton.querySelector('[data-testid="animated-orb"]')).not.toBeInTheDocument()
+  })
+
   it("submits typed text when the send button is clicked", async () => {
     const onSend = vi.fn()
     const user = userEvent.setup()
