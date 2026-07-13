@@ -181,6 +181,28 @@ export const PREVIEW_CONSOLE_BRIDGE_SCRIPT = `
     if (!anchor) return;
     var href = anchor.getAttribute('href');
     if (!href) return;
+
+    var trimmed = String(href).trim();
+    var isHashOnly = trimmed.charAt(0) === '#';
+    var isExternalProtocol = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) || trimmed.indexOf('//') === 0;
+    var isMailOrTel = trimmed.indexOf('mailto:') === 0 || trimmed.indexOf('tel:') === 0 || trimmed.indexOf('javascript:') === 0;
+    var isInternalArtifactLink = !isHashOnly && !isExternalProtocol && !isMailOrTel;
+
+    if (isInternalArtifactLink) {
+      event.preventDefault();
+      event.stopPropagation();
+      var path = trimmed.split('#')[0].split('?')[0] || '';
+      var file = path.replace(/^\\.\\//, '').replace(/^\\//, '').split('/').filter(Boolean).pop() || 'index';
+      var slug = file.replace(/\\.html?$/i, '');
+      if (!slug || slug === 'index' || slug === 'home' || slug === '.' || slug === '..') slug = 'index';
+      emit({
+        type: 'pngto-preview-artifact-navigate',
+        href: trimmed,
+        slug: slug,
+        ts: Date.now()
+      });
+    }
+
     emitNavigation('link', {
       href: href,
       text: (anchor.innerText || anchor.textContent || '').trim().slice(0, 120)
@@ -246,6 +268,7 @@ const PREVIEW_MESSAGE_TYPES = new Set([
   "pngto-preview-error",
   "pngto-preview-network",
   "pngto-preview-performance",
+  "pngto-preview-artifact-navigate",
 ]);
 
 function createEntryId(ts: number): string {

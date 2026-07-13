@@ -27,9 +27,16 @@ export function extractExportableArtifacts(content: string): ExportableArtifact[
 
   const htmlBlocks = extractHtmlArtifacts(content)
   htmlBlocks.forEach((html, index) => {
+    const pageMatch = html.match(/<!--\s*page:\s*([a-zA-Z0-9_-]+)\s*-->/i)
+    const slug = pageMatch?.[1]?.toLowerCase()
     artifacts.push({
       kind: "html",
-      label: htmlBlocks.length > 1 ? `page-${index + 1}.html` : "artifact.html",
+      label:
+        slug
+          ? `${slug}.html`
+          : htmlBlocks.length > 1
+            ? `page-${index + 1}.html`
+            : "artifact.html",
       content: html,
     })
   })

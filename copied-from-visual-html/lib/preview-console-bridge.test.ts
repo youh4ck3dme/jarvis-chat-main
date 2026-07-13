@@ -93,6 +93,7 @@ describe("preview-console-bridge runtime messages", () => {
 
   it("recognizes known preview message types", () => {
     expect(isKnownPreviewMessageType({ type: "pngto-preview-network" })).toBe(true)
+    expect(isKnownPreviewMessageType({ type: "pngto-preview-artifact-navigate" })).toBe(true)
     expect(isKnownPreviewMessageType({ type: "other" })).toBe(false)
   })
 

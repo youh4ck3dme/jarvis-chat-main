@@ -51,9 +51,12 @@ export function formatPlanForSystemPrompt(plan: BuildPlan, experienceHint?: stri
     "Build according to this plan:",
     JSON.stringify(plan, null, 2),
     "Honor the plan sections, CTA label, primary color, and language.",
-    "Deliver one complete ```html artifact with inline CSS and inline <script> for every button.",
+    "Deliver complete HTML artifact(s) with inline CSS and inline <script> for every button.",
+    "Single page: one ```html fence. Multi-page site: one ```html fence per page.",
+    "For each page, start the HTML with an annotation comment, e.g. <!-- page:index --> or <!-- page:about -->.",
+    "Link between pages with relative hrefs (about.html, pricing.html, index.html) — no absolute URLs.",
     "Mobile minimum: viewport meta, @media (max-width: 768px), max-width: 100% (no horizontal scroll at 420px), buttons min 44px tall.",
-    "Never truncate — close </body></html> and the ```html fence only after the document is finished.",
+    "Never truncate — close </body></html> and each ```html fence only after the document is finished.",
   ]
 
   if (experienceHint?.trim()) {

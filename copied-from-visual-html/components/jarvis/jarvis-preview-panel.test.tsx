@@ -53,4 +53,36 @@ describe("JarvisPreviewPanel fullscreen", () => {
     expect(screen.queryByTestId("jarvis-preview-fullscreen-btn")).not.toBeInTheDocument();
     expect(screen.queryByTestId("jarvis-preview-fullscreen-btn-sandbox")).not.toBeInTheDocument();
   });
+
+  it("shows page tabs for multi-artifact workspaces", () => {
+    render(
+      <JarvisPreviewPanel
+        htmlContent={SAMPLE_HTML}
+        previewHtmlContent={SAMPLE_HTML}
+        showPreview
+        showSource={false}
+        artifacts={[
+          {
+            id: "a1",
+            slug: "index",
+            title: "Home",
+            html: SAMPLE_HTML,
+            createdAt: "2026-07-13T12:00:00.000Z",
+          },
+          {
+            id: "a2",
+            slug: "about",
+            title: "About",
+            html: SAMPLE_HTML,
+            createdAt: "2026-07-13T12:00:00.000Z",
+          },
+        ]}
+        activeArtifactId="a1"
+        onSelectArtifact={() => {}}
+      />,
+    );
+
+    expect(screen.getByTestId("jarvis-artifact-tabs")).toBeInTheDocument();
+    expect(screen.getByTestId("jarvis-artifact-tab-about")).toBeInTheDocument();
+  });
 });

@@ -1,4 +1,10 @@
 import type { Message } from "@/components/chat/chat-shell"
+import { extractJarvisHtmlArtifact } from "@/copied-from-visual-html/lib/jarvis-artifacts"
+
+import {
+  normalizeSessionArtifacts,
+  type SessionArtifact,
+} from "./session-artifacts"
 
 export const CHAT_SESSIONS_STORAGE_KEY = "jarvis-chat-sessions"
 export const LEGACY_CHAT_MESSAGES_KEY = "chat-messages"
@@ -18,12 +24,17 @@ export type StoredChatMessage = {
   narrative?: boolean
 }
 
+export type { SessionArtifact }
+
 export type ChatSession = {
   id: string
   title: string
   messages: StoredChatMessage[]
   projectName: string
   updatedAt: string
+  /** Multi-page HTML workspace for Builder preview tabs. */
+  artifacts: SessionArtifact[]
+  activeArtifactId: string | null
 }
 
 export type ChatSessionsState = {
@@ -79,6 +90,29 @@ export function deserializeMessages(stored: StoredChatMessage[]): Message[] {
   }))
 }
 
+function latestHtmlFallback(messages: StoredChatMessage[]): string | null {
+  return extractJarvisHtmlArtifact(messages)
+}
+
+function normalizeSession(session: Partial<ChatSession> & { id: string }): ChatSession {
+  const messages = Array.isArray(session.messages) ? session.messages : []
+  const { artifacts, activeArtifactId } = normalizeSessionArtifacts(
+    session.artifacts,
+    session.activeArtifactId,
+    latestHtmlFallback(messages),
+  )
+
+  return {
+    id: session.id,
+    title: session.title?.trim() || DEFAULT_SESSION_TITLE,
+    messages,
+    projectName: session.projectName?.trim() || readStoredProjectName(),
+    updatedAt: session.updatedAt || new Date().toISOString(),
+    artifacts,
+    activeArtifactId,
+  }
+}
+
 export function createEmptySession(projectName = readStoredProjectName()): ChatSession {
   const now = new Date().toISOString()
   return {
@@ -87,6 +121,8 @@ export function createEmptySession(projectName = readStoredProjectName()): ChatS
     messages: [],
     projectName,
     updatedAt: now,
+    artifacts: [],
+    activeArtifactId: null,
   }
 }
 
@@ -136,13 +172,13 @@ function migrateLegacyChatMessages(): ChatSessionsState | null {
     return null
   }
 
-  const session: ChatSession = {
+  const session = normalizeSession({
     id: generateSessionId(),
     title: deriveSessionTitle(messages),
     messages,
     projectName: readStoredProjectName(),
     updatedAt: new Date().toISOString(),
-  }
+  })
 
   return {
     activeSessionId: session.id,
@@ -159,13 +195,7 @@ function parseSessionsState(raw: string): ChatSessionsState | null {
 
     const sessions = parsed.sessions
       .filter((session) => session && typeof session.id === "string")
-      .map((session) => ({
-        id: session.id,
-        title: session.title?.trim() || DEFAULT_SESSION_TITLE,
-        messages: Array.isArray(session.messages) ? session.messages : [],
-        projectName: session.projectName?.trim() || readStoredProjectName(),
-        updatedAt: session.updatedAt || new Date().toISOString(),
-      }))
+      .map((session) => normalizeSession(session))
 
     if (sessions.length === 0) return null
 
@@ -226,6 +256,8 @@ export function updateActiveSession(
     messages?: Message[]
     projectName?: string
     title?: string
+    artifacts?: SessionArtifact[]
+    activeArtifactId?: string | null
   },
 ): ChatSessionsState {
   const now = new Date().toISOString()
@@ -239,11 +271,25 @@ export function updateActiveSession(
       (patch.messages ? deriveSessionTitle(messages) : session.title) ||
       DEFAULT_SESSION_TITLE
 
+    const artifactPatch =
+      patch.artifacts !== undefined || patch.activeArtifactId !== undefined
+        ? normalizeSessionArtifacts(
+            patch.artifacts ?? session.artifacts,
+            patch.activeArtifactId !== undefined ? patch.activeArtifactId : session.activeArtifactId,
+            latestHtmlFallback(messages),
+          )
+        : {
+            artifacts: session.artifacts,
+            activeArtifactId: session.activeArtifactId,
+          }
+
     return {
       ...session,
       messages,
       projectName,
       title,
+      artifacts: artifactPatch.artifacts,
+      activeArtifactId: artifactPatch.activeArtifactId,
       updatedAt: now,
     }
   })
