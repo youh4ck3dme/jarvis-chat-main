@@ -268,9 +268,15 @@ export function ChatShell() {
     openai: false,
     anthropic: false,
   })
+  const isShellMountedRef = useRef(false)
 
   useEffect(() => {
+    isShellMountedRef.current = true
     setMounted(true)
+    return () => {
+      isShellMountedRef.current = false
+      setMounted(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -304,15 +310,28 @@ export function ChatShell() {
       setSnapshotRecords([])
       return
     }
-    void countBuildHistory(activeSessionId).then(setBuildHistoryCount)
-    void listBuildHistory({ sessionId: activeSessionId, limit: 50 }).then(setSnapshotRecords)
-  }, [mounted, activeSessionId, buildHistoryCount])
+
+    let cancelled = false
+    void Promise.all([
+      countBuildHistory(activeSessionId),
+      listBuildHistory({ sessionId: activeSessionId, limit: 50 }),
+    ]).then(([count, records]) => {
+      if (cancelled) return
+      setBuildHistoryCount(count)
+      setSnapshotRecords(records)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [mounted, activeSessionId])
 
   const refreshSnapshotTimeline = useCallback(async (sessionId: string) => {
     const [count, records] = await Promise.all([
       countBuildHistory(sessionId),
       listBuildHistory({ sessionId, limit: 50 }),
     ])
+    if (!isShellMountedRef.current) return
     setBuildHistoryCount(count)
     setSnapshotRecords(records)
   }, [])
