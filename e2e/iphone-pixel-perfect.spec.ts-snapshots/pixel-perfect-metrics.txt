@@ -107,8 +107,8 @@
     "composerShellPaddingLeft": 8,
     "composerShellPaddingRight": 8,
     "composerShellPaddingDelta": 0,
-    "starterRowLeftInset": 24,
-    "starterRowRightInset": 24,
+    "starterRowLeftInset": 25,
+    "starterRowRightInset": 25,
     "starterRowInsetDelta": 0
   },
   "composerControls": [
@@ -153,9 +153,9 @@
     {
       "top": 564,
       "bottom": 608,
-      "left": 24,
+      "left": 25,
       "right": 125,
-      "width": 102,
+      "width": 100,
       "height": 44,
       "label": "Ahoj Jarvis"
     },
@@ -163,16 +163,16 @@
       "top": 564,
       "bottom": 608,
       "left": 133,
-      "right": 272,
-      "width": 138,
+      "right": 270,
+      "width": 137,
       "height": 44,
       "label": "Čo vieš postaviť?"
     },
     {
       "top": 564,
       "bottom": 608,
-      "left": 280,
-      "right": 396,
+      "left": 278,
+      "right": 395,
       "width": 117,
       "height": 44,
       "label": "Landing page"
