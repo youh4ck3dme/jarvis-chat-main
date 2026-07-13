@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { AlertTriangle, Globe, Gauge, Navigation, Terminal, Trash2 } from "lucide-react"
+import { AlertTriangle, Globe, Gauge, Navigation, Sparkles, Terminal, Trash2 } from "lucide-react"
 
 import type {
   PreviewConsoleEntry,
@@ -10,6 +10,14 @@ import type {
   PreviewNetworkEntry,
   PreviewPerformanceEntry,
 } from "@/copied-from-visual-html/lib/preview-console-bridge"
+import {
+  formatSelfHealAttemptLabel,
+  MAX_SELF_HEAL_ATTEMPTS,
+  selfHealIssueFromConsole,
+  selfHealIssueFromError,
+  selfHealIssueFromNetwork,
+  type SelfHealIssue,
+} from "@/lib/chat/self-heal"
 import { cn } from "@/lib/utils"
 
 export type RuntimeInspectorFilter = "all" | "console" | "errors" | "network" | "navigation" | "performance"
@@ -26,6 +34,11 @@ type RuntimeInspectorPanelProps = {
   className?: string
   state: RuntimeInspectorState
   onClear: () => void
+  onFixIssue?: (issue: SelfHealIssue) => void
+  canSelfHeal?: boolean
+  isSelfHealBusy?: boolean
+  selfHealAttempt?: number
+  selfHealMaxAttempts?: number
 }
 
 const FILTERS: { id: RuntimeInspectorFilter; label: string; icon: typeof Terminal }[] = [
@@ -47,7 +60,40 @@ function formatTime(ts: number): string {
   })
 }
 
-function ConsoleRow({ entry }: { entry: PreviewConsoleEntry }) {
+function FixItButton({
+  disabled,
+  onClick,
+}: {
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-md border border-amber-900/50 bg-amber-950/30 px-2.5 text-[11px] font-medium text-amber-200 transition-colors hover:bg-amber-950/50 disabled:cursor-not-allowed disabled:opacity-40"
+      data-testid="inspector-fix-it-btn"
+    >
+      <Sparkles className="h-3.5 w-3.5" />
+      Ask Jarvis to fix
+    </button>
+  )
+}
+
+function ConsoleRow({
+  entry,
+  onFixIssue,
+  canSelfHeal,
+  isSelfHealBusy,
+}: {
+  entry: PreviewConsoleEntry
+  onFixIssue?: (issue: SelfHealIssue) => void
+  canSelfHeal?: boolean
+  isSelfHealBusy?: boolean
+}) {
+  const issue = selfHealIssueFromConsole(entry)
+
   return (
     <div className="border-b border-border/60 px-3 py-2 font-mono text-[11px] leading-5" data-testid="inspector-console-row">
       <div className="flex items-center gap-2 text-muted-foreground">
@@ -65,11 +111,29 @@ function ConsoleRow({ entry }: { entry: PreviewConsoleEntry }) {
         </span>
       </div>
       <p className="mt-1 break-all text-zinc-300">{entry.args.join(" ")}</p>
+      {issue && onFixIssue ? (
+        <FixItButton
+          disabled={!canSelfHeal || isSelfHealBusy}
+          onClick={() => onFixIssue(issue)}
+        />
+      ) : null}
     </div>
   )
 }
 
-function ErrorRow({ entry }: { entry: PreviewErrorEntry }) {
+function ErrorRow({
+  entry,
+  onFixIssue,
+  canSelfHeal,
+  isSelfHealBusy,
+}: {
+  entry: PreviewErrorEntry
+  onFixIssue?: (issue: SelfHealIssue) => void
+  canSelfHeal?: boolean
+  isSelfHealBusy?: boolean
+}) {
+  const issue = selfHealIssueFromError(entry)
+
   return (
     <div className="border-b border-border/60 px-3 py-2" data-testid="inspector-error-row">
       <div className="flex items-center gap-2 text-[11px] text-red-300">
@@ -90,11 +154,28 @@ function ErrorRow({ entry }: { entry: PreviewErrorEntry }) {
           {entry.stack}
         </pre>
       ) : null}
+      {onFixIssue ? (
+        <FixItButton
+          disabled={!canSelfHeal || isSelfHealBusy}
+          onClick={() => onFixIssue(issue)}
+        />
+      ) : null}
     </div>
   )
 }
 
-function NetworkRow({ entry }: { entry: PreviewNetworkEntry }) {
+function NetworkRow({
+  entry,
+  onFixIssue,
+  canSelfHeal,
+  isSelfHealBusy,
+}: {
+  entry: PreviewNetworkEntry
+  onFixIssue?: (issue: SelfHealIssue) => void
+  canSelfHeal?: boolean
+  isSelfHealBusy?: boolean
+}) {
+  const issue = selfHealIssueFromNetwork(entry)
   const statusLabel =
     entry.error != null
       ? `ERR ${entry.error}`
@@ -121,6 +202,12 @@ function NetworkRow({ entry }: { entry: PreviewNetworkEntry }) {
         {entry.durationMs != null ? <span className="text-muted-foreground">{entry.durationMs}ms</span> : null}
       </div>
       <p className="mt-1 break-all text-zinc-300">{entry.url}</p>
+      {issue && onFixIssue ? (
+        <FixItButton
+          disabled={!canSelfHeal || isSelfHealBusy}
+          onClick={() => onFixIssue(issue)}
+        />
+      ) : null}
     </div>
   )
 }
@@ -155,7 +242,16 @@ function PerformanceRow({ entry }: { entry: PreviewPerformanceEntry }) {
   )
 }
 
-export function RuntimeInspectorPanel({ className, state, onClear }: RuntimeInspectorPanelProps) {
+export function RuntimeInspectorPanel({
+  className,
+  state,
+  onClear,
+  onFixIssue,
+  canSelfHeal = false,
+  isSelfHealBusy = false,
+  selfHealAttempt = 0,
+  selfHealMaxAttempts = MAX_SELF_HEAL_ATTEMPTS,
+}: RuntimeInspectorPanelProps) {
   const [filter, setFilter] = useState<RuntimeInspectorFilter>("all")
 
   const counts = useMemo(
@@ -180,6 +276,12 @@ export function RuntimeInspectorPanel({ className, state, onClear }: RuntimeInsp
     (filter === "navigation" && counts.navigation === 0) ||
     (filter === "performance" && counts.performance === 0)
 
+  const rowProps = {
+    onFixIssue,
+    canSelfHeal,
+    isSelfHealBusy,
+  }
+
   return (
     <section className={cn("flex min-h-0 flex-col bg-canvas", className)} data-testid="runtime-inspector-panel">
       <div className="flex h-12 items-center justify-between border-b border-border/80 bg-panel px-3 md:px-4">
@@ -201,6 +303,16 @@ export function RuntimeInspectorPanel({ className, state, onClear }: RuntimeInsp
           Clear
         </button>
       </div>
+
+      {selfHealAttempt > 0 ? (
+        <div
+          className="border-b border-amber-900/40 bg-amber-950/20 px-3 py-2 text-[11px] text-amber-200 md:px-4"
+          data-testid="self-heal-attempt-banner"
+        >
+          {formatSelfHealAttemptLabel(selfHealAttempt, selfHealMaxAttempts)}
+          {isSelfHealBusy ? " — Jarvis is repairing the artifact…" : null}
+        </div>
+      ) : null}
 
       <div className="flex items-center gap-1 overflow-x-auto border-b border-border/80 px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {FILTERS.map((item) => {
@@ -244,11 +356,11 @@ export function RuntimeInspectorPanel({ className, state, onClear }: RuntimeInsp
         ) : (
           <>
             {(filter === "all" || filter === "errors") &&
-              state.errorEntries.map((entry) => <ErrorRow key={entry.id} entry={entry} />)}
+              state.errorEntries.map((entry) => <ErrorRow key={entry.id} entry={entry} {...rowProps} />)}
             {(filter === "all" || filter === "console") &&
-              state.consoleEntries.map((entry) => <ConsoleRow key={entry.id} entry={entry} />)}
+              state.consoleEntries.map((entry) => <ConsoleRow key={entry.id} entry={entry} {...rowProps} />)}
             {(filter === "all" || filter === "network") &&
-              state.networkEntries.map((entry) => <NetworkRow key={entry.id} entry={entry} />)}
+              state.networkEntries.map((entry) => <NetworkRow key={entry.id} entry={entry} {...rowProps} />)}
             {(filter === "all" || filter === "navigation") &&
               state.navigationEntries.map((entry) => <NavigationRow key={entry.id} entry={entry} />)}
             {(filter === "all" || filter === "performance") &&
