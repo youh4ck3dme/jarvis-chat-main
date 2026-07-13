@@ -154,4 +154,20 @@ describe("build-history-store", () => {
     expect(await listBuildHistory({ sessionId: "session-a" })).toEqual([])
     expect(await listBuildHistory({ sessionId: "session-b" })).toHaveLength(1)
   })
+
+  it("persists optional html and thumbnail on save", async () => {
+    const saved = await saveBuildHistory({
+      ...sampleInput("with-html", { createdAt: "2026-07-13T12:00:00.000Z" }),
+      html: "<html><body>Hello</body></html>",
+      thumbnailDataUrl: "data:image/jpeg;base64,abc",
+    })
+
+    expect(saved?.html).toContain("<body>Hello</body>")
+    expect(saved?.thumbnailDataUrl).toMatch(/^data:image\/jpeg/)
+
+    const listed = await listBuildHistory({ limit: 1 })
+    expect(listed[0]?.html).toContain("Hello")
+    expect(listed[0]?.thumbnailDataUrl).toBe("data:image/jpeg;base64,abc")
+  })
+
 })

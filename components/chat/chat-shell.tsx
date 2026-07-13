@@ -80,6 +80,11 @@ import {
   saveBuildHistory,
   type BuildHistoryRecord,
 } from "@/lib/build-history/build-history-store"
+import { captureHtmlThumbnail } from "@/lib/build-history/capture-thumbnail"
+import {
+  SnapshotComparePanel,
+  SnapshotTimeline,
+} from "@/components/workspace/snapshot-timeline"
 import {
   addNewSession,
   deleteSession,
@@ -218,6 +223,12 @@ export function ChatShell() {
   const [buildEvaluation, setBuildEvaluation] = useState<BuildEvaluation | null>(null)
   const [buildTrace, setBuildTrace] = useState<BuildTrace | null>(null)
   const [buildHistoryCount, setBuildHistoryCount] = useState(0)
+  const [snapshotRecords, setSnapshotRecords] = useState<BuildHistoryRecord[]>([])
+  const [viewingSnapshot, setViewingSnapshot] = useState<BuildHistoryRecord | null>(null)
+  const [comparePair, setComparePair] = useState<{
+    before: BuildHistoryRecord
+    after: BuildHistoryRecord
+  } | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isMemoryOpen, setIsMemoryOpen] = useState(false)
   const [cloudSyncEnabled, setCloudSyncEnabled] = useState(false)
@@ -290,10 +301,21 @@ export function ChatShell() {
   useEffect(() => {
     if (!mounted || !activeSessionId) {
       setBuildHistoryCount(0)
+      setSnapshotRecords([])
       return
     }
     void countBuildHistory(activeSessionId).then(setBuildHistoryCount)
-  }, [mounted, activeSessionId])
+    void listBuildHistory({ sessionId: activeSessionId, limit: 50 }).then(setSnapshotRecords)
+  }, [mounted, activeSessionId, buildHistoryCount])
+
+  const refreshSnapshotTimeline = useCallback(async (sessionId: string) => {
+    const [count, records] = await Promise.all([
+      countBuildHistory(sessionId),
+      listBuildHistory({ sessionId, limit: 50 }),
+    ])
+    setBuildHistoryCount(count)
+    setSnapshotRecords(records)
+  }, [])
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 767px)")
@@ -308,16 +330,23 @@ export function ChatShell() {
     [messages],
   )
 
+  const displayHtmlArtifact = viewingSnapshot?.html ?? rawHtmlArtifact
+
   const livePreviewHtml = useMemo(
     () =>
-      rawHtmlArtifact
-        ? prepareJarvisPreviewHtml(rawHtmlArtifact, { streaming: isStreaming })
+      displayHtmlArtifact
+        ? prepareJarvisPreviewHtml(displayHtmlArtifact, {
+            streaming: isStreaming && !viewingSnapshot,
+          })
         : null,
-    [rawHtmlArtifact, isStreaming],
+    [displayHtmlArtifact, isStreaming, viewingSnapshot],
   )
 
-  const previewHtmlContent = useThrottledValue(livePreviewHtml, isStreaming ? 200 : 0)
-  const hasArtifact = Boolean(rawHtmlArtifact)
+  const previewHtmlContent = useThrottledValue(
+    livePreviewHtml,
+    isStreaming && !viewingSnapshot ? 200 : 0,
+  )
+  const hasArtifact = Boolean(displayHtmlArtifact)
 
   const isBuildActive =
     jarvisMode === "builder" &&
@@ -520,9 +549,32 @@ export function ChatShell() {
   const handleSelectBuildRecord = useCallback((record: BuildHistoryRecord) => {
     setBuildTrace(record.trace)
     setBuildEvaluation(record.evaluation)
+    setComparePair(null)
+    if (record.html) {
+      setViewingSnapshot(record)
+    } else {
+      setViewingSnapshot(null)
+    }
     setArtifactTab("preview")
     setWorkspaceView("artifact")
   }, [])
+
+  const handleBackToLive = useCallback(() => {
+    setViewingSnapshot(null)
+    setComparePair(null)
+  }, [])
+
+  const handleCompareSnapshots = useCallback(
+    (before: BuildHistoryRecord, after: BuildHistoryRecord) => {
+      setComparePair({ before, after })
+      setViewingSnapshot(after)
+      setBuildTrace(after.trace)
+      setBuildEvaluation(after.evaluation)
+      setArtifactTab("preview")
+      setWorkspaceView("artifact")
+    },
+    [],
+  )
 
   const handleFocusTelemetry = useCallback(() => {
     setWorkspaceView("artifact")
@@ -894,6 +946,7 @@ export function ChatShell() {
         }
 
         if (evaluation && artifact) {
+          const thumbnailDataUrl = (await captureHtmlThumbnail(artifact)) ?? undefined
           const saved = await saveBuildHistory({
             sessionId: conversationId,
             userPrompt: userMessage.content,
@@ -901,9 +954,12 @@ export function ChatShell() {
             trace,
             htmlChars: artifact.length,
             planSummary: trace.phases.find((phase) => phase.phase === "planner")?.detail,
+            html: artifact,
+            thumbnailDataUrl,
           })
           if (saved) {
-            void countBuildHistory(conversationId).then(setBuildHistoryCount)
+            setViewingSnapshot(null)
+            void refreshSnapshotTimeline(conversationId)
           }
         }
 
@@ -953,6 +1009,7 @@ export function ChatShell() {
       scheduleStreamingAssistantFlush,
       flushStreamingAssistantMessage,
       clearStreamingAssistantFlush,
+      refreshSnapshotTimeline,
     ],
   )
 
@@ -1076,6 +1133,9 @@ export function ChatShell() {
     setInspectorNavigationEntries([])
     setInspectorPerformanceEntries([])
     setSelfHealAttemptCount(0)
+    setViewingSnapshot(null)
+    setComparePair(null)
+    setSnapshotRecords([])
   }, [])
 
   const clearInspectorEntries = useCallback(() => {
@@ -1194,12 +1254,28 @@ export function ChatShell() {
         <BuildTelemetry
           buildTrace={buildTrace}
           buildEvaluation={buildEvaluation}
-          htmlChars={rawHtmlArtifact?.length ?? 0}
+          htmlChars={(displayHtmlArtifact ?? rawHtmlArtifact)?.length ?? 0}
           isStreaming={isStreaming}
           activePhase={pipelinePhase}
           plannerPlan={plannerPlan}
           collapsible={isMobile}
           historyCount={buildHistoryCount}
+        />
+      ) : null}
+      {snapshotRecords.length > 0 ? (
+        <SnapshotTimeline
+          records={snapshotRecords}
+          selectedId={viewingSnapshot?.id}
+          compareId={comparePair?.after.id}
+          onSelect={handleSelectBuildRecord}
+          onCompare={handleCompareSnapshots}
+        />
+      ) : null}
+      {comparePair ? (
+        <SnapshotComparePanel
+          before={comparePair.before}
+          after={comparePair.after}
+          onClose={() => setComparePair(null)}
         />
       ) : null}
       {artifactTab === "inspector" ? (
@@ -1226,19 +1302,23 @@ export function ChatShell() {
         />
       ) : null}
       <JarvisPreviewPanel
-        htmlContent={rawHtmlArtifact}
+        htmlContent={displayHtmlArtifact}
         previewHtmlContent={previewHtmlContent}
-        isStreaming={isStreaming}
+        isStreaming={isStreaming && !viewingSnapshot}
+        isViewingSnapshot={Boolean(viewingSnapshot)}
+        onBackToLive={handleBackToLive}
         showSource={artifactTab === "code"}
         showPreview={artifactTab === "preview"}
         hiddenSandbox={artifactTab === "inspector"}
-        onConsoleEntry={rawHtmlArtifact ? handleInspectorConsoleEntry : undefined}
-        onNavigationEntry={rawHtmlArtifact ? handleInspectorNavigationEntry : undefined}
-        onErrorEntry={rawHtmlArtifact ? handleInspectorErrorEntry : undefined}
-        onNetworkEntry={rawHtmlArtifact ? handleInspectorNetworkEntry : undefined}
-        onPerformanceEntry={rawHtmlArtifact ? handleInspectorPerformanceEntry : undefined}
+        onConsoleEntry={displayHtmlArtifact && !viewingSnapshot ? handleInspectorConsoleEntry : undefined}
+        onNavigationEntry={displayHtmlArtifact && !viewingSnapshot ? handleInspectorNavigationEntry : undefined}
+        onErrorEntry={displayHtmlArtifact && !viewingSnapshot ? handleInspectorErrorEntry : undefined}
+        onNetworkEntry={displayHtmlArtifact && !viewingSnapshot ? handleInspectorNetworkEntry : undefined}
+        onPerformanceEntry={
+          displayHtmlArtifact && !viewingSnapshot ? handleInspectorPerformanceEntry : undefined
+        }
         emptyPreview={
-          !rawHtmlArtifact ? (
+          !displayHtmlArtifact ? (
             <OrbMindMap
               isPlanning={pipelinePhase === "planner"}
               plan={plannerPlan}
