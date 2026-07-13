@@ -122,12 +122,11 @@
 
 Detail: [README.md#bomba-nápady-builder-p2p3](./README.md#bomba-nápady-builder-p2p3)
 
-- [ ] **#1** Diff-based Snapshot Timeline s vizuálnym A/B preview (P2)
+- [x] **#1** Diff-based Snapshot Timeline s vizuálnym A/B preview (P2)
 - [ ] **#2** Prompt-to-Component Library — local RAG (P2, závisí na #1)
 - [ ] **#3** Multi-Artifact Workspace — mini „pages“ (P2)
 - [x] **#4** Sandbox Runtime Inspector — Console + Network overlay (P3)
 - [x] **#5** „Fix it“ self-heal loop (P3, závisí na #4)
-
 ---
 
 ## 📋 Príkazy

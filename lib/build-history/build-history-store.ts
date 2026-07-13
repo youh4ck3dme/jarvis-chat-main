@@ -3,7 +3,7 @@ import { Logger } from "@/lib/logger"
 import type { BuildEvaluation, BuildTrace } from "@/types/build"
 
 const DB_NAME = "JarvisBuildHistory"
-const DB_VERSION = 2
+const DB_VERSION = 3
 const STORE_NAME = "builds"
 const MAX_RECORDS_PER_SESSION = 50
 
@@ -16,6 +16,10 @@ export type BuildHistoryRecord = {
   trace: BuildTrace
   htmlChars: number
   planSummary?: string
+  /** Full HTML artifact for restore + A/B compare (optional for legacy rows). */
+  html?: string
+  /** jpeg/png data URL thumbnail captured after build. */
+  thumbnailDataUrl?: string
 }
 
 export type SaveBuildHistoryInput = {
@@ -25,6 +29,8 @@ export type SaveBuildHistoryInput = {
   trace: BuildTrace
   htmlChars: number
   planSummary?: string
+  html?: string
+  thumbnailDataUrl?: string
   /** Optional deterministic timestamp for tests. */
   createdAt?: string
 }
@@ -85,6 +91,8 @@ export function createBuildHistoryRecord(input: SaveBuildHistoryInput): BuildHis
     trace: input.trace,
     htmlChars: input.htmlChars,
     planSummary: input.planSummary,
+    html: input.html,
+    thumbnailDataUrl: input.thumbnailDataUrl,
   }
 }
 
@@ -115,6 +123,25 @@ export async function saveBuildHistory(input: SaveBuildHistoryInput): Promise<Bu
     return record
   } catch (error) {
     Logger.warn("Failed to save build history", { error: String(error) })
+    return null
+  }
+}
+
+export async function getBuildHistoryRecord(id: string): Promise<BuildHistoryRecord | null> {
+  if (!isIndexedDbAvailable()) {
+    return null
+  }
+
+  try {
+    const db = await openDatabase()
+    return await new Promise<BuildHistoryRecord | null>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, "readonly")
+      const request = transaction.objectStore(STORE_NAME).get(id)
+      request.onerror = () => reject(request.error ?? new Error("Failed to read build history record"))
+      request.onsuccess = () => resolve((request.result as BuildHistoryRecord | undefined) ?? null)
+    })
+  } catch (error) {
+    Logger.warn("Failed to get build history record", { error: String(error) })
     return null
   }
 }
