@@ -118,6 +118,16 @@
 - [x] Rate limiting na `/api/builder/unlock` (10/IP/15 min, `429` + `Retry-After`)
 - [ ] Batch eval / continuous monitoring (Foundry pattern)
 
+### 💥 Bomba nápady (Builder P2/P3)
+
+Detail: [README.md#bomba-nápady-builder-p2p3](./README.md#bomba-nápady-builder-p2p3)
+
+- [ ] **#1** Diff-based Snapshot Timeline s vizuálnym A/B preview (P2)
+- [ ] **#2** Prompt-to-Component Library — local RAG (P2, závisí na #1)
+- [ ] **#3** Multi-Artifact Workspace — mini „pages“ (P2)
+- [ ] **#4** Sandbox Runtime Inspector — Console + Network overlay (P3)
+- [ ] **#5** „Fix it“ self-heal loop (P3, závisí na #4)
+
 ---
 
 ## 📋 Príkazy

@@ -13,6 +13,7 @@ Kompletný developer guide je zlúčený do **[README.md](./README.md)**.
 | Desktop Voice | [README.md#desktop-voice-agent](./README.md#desktop-voice-agent) |
 | Testovanie | [README.md#testovanie](./README.md#testovanie) |
 | Backlog | [README.md#backlog--roadmap](./README.md#backlog--roadmap) |
+| Bomba nápady (Builder) | [README.md#bomba-nápady-builder-p2p3](./README.md#bomba-nápady-builder-p2p3) |
 | Linear sync | [README.md#linear-sync](./README.md#linear-sync) |
 
 ## Detailné appendixy

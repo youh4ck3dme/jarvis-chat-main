@@ -382,6 +382,76 @@ pnpm test:e2e:update-layout-snapshots
 | P4 | Real-device Safari E2E |
 | P4 | Batch eval / continuous monitoring |
 
+### 💥 Bomba nápady (Builder P2/P3)
+
+Nezávislé slice-y pre ďalšiu generáciu Builder UX. Každý sa dá dodať samostatne — žiadny neporušuje existujúci sandbox model (`allow-scripts` + CSP) ani nezavádza server dependency.
+
+#### 1. Diff-based Snapshot Timeline s vizuálnym A/B preview
+
+- **Čo:** Horizontálna time-lane so screenshotom každého snapshotu; hover = mini-preview; klik = split-view „before vs after“ so zvýraznenými zmenami.
+- **Prečo je to 8× lepšie:** Namiesto plochého zoznamu build histórie (dnes len prompt + score v `workspace-menu-drawer.tsx`) okamžite vidíš, čo AI naozaj zmenila — aj keď `handleSelectBuildRecord` dnes obnoví len telemetry, nie HTML.
+- **Ako to postaviť (skratka):**
+  - Rozšíriť IndexedDB store (`JarvisBuildHistory` v3 alebo nový `JarvisSnapshots`) o `html` + `thumbnailBlob` (ring-buffer 50 už existuje v `trimBuildHistoryForSession`)
+  - Po úspešnom builde: uložiť HTML + `html2canvas` thumbnail do blob store
+  - Prepojiť dormant `JarvisDeckSnapshot` + `diffJarvisText()` z `copied-from-visual-html/lib/jarvis-workspace.ts`; vizuálny DOM diff cez `diff-dom`
+  - Nový komponent `components/workspace/snapshot-timeline.tsx`; wire `isViewingSnapshot` / `onBackToLive` v `components/chat/chat-shell.tsx`
+  - **Deps:** `html2canvas`, `diff-dom`
+
+#### 2. Prompt-to-Component Library (local RAG)
+
+- **Čo:** Pinované „úspešné“ snapshoty sa indexujú do lokálneho embedding indexu; pri novom prompte Jarvis pošle top-3 podobné artefakty ako few-shot examples.
+- **Prečo je to 8× lepšie:** Každý ďalší build stojí na overených vzoroch — bez cloudu, 100 % v browseri; compounding learning namiesto čistého zero-shot.
+- **Ako to postaviť (skratka):**
+  - Pin akcia na snapshot timeline (závisí na #1 pre HTML storage)
+  - Nový modul `lib/rag/local-embedding-index.ts` — `@xenova/transformers` MiniLM, embeddings v IndexedDB (`JarvisComponentLibrary` store)
+  - V `lib/chat/build-pipeline.ts` pred planner fázou: `retrieveTopK(prompt, 3)` → inject do system/few-shot kontextu
+  - UI: pin/unpin ikona na timeline karte
+  - **Deps:** `@xenova/transformers` (lazy-loaded Web Worker)
+
+#### 3. Multi-Artifact Workspace (mini „pages“)
+
+- **Čo:** Session s viacerými HTML artefaktmi (index, about, pricing) prepínateľnými tabmi v preview + auto-linking medzi stránkami cez srcdoc postMessage router. Export = ZIP s viacerými `.html`.
+- **Prečo je to 8× lepšie:** Z one-shot landing page buildera sa stáva reálny statický site generator — viacstránkové projekty bez opakovania celého flow.
+- **Ako to postaviť (skratka):**
+  - Rozšíriť `ChatSession` v `lib/chat/chat-sessions.ts` o `artifacts: { id, slug, title, html, createdAt }[]` (migrácia: existujúci latest HTML → `artifacts[0]`)
+  - Tab bar v `copied-from-visual-html/components/jarvis/jarvis-preview-panel.tsx` alebo nový `artifact-tabs.tsx`
+  - `lib/artifact-router.ts` — parent→child postMessage: intercept `<a href>` v sandboxe, prepnúť tab namiesto navigácie mimo iframe
+  - Rozšíriť `lib/chat/project-zip-export.ts`: `index.html`, `about.html`, … + aktualizovaný `manifest.json`
+  - Builder prompt parsing: detekcia viacerých ` ```html ` blokov s `<!-- page:about -->` anotáciou
+
+#### 4. Sandbox Runtime Inspector (Console + Network overlay)
+
+- **Čo:** Dev-agent injektovaný do sandbox iframe → panel v Jarvis UI zobrazuje `console.*`, uncaught errors, fetch/XHR a performance markery.
+- **Prečo je to 8× lepšie:** Užívateľ vidí broken script, 404, CSP violation priamo v appke — bez DevTools a bez opúšťania workspace.
+- **Ako to postaviť (skratka):**
+  - Wire existujúce `onConsoleEntry` / `onNavigationEntry` props v `components/chat/chat-shell.tsx` (infra už v `jarvis-preview-panel.tsx`)
+  - Rozšíriť `PREVIEW_CONSOLE_BRIDGE_SCRIPT` v `copied-from-visual-html/lib/preview-console-bridge.ts`: `window.onerror`, `unhandledrejection`, monkey-patch `fetch`/`XMLHttpRequest`, `performance.mark`/`measure`
+  - Nový `components/workspace/runtime-inspector-panel.tsx` — záložka vedľa Preview/Code v `components/workspace/workspace-footer.tsx`
+  - Pridať `event.origin` validáciu na parent listener (security hardening)
+  - Feed do `JarvisBehaviorEvent` typu `"console"` / `"navigation"` pre budúci deck export
+
+#### 5. „Fix it“ self-heal loop
+
+- **Čo:** Pri runtime error alebo CSP violation → one-click „Ask Jarvis to fix“ → chyba + HTML slice späť do modelu → nahradí artefakt + auto-snapshot. Retry limit 3.
+- **Prečo je to 8× lepšie:** Zatvára loop chat → build → validate → fix, ktorý dnes musí robiť človek manuálne kopírovaním chyby do chatu.
+- **Ako to postaviť (skratka):**
+  - **Závisí na #4** (inspector musí zachytiť chybu)
+  - V `runtime-inspector-panel.tsx`: tlačidlo „Fix it“ pri error riadku
+  - `lib/chat/self-heal.ts` — zostaví follow-up prompt: error stack + relevantný HTML slice (okolo `<script>` alebo failing elementu)
+  - Volá existujúci build flow v `components/chat/chat-shell.tsx` s `retryCount` state (max 3)
+  - Po úspechu: auto-uloží snapshot (#1) a reset retry counter
+  - UI indikátor: „Self-heal attempt 2/3“
+
+| # | Nápad | Priorita | Závislosti | Kľúčové súbory |
+|---|-------|----------|------------|----------------|
+| 1 | Snapshot Timeline | P2 | — | `build-history-store.ts`, `jarvis-workspace.ts`, `snapshot-timeline.tsx` |
+| 2 | Local RAG | P2 | #1 (pin + HTML) | `local-embedding-index.ts`, `build-pipeline.ts` |
+| 3 | Multi-Artifact | P2 | — | `chat-sessions.ts`, `project-zip-export.ts` |
+| 4 | Runtime Inspector | P3 | — | `preview-console-bridge.ts`, `chat-shell.tsx` |
+| 5 | Fix-it loop | P3 | #4 | `self-heal.ts`, `chat-shell.tsx` |
+
+#1, #3 a #4 sú nezávislé a môžu ísť paralelne. #2 potrebuje HTML storage z #1. #5 potrebuje inspector z #4.
+
 Kompletný zoznam: [`scripts/linear-backlog.json`](scripts/linear-backlog.json)  
 Stav projektu: [`todo.md`](todo.md)
 
