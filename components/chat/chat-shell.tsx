@@ -82,6 +82,13 @@ import {
 } from "@/lib/build-history/build-history-store"
 import { captureHtmlThumbnail } from "@/lib/build-history/capture-thumbnail"
 import {
+  formatFewShotExamples,
+  listPinnedBuildHistoryIds,
+  pinComponent,
+  retrieveTopK,
+  unpinComponent,
+} from "@/lib/rag/local-embedding-index"
+import {
   SnapshotComparePanel,
   SnapshotTimeline,
 } from "@/components/workspace/snapshot-timeline"
@@ -229,6 +236,7 @@ export function ChatShell() {
     before: BuildHistoryRecord
     after: BuildHistoryRecord
   } | null>(null)
+  const [pinnedSnapshotIds, setPinnedSnapshotIds] = useState<string[]>([])
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isMemoryOpen, setIsMemoryOpen] = useState(false)
   const [cloudSyncEnabled, setCloudSyncEnabled] = useState(false)
@@ -325,6 +333,20 @@ export function ChatShell() {
       cancelled = true
     }
   }, [mounted, activeSessionId])
+
+  useEffect(() => {
+    if (!mounted) {
+      setPinnedSnapshotIds([])
+      return
+    }
+    let cancelled = false
+    void listPinnedBuildHistoryIds().then((ids) => {
+      if (!cancelled) setPinnedSnapshotIds(ids)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [mounted, snapshotRecords.length])
 
   const refreshSnapshotTimeline = useCallback(async (sessionId: string) => {
     const [count, records] = await Promise.all([
@@ -594,6 +616,35 @@ export function ChatShell() {
     },
     [],
   )
+
+  const handleTogglePinSnapshot = useCallback(async (record: BuildHistoryRecord) => {
+    if (!record.html) {
+      setError("Cannot pin a snapshot without stored HTML.")
+      return
+    }
+
+    const alreadyPinned = pinnedSnapshotIds.includes(record.id)
+    if (alreadyPinned) {
+      const ok = await unpinComponent(record.id)
+      if (ok) {
+        setPinnedSnapshotIds((current) => current.filter((id) => id !== record.id))
+      }
+      return
+    }
+
+    const pinned = await pinComponent({
+      buildHistoryId: record.id,
+      userPrompt: record.userPrompt,
+      html: record.html,
+    })
+    if (pinned) {
+      setPinnedSnapshotIds((current) =>
+        current.includes(record.id) ? current : [...current, record.id],
+      )
+    } else {
+      setError("Failed to pin snapshot into the local component library.")
+    }
+  }, [pinnedSnapshotIds])
 
   const handleFocusTelemetry = useCallback(() => {
     setWorkspaceView("artifact")
@@ -865,6 +916,18 @@ export function ChatShell() {
           }
         } catch (contextError) {
           Logger.warn("Failed to build memory context", { error: String(contextError) })
+        }
+
+        try {
+          const similar = await retrieveTopK(userMessage.content, 3)
+          const fewShot = formatFewShotExamples(similar)
+          if (fewShot) {
+            systemPrompt = `${systemPrompt}\n\n${fewShot}`
+          }
+        } catch (ragError) {
+          Logger.warn("Failed to retrieve local component library examples", {
+            error: String(ragError),
+          })
         }
 
         const pipelineResult = await runBuildPipeline({
@@ -1155,6 +1218,7 @@ export function ChatShell() {
     setViewingSnapshot(null)
     setComparePair(null)
     setSnapshotRecords([])
+    setPinnedSnapshotIds([])
   }, [])
 
   const clearInspectorEntries = useCallback(() => {
@@ -1286,8 +1350,10 @@ export function ChatShell() {
           records={snapshotRecords}
           selectedId={viewingSnapshot?.id}
           compareId={comparePair?.after.id}
+          pinnedIds={pinnedSnapshotIds}
           onSelect={handleSelectBuildRecord}
           onCompare={handleCompareSnapshots}
+          onTogglePin={handleTogglePinSnapshot}
         />
       ) : null}
       {comparePair ? (

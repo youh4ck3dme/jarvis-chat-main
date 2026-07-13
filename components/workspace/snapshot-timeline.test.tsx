@@ -59,6 +59,24 @@ describe("SnapshotTimeline", () => {
     expect(onSelect).toHaveBeenCalledWith(newer)
   })
 
+  it("shows pin control for HTML snapshots", () => {
+    const onTogglePin = vi.fn()
+    const record = makeRecord("1", "Pinned build", "2026-07-13T10:00:00.000Z")
+
+    render(
+      <SnapshotTimeline
+        records={[record]}
+        pinnedIds={["1"]}
+        onSelect={vi.fn()}
+        onTogglePin={onTogglePin}
+      />,
+    )
+
+    fireEvent.mouseEnter(screen.getByTestId("snapshot-timeline-card").parentElement!)
+    fireEvent.click(screen.getByTestId("snapshot-pin-btn"))
+    expect(onTogglePin).toHaveBeenCalledWith(record)
+  })
+
   it("shows compare panel with before/after summary", () => {
     const before = makeRecord("a", "Before", "2026-07-13T10:00:00.000Z", "<html><body>A</body></html>")
     const after = makeRecord("b", "After", "2026-07-13T11:00:00.000Z", "<html><body>B</body></html>")
