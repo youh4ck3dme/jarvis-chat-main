@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import type { PreviewErrorEntry } from "@/copied-from-visual-html/lib/preview-console-bridge"
 import { RuntimeInspectorPanel } from "@/components/workspace/runtime-inspector-panel"
 
 describe("RuntimeInspectorPanel", () => {
@@ -90,5 +91,56 @@ describe("RuntimeInspectorPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /Network/i }))
     expect(screen.getByTestId("inspector-network-row")).toHaveTextContent("/missing")
     expect(screen.queryByTestId("inspector-console-row")).not.toBeInTheDocument()
+  })
+
+  it("shows fix button for errors and triggers onFixIssue", () => {
+    const onFixIssue = vi.fn()
+    const errorEntry: PreviewErrorEntry = {
+      id: "e2",
+      kind: "error",
+      message: "ReferenceError: x is not defined",
+      ts: Date.now(),
+    }
+
+    render(
+      <RuntimeInspectorPanel
+        state={{
+          consoleEntries: [],
+          errorEntries: [errorEntry],
+          networkEntries: [],
+          navigationEntries: [],
+          performanceEntries: [],
+        }}
+        onClear={vi.fn()}
+        onFixIssue={onFixIssue}
+        canSelfHeal
+      />,
+    )
+
+    fireEvent.click(screen.getByTestId("inspector-fix-it-btn"))
+    expect(onFixIssue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "runtime-error",
+        message: "ReferenceError: x is not defined",
+      }),
+    )
+  })
+
+  it("shows self-heal attempt banner", () => {
+    render(
+      <RuntimeInspectorPanel
+        state={{
+          consoleEntries: [],
+          errorEntries: [],
+          networkEntries: [],
+          navigationEntries: [],
+          performanceEntries: [],
+        }}
+        onClear={vi.fn()}
+        selfHealAttempt={2}
+      />,
+    )
+
+    expect(screen.getByTestId("self-heal-attempt-banner")).toHaveTextContent("Self-heal attempt 2/3")
   })
 })

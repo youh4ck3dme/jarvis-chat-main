@@ -32,6 +32,12 @@ import {
   type PipelineChatMessage,
 } from "@/lib/chat/build-pipeline"
 import {
+  buildSelfHealPrompt,
+  canRequestSelfHeal,
+  MAX_SELF_HEAL_ATTEMPTS,
+  type SelfHealIssue,
+} from "@/lib/chat/self-heal"
+import {
   classifyDataUrl,
   getDefaultAttachmentPrompt,
   splitAttachmentPayload,
@@ -206,6 +212,8 @@ export function ChatShell() {
   const [inspectorNetworkEntries, setInspectorNetworkEntries] = useState<PreviewNetworkEntry[]>([])
   const [inspectorNavigationEntries, setInspectorNavigationEntries] = useState<PreviewNavigationEntry[]>([])
   const [inspectorPerformanceEntries, setInspectorPerformanceEntries] = useState<PreviewPerformanceEntry[]>([])
+  const [selfHealAttemptCount, setSelfHealAttemptCount] = useState(0)
+  const forceBuilderPipelineRef = useRef(false)
   const [isMobile, setIsMobile] = useState(readIsMobileViewport)
   const [buildEvaluation, setBuildEvaluation] = useState<BuildEvaluation | null>(null)
   const [buildTrace, setBuildTrace] = useState<BuildTrace | null>(null)
@@ -576,8 +584,12 @@ export function ChatShell() {
 
       const trimmedContent = content.trim()
       const buildIntent = detectBuildIntent(trimmedContent)
+      const forceBuilderPipeline = forceBuilderPipelineRef.current
+      if (forceBuilderPipeline) {
+        forceBuilderPipelineRef.current = false
+      }
 
-      if (jarvisMode === "chat" && buildIntent && !builderUnlockedRef.current) {
+      if (jarvisMode === "chat" && buildIntent && !builderUnlockedRef.current && !forceBuilderPipeline) {
         pendingBuildPromptRef.current = trimmedContent
         const lockedUserMessage: Message = {
           id: generateId(),
@@ -595,9 +607,11 @@ export function ChatShell() {
       }
 
       const runBuilderPipeline =
-        jarvisMode === "builder" || (buildIntent && builderUnlockedRef.current)
+        forceBuilderPipeline ||
+        jarvisMode === "builder" ||
+        (buildIntent && builderUnlockedRef.current)
 
-      if (runBuilderPipeline && jarvisMode === "chat" && buildIntent) {
+      if (runBuilderPipeline && jarvisMode === "chat" && (buildIntent || forceBuilderPipeline)) {
         setJarvisMode("builder")
         persistJarvisMode("builder")
       }
@@ -646,7 +660,7 @@ export function ChatShell() {
       }
 
       const storyBeats: Message[] = []
-      if (runBuilderPipeline && buildIntent) {
+      if (runBuilderPipeline && buildIntent && !forceBuilderPipeline) {
         storyBeats.push(createNarrativeBeat(generateId(), JARVIS_STORY_BUILD_INTENT))
       }
 
@@ -898,6 +912,12 @@ export function ChatShell() {
         }
 
         if (artifact && evaluation?.ok) {
+          setSelfHealAttemptCount(0)
+          setInspectorConsoleEntries([])
+          setInspectorErrorEntries([])
+          setInspectorNetworkEntries([])
+          setInspectorNavigationEntries([])
+          setInspectorPerformanceEntries([])
           setMessages((prev) => [
             ...prev,
             createNarrativeBeat(generateId(), JARVIS_STORY_BUILD_SUCCESS),
@@ -937,6 +957,34 @@ export function ChatShell() {
   )
 
   sendMessageRef.current = sendMessage
+
+  const handleSelfHealFix = useCallback(
+    (issue: SelfHealIssue) => {
+      if (!rawHtmlArtifact || isStreaming) return
+
+      if (!builderUnlockedRef.current) {
+        setError("Builder must be unlocked before Jarvis can self-heal the artifact.")
+        return
+      }
+
+      if (!canRequestSelfHeal(selfHealAttemptCount)) {
+        setError(
+          `Self-heal limit reached (${MAX_SELF_HEAL_ATTEMPTS} attempts). Fix manually or start a new build.`,
+        )
+        return
+      }
+
+      setSelfHealAttemptCount((current) => current + 1)
+      forceBuilderPipelineRef.current = true
+      setJarvisMode("builder")
+      persistJarvisMode("builder")
+      setWorkspaceView("artifact")
+      setArtifactTab("preview")
+      setError(null)
+      void sendMessage(buildSelfHealPrompt(issue, rawHtmlArtifact))
+    },
+    [isStreaming, rawHtmlArtifact, selfHealAttemptCount, sendMessage],
+  )
 
   const sendMessageBatch = useCallback(
     (items: { content: string; attachment: string; attachmentName: string }[]) => {
@@ -1027,6 +1075,7 @@ export function ChatShell() {
     setInspectorNetworkEntries([])
     setInspectorNavigationEntries([])
     setInspectorPerformanceEntries([])
+    setSelfHealAttemptCount(0)
   }, [])
 
   const clearInspectorEntries = useCallback(() => {
@@ -1164,6 +1213,16 @@ export function ChatShell() {
             performanceEntries: inspectorPerformanceEntries,
           }}
           onClear={clearInspectorEntries}
+          onFixIssue={rawHtmlArtifact ? handleSelfHealFix : undefined}
+          canSelfHeal={
+            Boolean(rawHtmlArtifact) &&
+            builderUnlocked &&
+            canRequestSelfHeal(selfHealAttemptCount) &&
+            !isStreaming
+          }
+          isSelfHealBusy={isStreaming}
+          selfHealAttempt={selfHealAttemptCount}
+          selfHealMaxAttempts={MAX_SELF_HEAL_ATTEMPTS}
         />
       ) : null}
       <JarvisPreviewPanel
