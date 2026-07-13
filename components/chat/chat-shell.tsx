@@ -11,6 +11,15 @@ import { JarvisPreviewPanel } from "@/copied-from-visual-html/components/jarvis/
 import { useThrottledValue } from "@/copied-from-visual-html/hooks/use-throttled-value"
 import { JARVIS_ADVISOR_SYSTEM_PROMPT } from "@/copied-from-visual-html/lib/jarvis-advisor-prompt"
 import {
+  capPreviewConsoleEntries,
+  capPreviewEntries,
+  type PreviewConsoleEntry,
+  type PreviewErrorEntry,
+  type PreviewNavigationEntry,
+  type PreviewNetworkEntry,
+  type PreviewPerformanceEntry,
+} from "@/copied-from-visual-html/lib/preview-console-bridge"
+import {
   extractJarvisHtmlArtifact,
   prepareJarvisPreviewHtml,
 } from "@/copied-from-visual-html/lib/jarvis-artifacts"
@@ -28,6 +37,7 @@ import {
   splitAttachmentPayload,
 } from "@/lib/chat/jarvis-attachments"
 import { BuildTelemetry } from "@/components/workspace/build-telemetry"
+import { RuntimeInspectorPanel } from "@/components/workspace/runtime-inspector-panel"
 import { WorkspaceFooter, type WorkspaceView } from "@/components/workspace/workspace-footer"
 import { WorkspaceHeader } from "@/components/workspace/workspace-header"
 import { WorkspaceMenuDrawer } from "@/components/workspace/workspace-menu-drawer"
@@ -94,7 +104,7 @@ import { DEFAULT_AI_MODEL, getDefaultAiModel } from "@/lib/default-model"
 import { isProviderAuthError } from "@/lib/resolve-api-key"
 import { readIsMobileViewport } from "@/lib/workspace/mobile-detect"
 
-export type ArtifactTab = "preview" | "code"
+export type ArtifactTab = "preview" | "code" | "inspector"
 
 import { MessageList } from "./message-list"
 import { AI_MODELS, isModelAvailable, type AIModel } from "./composer"
@@ -191,6 +201,11 @@ export function ChatShell() {
   const [mounted, setMounted] = useState(false)
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("chat")
   const [artifactTab, setArtifactTab] = useState<ArtifactTab>("preview")
+  const [inspectorConsoleEntries, setInspectorConsoleEntries] = useState<PreviewConsoleEntry[]>([])
+  const [inspectorErrorEntries, setInspectorErrorEntries] = useState<PreviewErrorEntry[]>([])
+  const [inspectorNetworkEntries, setInspectorNetworkEntries] = useState<PreviewNetworkEntry[]>([])
+  const [inspectorNavigationEntries, setInspectorNavigationEntries] = useState<PreviewNavigationEntry[]>([])
+  const [inspectorPerformanceEntries, setInspectorPerformanceEntries] = useState<PreviewPerformanceEntry[]>([])
   const [isMobile, setIsMobile] = useState(readIsMobileViewport)
   const [buildEvaluation, setBuildEvaluation] = useState<BuildEvaluation | null>(null)
   const [buildTrace, setBuildTrace] = useState<BuildTrace | null>(null)
@@ -1007,6 +1022,39 @@ export function ChatShell() {
     setWorkspaceView("chat")
     setIsMenuOpen(false)
     setIsMemoryOpen(false)
+    setInspectorConsoleEntries([])
+    setInspectorErrorEntries([])
+    setInspectorNetworkEntries([])
+    setInspectorNavigationEntries([])
+    setInspectorPerformanceEntries([])
+  }, [])
+
+  const clearInspectorEntries = useCallback(() => {
+    setInspectorConsoleEntries([])
+    setInspectorErrorEntries([])
+    setInspectorNetworkEntries([])
+    setInspectorNavigationEntries([])
+    setInspectorPerformanceEntries([])
+  }, [])
+
+  const handleInspectorConsoleEntry = useCallback((entry: PreviewConsoleEntry) => {
+    setInspectorConsoleEntries((current) => capPreviewConsoleEntries([...current, entry]))
+  }, [])
+
+  const handleInspectorNavigationEntry = useCallback((entry: PreviewNavigationEntry) => {
+    setInspectorNavigationEntries((current) => capPreviewEntries([...current, entry]))
+  }, [])
+
+  const handleInspectorErrorEntry = useCallback((entry: PreviewErrorEntry) => {
+    setInspectorErrorEntries((current) => capPreviewEntries([...current, entry]))
+  }, [])
+
+  const handleInspectorNetworkEntry = useCallback((entry: PreviewNetworkEntry) => {
+    setInspectorNetworkEntries((current) => capPreviewEntries([...current, entry]))
+  }, [])
+
+  const handleInspectorPerformanceEntry = useCallback((entry: PreviewPerformanceEntry) => {
+    setInspectorPerformanceEntries((current) => capPreviewEntries([...current, entry]))
   }, [])
 
   const handleImportBackup = useCallback(
@@ -1105,12 +1153,31 @@ export function ChatShell() {
           historyCount={buildHistoryCount}
         />
       ) : null}
+      {artifactTab === "inspector" ? (
+        <RuntimeInspectorPanel
+          className="min-h-0 flex-1"
+          state={{
+            consoleEntries: inspectorConsoleEntries,
+            errorEntries: inspectorErrorEntries,
+            networkEntries: inspectorNetworkEntries,
+            navigationEntries: inspectorNavigationEntries,
+            performanceEntries: inspectorPerformanceEntries,
+          }}
+          onClear={clearInspectorEntries}
+        />
+      ) : null}
       <JarvisPreviewPanel
         htmlContent={rawHtmlArtifact}
         previewHtmlContent={previewHtmlContent}
         isStreaming={isStreaming}
         showSource={artifactTab === "code"}
         showPreview={artifactTab === "preview"}
+        hiddenSandbox={artifactTab === "inspector"}
+        onConsoleEntry={rawHtmlArtifact ? handleInspectorConsoleEntry : undefined}
+        onNavigationEntry={rawHtmlArtifact ? handleInspectorNavigationEntry : undefined}
+        onErrorEntry={rawHtmlArtifact ? handleInspectorErrorEntry : undefined}
+        onNetworkEntry={rawHtmlArtifact ? handleInspectorNetworkEntry : undefined}
+        onPerformanceEntry={rawHtmlArtifact ? handleInspectorPerformanceEntry : undefined}
         emptyPreview={
           !rawHtmlArtifact ? (
             <OrbMindMap
@@ -1121,7 +1188,10 @@ export function ChatShell() {
             />
           ) : undefined
         }
-        className="min-h-0 flex-1"
+        className={cn(
+          "min-h-0",
+          artifactTab === "inspector" ? "h-px overflow-hidden opacity-0" : "flex-1",
+        )}
       />
     </div>
   )

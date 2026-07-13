@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronLeft, Code2, Eye, Play } from "lucide-react"
+import { ChevronLeft, Code2, Eye, Play, Terminal } from "lucide-react"
 
 import { Composer, type AIModel, type ComposerSendItem } from "@/components/chat/composer"
 import { useIsMobile } from "@/components/ui/use-mobile"
@@ -130,6 +130,22 @@ export function WorkspaceFooter({
             >
               <Code2 className="h-3.5 w-3.5 shrink-0" />
               <span className="max-[420px]:hidden sm:inline">Generated </span>Code
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onArtifactTabChange("inspector")
+                onWorkspaceViewChange("artifact")
+              }}
+              className={cn(
+                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors sm:min-h-7",
+                artifactTab === "inspector" && workspaceView === "artifact"
+                  ? "bg-border/50 text-fg"
+                  : "text-muted-foreground hover:text-fg/70",
+              )}
+            >
+              <Terminal className="h-3.5 w-3.5 shrink-0" />
+              <span className="max-[420px]:hidden sm:inline">Runtime </span>Inspector
             </button>
           </div>
         )}
