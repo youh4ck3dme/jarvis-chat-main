@@ -62,5 +62,7 @@ describe("build-plan-utils", () => {
     expect(formatted).toContain("Coffee shop site")
     expect(formatted).toContain("Experience hint")
     expect(formatted).toContain("Always include <script>.")
+    expect(formatted).toContain("<!-- page:index -->")
+    expect(formatted).toContain("Multi-page site")
   })
 })

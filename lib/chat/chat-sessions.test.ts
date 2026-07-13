@@ -137,6 +137,64 @@ describe("chat-sessions", () => {
 
     expect(serialized[0].createdAt).toBe("2026-03-01T12:00:00.000Z")
   })
+
+  it("migrates latest HTML into artifacts[0] for legacy sessions", () => {
+    localStorage.setItem(
+      CHAT_SESSIONS_STORAGE_KEY,
+      JSON.stringify({
+        activeSessionId: "legacy-1",
+        sessions: [
+          {
+            id: "legacy-1",
+            title: "Legacy",
+            projectName: "Jarvis",
+            updatedAt: "2026-07-13T10:00:00.000Z",
+            messages: [
+              {
+                id: "a1",
+                role: "assistant",
+                content: "```html\n<!doctype html><html><body><h1>Legacy</h1></body></html>\n```",
+                createdAt: "2026-07-13T10:00:00.000Z",
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const state = loadChatSessionsState()
+    expect(state.sessions[0]?.artifacts).toHaveLength(1)
+    expect(state.sessions[0]?.artifacts[0]?.html).toContain("Legacy")
+    expect(state.sessions[0]?.activeArtifactId).toBe(state.sessions[0]?.artifacts[0]?.id)
+  })
+
+  it("persists multi-artifact workspace on the active session", () => {
+    const initial = loadChatSessionsState()
+    const next = updateActiveSession(initial, {
+      artifacts: [
+        {
+          id: "art-index",
+          slug: "index",
+          title: "Home",
+          html: "<html>home</html>",
+          createdAt: "2026-07-13T12:00:00.000Z",
+        },
+        {
+          id: "art-about",
+          slug: "about",
+          title: "About",
+          html: "<html>about</html>",
+          createdAt: "2026-07-13T12:00:00.000Z",
+        },
+      ],
+      activeArtifactId: "art-about",
+    })
+
+    persistChatSessionsState(next)
+    const reloaded = loadChatSessionsState()
+    expect(reloaded.sessions[0]?.artifacts).toHaveLength(2)
+    expect(reloaded.sessions[0]?.activeArtifactId).toBe("art-about")
+  })
 })
 
 function getActiveMessages(state: ReturnType<typeof loadChatSessionsState>) {
