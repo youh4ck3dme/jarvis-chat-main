@@ -19,10 +19,17 @@ import { DeployMenu } from "./deploy-menu-stub";
 import type { JarvisSourceBundle } from "../../lib/jarvis-workspace";
 import {
   injectConsoleBridge,
+  isTrustedPreviewMessage,
   normalizePreviewConsoleMessage,
+  normalizePreviewErrorMessage,
   normalizePreviewNavigationMessage,
+  normalizePreviewNetworkMessage,
+  normalizePreviewPerformanceMessage,
   type PreviewConsoleEntry,
+  type PreviewErrorEntry,
   type PreviewNavigationEntry,
+  type PreviewNetworkEntry,
+  type PreviewPerformanceEntry,
 } from "../../lib/preview-console-bridge";
 import { summarizeJarvisSourceBundle } from "../../lib/jarvis-workspace";
 
@@ -37,6 +44,11 @@ interface JarvisPreviewPanelProps {
   sourceBundle?: JarvisSourceBundle | null;
   onConsoleEntry?: (entry: PreviewConsoleEntry) => void;
   onNavigationEntry?: (entry: PreviewNavigationEntry) => void;
+  onErrorEntry?: (entry: PreviewErrorEntry) => void;
+  onNetworkEntry?: (entry: PreviewNetworkEntry) => void;
+  onPerformanceEntry?: (entry: PreviewPerformanceEntry) => void;
+  /** Keep sandbox iframe mounted (hidden) for runtime capture while another tab is active. */
+  hiddenSandbox?: boolean;
   showSource?: boolean;
   showPreview?: boolean;
   /** Replaces the static preview empty state (e.g. Orb Mind-Map). */
@@ -61,6 +73,10 @@ export function JarvisPreviewPanel({
   sourceBundle = null,
   onConsoleEntry,
   onNavigationEntry,
+  onErrorEntry,
+  onNetworkEntry,
+  onPerformanceEntry,
+  hiddenSandbox = false,
   showSource = true,
   showPreview = true,
   emptyPreview,
@@ -73,16 +89,21 @@ export function JarvisPreviewPanel({
     [viewport],
   );
   const iframeDoc = previewHtmlContent ?? htmlContent;
-  const resolvedHtmlContent = useMemo(
-    () =>
-      iframeDoc && (onConsoleEntry || onNavigationEntry)
-        ? injectConsoleBridge(iframeDoc)
-        : iframeDoc,
-    [iframeDoc, onConsoleEntry, onNavigationEntry],
+  const runtimeCaptureEnabled = Boolean(
+    onConsoleEntry ||
+      onNavigationEntry ||
+      onErrorEntry ||
+      onNetworkEntry ||
+      onPerformanceEntry,
   );
+  const resolvedHtmlContent = useMemo(
+    () => (iframeDoc && runtimeCaptureEnabled ? injectConsoleBridge(iframeDoc) : iframeDoc),
+    [iframeDoc, runtimeCaptureEnabled],
+  );
+  const showSandboxSection = showPreview || hiddenSandbox;
   const sourceSummary = useMemo(() => summarizeJarvisSourceBundle(sourceBundle), [sourceBundle]);
   const visibleSectionCount = Number(showSource) + Number(showPreview);
-  const canFullscreen = Boolean(showPreview && resolvedHtmlContent);
+  const canFullscreen = Boolean(showPreview && resolvedHtmlContent && !hiddenSandbox);
 
   useLockBodyScroll(isFullscreen);
 
@@ -115,8 +136,10 @@ export function JarvisPreviewPanel({
   }, [canFullscreen]);
 
   useEffect(() => {
-    if (!onConsoleEntry && !onNavigationEntry) return;
+    if (!runtimeCaptureEnabled) return;
     const handler = (event: MessageEvent) => {
+      if (!isTrustedPreviewMessage(event)) return;
+
       const consoleEntry = normalizePreviewConsoleMessage(event.data);
       if (consoleEntry && onConsoleEntry) {
         onConsoleEntry(consoleEntry);
@@ -126,11 +149,36 @@ export function JarvisPreviewPanel({
       const navigationEntry = normalizePreviewNavigationMessage(event.data);
       if (navigationEntry && onNavigationEntry) {
         onNavigationEntry(navigationEntry);
+        return;
+      }
+
+      const errorEntry = normalizePreviewErrorMessage(event.data);
+      if (errorEntry && onErrorEntry) {
+        onErrorEntry(errorEntry);
+        return;
+      }
+
+      const networkEntry = normalizePreviewNetworkMessage(event.data);
+      if (networkEntry && onNetworkEntry) {
+        onNetworkEntry(networkEntry);
+        return;
+      }
+
+      const performanceEntry = normalizePreviewPerformanceMessage(event.data);
+      if (performanceEntry && onPerformanceEntry) {
+        onPerformanceEntry(performanceEntry);
       }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [onConsoleEntry, onNavigationEntry]);
+  }, [
+    onConsoleEntry,
+    onErrorEntry,
+    onNavigationEntry,
+    onNetworkEntry,
+    onPerformanceEntry,
+    runtimeCaptureEnabled,
+  ]);
 
   const handleDownload = useCallback(() => {
     if (!htmlContent) return;
@@ -293,8 +341,14 @@ export function JarvisPreviewPanel({
           </section>
         )}
 
-        {showPreview && (
-          <section className="flex min-h-0 flex-col">
+        {showSandboxSection && (
+          <section
+            className={cn(
+              "flex min-h-0 flex-col",
+              hiddenSandbox && !showPreview && "sr-only h-px overflow-hidden opacity-0",
+            )}
+            aria-hidden={hiddenSandbox && !showPreview ? true : undefined}
+          >
             <div className="flex h-10 items-center justify-between border-b border-border/80 bg-panel px-4">
               <span className="text-xs font-medium text-zinc-300">Sandbox</span>
               <div className="flex items-center gap-2">
