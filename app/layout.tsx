@@ -77,7 +77,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="sk" suppressHydrationWarning className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="sk" suppressHydrationWarning className={`dark bg-canvas ${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans bg-canvas text-fg selection:bg-white selection:text-black">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
           {children}
