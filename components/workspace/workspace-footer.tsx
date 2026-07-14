@@ -68,7 +68,7 @@ export function WorkspaceFooter({
   return (
     <footer
       className={cn(
-        "shrink-0 border-t border-border bg-background/95 backdrop-blur-md",
+        "shrink-0 border-t border-white/10 bg-background/60 glass-panel backdrop-blur-xl transition-all",
         isMobile ? "safe-bottom-dock" : "safe-bottom",
       )}
       data-testid="workspace-footer"
@@ -86,10 +86,10 @@ export function WorkspaceFooter({
           type="button"
           onClick={() => onWorkspaceViewChange("chat")}
           className={cn(
-            "inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-[13px] font-medium transition-colors sm:min-h-8",
+            "inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-[13px] font-medium transition-all sm:min-h-8",
             workspaceView === "chat"
-              ? "border-border bg-surface text-fg"
-              : "border-border bg-surface text-muted-foreground hover:border-border hover:text-fg/80",
+              ? "border-white/30 bg-white/10 text-fg glass-button-hover"
+              : "border-white/15 text-muted-foreground glass-button-hover hover:border-white/25 hover:bg-white/8 hover:text-fg/80",
           )}
           aria-label="Back to chat"
         >
@@ -98,7 +98,7 @@ export function WorkspaceFooter({
         </button>
 
         {(hasArtifact || showArtifactWorkspace) && (
-          <div className="ml-1 flex items-center rounded-lg border border-border bg-surface p-0.5">
+          <div className="ml-1 flex items-center rounded-lg border border-white/15 bg-white/5 p-0.5 glass-panel">
             <button
               type="button"
               onClick={() => {
@@ -106,10 +106,10 @@ export function WorkspaceFooter({
                 onWorkspaceViewChange("artifact")
               }}
               className={cn(
-                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors sm:min-h-7",
+                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-all sm:min-h-7",
                 artifactTab === "preview" && workspaceView === "artifact"
-                  ? "bg-border/50 text-fg"
-                  : "text-muted-foreground hover:text-fg/70",
+                  ? "bg-white/15 text-fg glass-button-hover"
+                  : "text-muted-foreground glass-button-hover hover:bg-white/8 hover:text-fg/70",
               )}
             >
               <Eye className="h-3.5 w-3.5 shrink-0" />
@@ -122,10 +122,10 @@ export function WorkspaceFooter({
                 onWorkspaceViewChange("artifact")
               }}
               className={cn(
-                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors sm:min-h-7",
+                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-all sm:min-h-7",
                 artifactTab === "code" && workspaceView === "artifact"
-                  ? "bg-border/50 text-fg"
-                  : "text-muted-foreground hover:text-fg/70",
+                  ? "bg-white/15 text-fg glass-button-hover"
+                  : "text-muted-foreground glass-button-hover hover:bg-white/8 hover:text-fg/70",
               )}
             >
               <Code2 className="h-3.5 w-3.5 shrink-0" />
@@ -138,10 +138,10 @@ export function WorkspaceFooter({
                 onWorkspaceViewChange("artifact")
               }}
               className={cn(
-                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors sm:min-h-7",
+                "inline-flex min-h-11 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-all sm:min-h-7",
                 artifactTab === "inspector" && workspaceView === "artifact"
-                  ? "bg-border/50 text-fg"
-                  : "text-muted-foreground hover:text-fg/70",
+                  ? "bg-white/15 text-fg glass-button-hover"
+                  : "text-muted-foreground glass-button-hover hover:bg-white/8 hover:text-fg/70",
               )}
             >
               <Terminal className="h-3.5 w-3.5 shrink-0" />
