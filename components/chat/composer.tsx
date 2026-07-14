@@ -20,6 +20,7 @@ import {
   Eraser,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ButtonGroup, ActionBar, CompactButtonGroup } from "@/components/ui/button-group"
 import { Logger } from "@/lib/logger"
 import { SOUND_CLICK_URL, SOUND_RECORD_URL } from "@/lib/sounds"
 import { cn } from "@/lib/utils"
@@ -650,9 +651,9 @@ export function Composer({
         ) : null}
         <div
           className={cn(
-            "jarvis-composer-shell focus-ring relative flex w-full items-end gap-1.5 border border-border bg-panel backdrop-blur-sm transition-none",
+            "jarvis-composer-shell focus-ring relative flex w-full items-end gap-1.5 border border-border bg-panel glass-panel transition-none",
             "max-md:rounded-none max-md:border-x-0 max-md:border-b-0 max-md:p-2",
-            "md:gap-2 md:rounded-2xl md:p-2",
+            "md:gap-2 md:rounded-2xl md:p-3",
           )}
         >
           {isDragOver ? (
@@ -679,7 +680,8 @@ export function Composer({
             disabled={isStreaming || disabled}
             className={cn(
               workspaceIconBtn,
-              "text-muted-foreground transition-colors hover:bg-surface hover:text-fg/80 disabled:opacity-40",
+              "text-muted-foreground glass-button-hover border border-white/10 transition-all disabled:opacity-40",
+              "hover:bg-white/10 hover:border-white/20 hover:text-fg/90",
             )}
             aria-label="Add attachment"
             title="JPEG, HEIC, PNG, WebP, PDF, HTML"
@@ -694,7 +696,8 @@ export function Composer({
                 disabled={isStreaming || disabled}
                 className={cn(
                   workspaceIconBtn,
-                  "text-muted-foreground transition-colors hover:bg-surface hover:text-fg/80 disabled:opacity-40",
+                  "text-muted-foreground glass-button-hover border border-white/10 transition-all disabled:opacity-40",
+                  "hover:bg-white/10 hover:border-white/20 hover:text-fg/90",
                 )}
                 aria-label="More options"
               >
@@ -838,7 +841,11 @@ export function Composer({
                 type="button"
                 disabled={isStreaming || disabled}
                 aria-label={`AI model: ${currentModel.name}`}
-                className="hidden h-8 max-w-[9rem] shrink-0 items-center gap-1.5 rounded-lg border border-border bg-surface px-2 text-[12px] font-medium text-fg/80 transition-colors hover:bg-border/50 disabled:opacity-40 sm:inline-flex"
+                className={cn(
+                  "hidden h-8 max-w-[9rem] shrink-0 items-center gap-1.5 rounded-lg border px-2 text-[12px] font-medium transition-all sm:inline-flex",
+                  "glass-button-hover border-white/15 text-fg/80 backdrop-blur-sm",
+                  "hover:border-white/30 hover:bg-white/8 disabled:opacity-40",
+                )}
               >
                 <Image
                   src={currentModel.icon || "/placeholder.svg"}
@@ -897,10 +904,10 @@ export function Composer({
             disabled={isStreaming || disabled}
             className={cn(
               workspaceIconBtn,
-              "transition-colors",
+              "transition-all border",
               isRecording
-                ? "bg-red-500/20 text-red-400"
-                : "text-muted-foreground hover:bg-surface hover:text-fg/80",
+                ? "bg-red-500/20 border-red-400/40 text-red-400 hover:bg-red-500/30 hover:border-red-400/60"
+                : "text-muted-foreground glass-button-hover border-white/10 hover:bg-white/10 hover:border-white/20 hover:text-fg/90",
             )}
             aria-label={isRecording ? "Stop recording" : "Start voice input"}
           >
@@ -939,10 +946,10 @@ export function Composer({
               disabled={!canSend || disabled}
               className={cn(
                 workspaceIconBtn,
-                "relative rounded-full border border-border bg-surface transition-all",
+                "relative rounded-full border transition-all duration-200",
                 !canSend || disabled
-                  ? "cursor-not-allowed opacity-40 text-muted-foreground"
-                  : "text-emerald-400 hover:scale-105 hover:border-emerald-500/40 hover:bg-emerald-500/10 active:scale-95",
+                  ? "cursor-not-allowed opacity-40 text-muted-foreground border-white/10"
+                  : "text-emerald-400 border-emerald-500/40 bg-emerald-500/10 hover:scale-105 hover:border-emerald-500/60 hover:bg-emerald-500/20 active:scale-95 shadow-lg hover:shadow-emerald-500/25",
               )}
               aria-label="Send message"
             >

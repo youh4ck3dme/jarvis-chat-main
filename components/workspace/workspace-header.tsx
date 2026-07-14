@@ -55,7 +55,7 @@ export function WorkspaceHeader({
   return (
     <header
       className={cn(
-        "safe-top z-20 grid min-h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-1 border-b border-border/60 bg-background/80 px-2 backdrop-blur-md sm:h-12 sm:gap-2 sm:px-3 md:px-4",
+        "safe-top z-20 grid min-h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-1 border-b border-white/10 bg-background/60 px-2 backdrop-blur-xl glass-panel transition-all sm:h-12 sm:gap-2 sm:px-3 md:px-4",
         className,
       )}
       data-testid="workspace-header"
@@ -64,7 +64,12 @@ export function WorkspaceHeader({
         <button
           type="button"
           onClick={onOpenMenu}
-          className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface text-muted-foreground transition-colors hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+          className={cn(
+            "flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-lg border transition-all",
+            "border-white/15 text-muted-foreground glass-button-hover",
+            "hover:border-white/30 hover:bg-white/10 hover:text-fg/80",
+            "sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+          )}
           aria-label="Open workspace menu"
         >
           <Menu className="h-4 w-4" />
@@ -86,7 +91,12 @@ export function WorkspaceHeader({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="hidden items-center gap-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-[13px] font-medium text-fg transition-colors hover:border-border hover:bg-surface sm:inline-flex"
+              className={cn(
+                "hidden items-center gap-1 rounded-lg border px-3 py-1.5 text-[13px] font-medium text-fg transition-all",
+                "border-white/15 glass-button-hover backdrop-blur-sm",
+                "hover:border-white/30 hover:bg-white/10",
+                "sm:inline-flex"
+              )}
               aria-label="Project menu"
             >
               <span className="max-w-[10rem] truncate">{projectName}</span>
@@ -156,9 +166,14 @@ export function WorkspaceHeader({
 
       <Button
         onClick={onOpenSettings}
-        variant="ghost"
+        variant="accent"
         size="icon"
-        className="h-11 w-11 min-h-11 min-w-11 justify-self-end rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+        className={cn(
+          "h-11 w-11 min-h-11 min-w-11 justify-self-end rounded-lg border transition-all",
+          "border-white/15 glass-button-hover",
+          "hover:border-white/30 hover:bg-white/10 hover:text-fg/80",
+          "sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+        )}
         aria-label="Open settings"
       >
         <Settings className="h-4 w-4" />

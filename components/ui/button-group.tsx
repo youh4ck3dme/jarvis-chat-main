@@ -75,9 +75,85 @@ function ButtonGroupSeparator({
   )
 }
 
+interface ActionBarProps extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Align buttons in the bar
+   * @default 'between'
+   */
+  align?: 'start' | 'center' | 'end' | 'between'
+  /**
+   * Semantic label for screen readers
+   */
+  label?: string
+}
+
+const alignClasses = {
+  start: 'justify-start',
+  center: 'justify-center',
+  end: 'justify-end',
+  between: 'justify-between',
+}
+
+/**
+ * ActionBar Component
+ * Container for action buttons with responsive layout
+ * Mobile-first design with proper spacing and alignment
+ */
+function ActionBar({
+  className,
+  align = 'between',
+  label,
+  children,
+  ...props
+}: ActionBarProps) {
+  return (
+    <div
+      role={label ? 'toolbar' : undefined}
+      aria-label={label}
+      className={cn(
+        'flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4',
+        alignClasses[align],
+        'px-2 sm:px-4 py-2 sm:py-3',
+        'rounded-lg glass-panel',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+}
+
+/**
+ * CompactButtonGroup Component
+ * Specialized for mobile-first button grouping with adaptive sizing
+ */
+function CompactButtonGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<'div'> & {
+  variant?: 'primary' | 'secondary'
+}) {
+  return (
+    <div
+      className={cn(
+        'flex gap-1.5 sm:gap-2 items-center rounded-lg p-1.5 sm:p-2',
+        'bg-white/5 backdrop-blur-sm border border-white/10',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+}
+
 export {
   ButtonGroup,
   ButtonGroupSeparator,
   ButtonGroupText,
+  ActionBar,
+  CompactButtonGroup,
   buttonGroupVariants,
 }

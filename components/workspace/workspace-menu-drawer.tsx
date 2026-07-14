@@ -36,8 +36,10 @@ import { DesktopVoicePanel } from "@/components/workspace/desktop-voice-panel"
 import { DesktopAuthExport } from "@/components/workspace/desktop-auth-export"
 import { SessionMemoryDrawerView } from "@/components/workspace/session-memory-drawer-view"
 import { cn } from "@/lib/utils"
+import { User } from "lucide-react"
+import { ProfileSettingsView } from "@/components/profile/profile-settings-view"
 
-type DrawerView = "main" | "conversations" | "memory" | "history" | "help"
+type DrawerView = "main" | "conversations" | "memory" | "history" | "help" | "profile"
 
 type WorkspaceMenuDrawerProps = {
   open: boolean
@@ -166,6 +168,7 @@ export function WorkspaceMenuDrawer({
             {view === "memory" && "Pamäť konverzácií"}
             {view === "history" && "História buildov"}
             {view === "help" && "Ako to funguje"}
+            {view === "profile" && "User Profile"}
           </SheetTitle>
           <SheetDescription className="text-muted-foreground">
             {view === "main" && "Navigácia, história, pamäť a export"}
@@ -174,6 +177,7 @@ export function WorkspaceMenuDrawer({
             {view === "history" &&
               `${buildHistoryCount} buildov v tejto konverzácii (max 50 na chat)`}
             {view === "help" && "Planner → Stream → Evaluator → Refine → Preview"}
+            {view === "profile" && "Customize your profile and avatar"}
           </SheetDescription>
         </SheetHeader>
 
@@ -211,6 +215,12 @@ export function WorkspaceMenuDrawer({
                 label="Pamäť Jarvisa"
                 description="Pamäť je per konverzácia — nový chat ju nemaže"
                 onClick={() => setView("memory")}
+              />
+              <MenuAction
+                icon={User}
+                label="My Profile"
+                description="Customize avatar, name, and account settings"
+                onClick={() => setView("profile")}
               />
               <MenuAction
                 icon={Activity}
@@ -397,6 +407,13 @@ export function WorkspaceMenuDrawer({
                 ))
               )}
             </div>
+          ) : null}
+
+          {view === "profile" ? (
+            <ProfileSettingsView
+              onClose={() => setView("main")}
+              className="pb-6"
+            />
           ) : null}
 
           {view === "help" ? (
