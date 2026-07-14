@@ -40,41 +40,42 @@
 }
 
 .dark {
-  --jarvis-canvas: #050505;
-  --jarvis-bg: #000000;
-  --jarvis-panel: #0a0a0a;
-  --jarvis-surface: #111111;
-  --jarvis-surface-raised: #111111;
-  --jarvis-header: #000000;
-  --jarvis-border: #222222;
-  --jarvis-border-subtle: #222222;
-  --jarvis-border-focus: #555555;
-  --jarvis-text: #ededed;
-  --jarvis-fg: #ededed;
-  --jarvis-text-muted: #666666;
-  --jarvis-text-secondary: #a1a1a1;
-  --jarvis-scrollbar: #333333;
-  --jarvis-accent-chat: #10b981;
-  --jarvis-accent-builder: #f59e0b;
-  --background: #000000;
-  --foreground: #ededed;
-  --card: #0a0a0a;
-  --card-foreground: #ededed;
-  --popover: #0a0a0a;
-  --popover-foreground: #ededed;
-  --primary: #ffffff;
-  --primary-foreground: #000000;
-  --secondary: #111111;
-  --secondary-foreground: #ededed;
-  --muted: #111111;
-  --muted-foreground: #666666;
-  --accent: #111111;
-  --accent-foreground: #ededed;
+  /* Legacy jarvis tokens, now fully migrated to the OKLch scale */
+  --jarvis-canvas: oklch(0.145 0 0);
+  --jarvis-bg: oklch(0.145 0 0);
+  --jarvis-panel: oklch(0.205 0 0);
+  --jarvis-surface: oklch(0.269 0 0);
+  --jarvis-surface-raised: oklch(0.269 0 0);
+  --jarvis-header: oklch(0.145 0 0);
+  --jarvis-border: oklch(0.269 0 0);
+  --jarvis-border-subtle: oklch(0.269 0 0);
+  --jarvis-border-focus: oklch(0.439 0 0);
+  --jarvis-text: oklch(0.985 0 0);
+  --jarvis-fg: oklch(0.985 0 0);
+  --jarvis-text-muted: oklch(0.556 0 0);
+  --jarvis-text-secondary: oklch(0.708 0 0);
+  --jarvis-scrollbar: oklch(0.439 0 0);
+  --jarvis-accent-chat: oklch(0.696 0.17 162.48);
+  --jarvis-accent-builder: oklch(0.769 0.188 70.08);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: #222222;
-  --input: #222222;
-  --ring: #555555;
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -91,8 +92,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", Menlo, ui-monospace, monospace;
+  --font-sans: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), "Geist Mono", Menlo, ui-monospace, monospace;
   --color-canvas: var(--jarvis-canvas);
   --color-panel: var(--jarvis-panel);
   --color-surface: var(--jarvis-surface);
@@ -1012,4 +1013,106 @@
 
 .jarvis-header-title-mobile {
   letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   Shader Button Design System — animated surfaces
+   ============================================================ */
+
+@keyframes shader-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes liquid-metal-shift {
+  0% {
+    background-position: 0% 0%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+@keyframes shader-sheen {
+  0% {
+    transform: translateX(-150%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(250%) skewX(-18deg);
+  }
+}
+
+/* Liquid metal: animated conic/linear metallic gradient */
+.shader-liquid-metal {
+  background-image: linear-gradient(
+    115deg,
+    oklch(0.55 0 0) 0%,
+    oklch(0.92 0 0) 18%,
+    oklch(0.45 0 0) 34%,
+    oklch(0.98 0 0) 52%,
+    oklch(0.4 0 0) 70%,
+    oklch(0.85 0 0) 86%,
+    oklch(0.55 0 0) 100%
+  );
+  background-size: 300% 300%;
+  animation: liquid-metal-shift 6s ease-in-out infinite;
+}
+
+.shader-liquid-metal[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+/* Shader button: flowing multi-stop gradient driven by design tokens */
+.shader-flow-surface {
+  background-image: linear-gradient(
+    100deg,
+    var(--chart-1),
+    var(--chart-4),
+    var(--chart-2),
+    var(--chart-1)
+  );
+  background-size: 300% 300%;
+  animation: shader-flow 5s ease infinite;
+}
+
+.shader-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--foreground) 55%, transparent) 50%,
+    transparent 100%
+  );
+  width: 40%;
+  animation: shader-sheen 2.6s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shader-liquid-metal,
+  .shader-flow-surface {
+    animation: none;
+  }
+  .shader-sheen::after {
+    display: none;
+  }
 }
