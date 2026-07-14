@@ -1,23 +1,21 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter, JetBrains_Mono } from "next/font/google"
+import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { PwaRegister } from "@/components/pwa/pwa-register"
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
-const inter = Inter({
+const geistSans = Geist({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
-  weight: ["400", "500", "600"],
+  variable: "--font-geist-sans",
 })
 
-const jetbrainsMono = JetBrains_Mono({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-jetbrains-mono",
-  weight: ["400", "500"],
+  variable: "--font-geist-mono",
 })
 
 export const metadata: Metadata = {
@@ -77,7 +75,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="sk" suppressHydrationWarning className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="sk" suppressHydrationWarning className={`dark ${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans bg-canvas text-fg selection:bg-white selection:text-black">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
           {children}
