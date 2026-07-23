@@ -3,9 +3,18 @@ import { z } from "zod";
 import { jsonError, jsonSuccess } from "@/lib/api-response";
 import { Logger } from "@/lib/logger";
 import type { ChatSession } from "@/lib/chat/chat-sessions";
+import { normalizeSessionArtifacts } from "@/lib/chat/session-artifacts";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import { isSupabaseSyncConfigured } from "@/lib/supabase/config";
 import { verifyRequestAuth } from "@/lib/supabase/verify-request-auth";
+
+const sessionArtifactSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  html: z.string(),
+  createdAt: z.string(),
+});
 
 const sessionSchema = z.object({
   id: z.string(),
@@ -13,6 +22,8 @@ const sessionSchema = z.object({
   messages: z.array(z.unknown()),
   projectName: z.string(),
   updatedAt: z.string(),
+  artifacts: z.array(sessionArtifactSchema).optional().default([]),
+  activeArtifactId: z.string().nullable().optional().default(null),
 });
 
 const pushBodySchema = z.object({
@@ -26,17 +37,26 @@ type RemoteSessionRow = {
   title: string;
   project_name: string;
   messages: ChatSession["messages"];
+  artifacts?: ChatSession["artifacts"] | null;
+  active_artifact_id?: string | null;
   updated_at: string;
   deleted_at: string | null;
 };
 
 function mapRowToSession(row: RemoteSessionRow): ChatSession {
+  const { artifacts, activeArtifactId } = normalizeSessionArtifacts(
+    row.artifacts,
+    row.active_artifact_id,
+  );
+
   return {
     id: row.session_id,
     title: row.title,
     messages: row.messages,
     projectName: row.project_name,
     updatedAt: row.updated_at,
+    artifacts,
+    activeArtifactId,
   };
 }
 
@@ -57,7 +77,9 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabase
     .from("jarvis_chat_sessions")
-    .select("session_id,sync_key,title,project_name,messages,updated_at,deleted_at")
+    .select(
+      "session_id,sync_key,title,project_name,messages,artifacts,active_artifact_id,updated_at,deleted_at",
+    )
     .eq("sync_key", auth.user.userId)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
@@ -103,6 +125,8 @@ export async function POST(req: Request) {
     title: session.title,
     project_name: session.projectName,
     messages: session.messages,
+    artifacts: session.artifacts,
+    active_artifact_id: session.activeArtifactId,
     updated_at: session.updatedAt,
     deleted_at: null,
   }));
