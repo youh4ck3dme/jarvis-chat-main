@@ -135,10 +135,10 @@
       "description": "## Čo\nPinované úspešné snapshoty → lokálny embedding index; pri novom prompte top-3 few-shot examples.\n\n## Závislosti\nSnapshot Timeline (#1) — HTML storage + pin UI\n\n## Ako\n1. `lib/rag/local-embedding-index.ts` — `@xenova/transformers` MiniLM v IndexedDB\n2. `build-pipeline.ts`: `retrieveTopK(prompt, 3)` pred planner fázou\n3. Pin/unpin ikona na timeline karte\n\n**Deps:** `@xenova/transformers` (Web Worker)"
     },
     {
-      "title": "[TODO] Builder P2 — Multi-Artifact Workspace (mini pages)",
+      "title": "[DONE] Builder P2 — Multi-Artifact Workspace (mini pages)",
       "priority": 2,
       "labels": ["backlog", "builder", "web"],
-      "description": "## Čo\nViac HTML artefaktov per session (index, about, pricing) — taby v preview, auto-linking cez postMessage router, ZIP export.\n\n## Ako\n1. Rozšíriť `ChatSession` o `artifacts[]` v `chat-sessions.ts`\n2. Tab bar v preview paneli\n3. `lib/artifact-router.ts` — intercept `<a href>` v sandboxe\n4. Rozšíriť `project-zip-export.ts` pre viac `.html` súborov"
+      "description": "## Čo\nViac HTML artefaktov per session (index, about, pricing) — taby v preview, auto-linking cez postMessage router, ZIP export.\n\n## Ako\n1. Rozšíriť `ChatSession` o `artifacts[]` v `chat-sessions.ts`\n2. Tab bar v preview paneli\n3. `lib/artifact-router.ts` — intercept `<a href>` v sandboxe\n4. Rozšíriť `project-zip-export.ts` pre viac `.html` súborov\n\n## Stav\nImplementované: session artifacts + migrácia, page annotations, preview tabs, artifact router bridge, ZIP `pages/*`."
     },
     {
       "title": "[TODO] Builder P3 — Sandbox Runtime Inspector",

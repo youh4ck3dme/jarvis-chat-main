@@ -103,6 +103,11 @@ import {
   updateActiveSession,
   type ChatSession,
 } from "@/lib/chat/chat-sessions"
+import {
+  findArtifactBySlug,
+  getActiveArtifact,
+  parsePageArtifactsFromContent,
+} from "@/lib/chat/session-artifacts"
 import { exportFullJarvisBackup, importFullJarvisBackup } from "@/lib/chat/jarvis-backup-client"
 import { exportJarvisProjectZip } from "@/lib/chat/project-zip-export-client"
 import {
@@ -366,12 +371,27 @@ export function ChatShell() {
     return () => media.removeEventListener("change", update)
   }, [])
 
+  const activeWorkspaceSession = useMemo(
+    () => chatSessions.find((session) => session.id === activeSessionId) ?? null,
+    [activeSessionId, chatSessions],
+  )
+  const sessionArtifacts = activeWorkspaceSession?.artifacts ?? []
+  const activeSessionArtifact = useMemo(
+    () => getActiveArtifact(sessionArtifacts, activeWorkspaceSession?.activeArtifactId),
+    [activeWorkspaceSession?.activeArtifactId, sessionArtifacts],
+  )
+
   const rawHtmlArtifact = useMemo(
     () => extractJarvisHtmlArtifact(messages),
     [messages],
   )
 
-  const displayHtmlArtifact = viewingSnapshot?.html ?? rawHtmlArtifact
+  const liveHtmlArtifact =
+    isStreaming || !activeSessionArtifact?.html
+      ? rawHtmlArtifact
+      : activeSessionArtifact.html
+
+  const displayHtmlArtifact = viewingSnapshot?.html ?? liveHtmlArtifact
 
   const livePreviewHtml = useMemo(
     () =>
@@ -1060,6 +1080,31 @@ export function ChatShell() {
             ...prev,
             createNarrativeBeat(generateId(), JARVIS_STORY_BUILD_SUCCESS),
           ])
+
+          const completedRounds = pipelineResult.completedRounds
+          const assistantContent =
+            completedRounds[completedRounds.length - 1]?.assistantContent ??
+            `\`\`\`html\n${artifact}\n\`\`\``
+          const pages = parsePageArtifactsFromContent(assistantContent)
+          const nextArtifacts =
+            pages.length > 0
+              ? pages
+              : parsePageArtifactsFromContent(`\`\`\`html\n${artifact}\n\`\`\``)
+          if (nextArtifacts.length > 0) {
+            try {
+              const nextState = updateActiveSession(loadChatSessionsState(), {
+                artifacts: nextArtifacts,
+                activeArtifactId: nextArtifacts[0]?.id ?? null,
+              })
+              persistChatSessionsState(nextState)
+              setChatSessions(nextState.sessions)
+              setViewingSnapshot(null)
+            } catch (artifactsError) {
+              Logger.warn("Failed to persist multi-artifact workspace", {
+                error: String(artifactsError),
+              })
+            }
+          }
         }
         }
       } catch (e) {
@@ -1220,6 +1265,30 @@ export function ChatShell() {
     setSnapshotRecords([])
     setPinnedSnapshotIds([])
   }, [])
+
+  const handleSelectArtifact = useCallback((artifactId: string) => {
+    try {
+      const nextState = updateActiveSession(loadChatSessionsState(), {
+        activeArtifactId: artifactId,
+      })
+      persistChatSessionsState(nextState)
+      setChatSessions(nextState.sessions)
+      setViewingSnapshot(null)
+      setWorkspaceView("artifact")
+      setArtifactTab("preview")
+    } catch (error) {
+      Logger.warn("Failed to switch artifact tab", { error: String(error) })
+    }
+  }, [])
+
+  const handleArtifactNavigate = useCallback(
+    (slug: string) => {
+      const match = findArtifactBySlug(sessionArtifacts, slug)
+      if (!match) return
+      handleSelectArtifact(match.id)
+    },
+    [handleSelectArtifact, sessionArtifacts],
+  )
 
   const clearInspectorEntries = useCallback(() => {
     setInspectorConsoleEntries([])
@@ -1395,6 +1464,10 @@ export function ChatShell() {
         showSource={artifactTab === "code"}
         showPreview={artifactTab === "preview"}
         hiddenSandbox={artifactTab === "inspector"}
+        artifacts={!viewingSnapshot ? sessionArtifacts : []}
+        activeArtifactId={!viewingSnapshot ? activeSessionArtifact?.id ?? null : null}
+        onSelectArtifact={!viewingSnapshot ? handleSelectArtifact : undefined}
+        onArtifactNavigate={!viewingSnapshot ? handleArtifactNavigate : undefined}
         onConsoleEntry={displayHtmlArtifact && !viewingSnapshot ? handleInspectorConsoleEntry : undefined}
         onNavigationEntry={displayHtmlArtifact && !viewingSnapshot ? handleInspectorNavigationEntry : undefined}
         onErrorEntry={displayHtmlArtifact && !viewingSnapshot ? handleInspectorErrorEntry : undefined}

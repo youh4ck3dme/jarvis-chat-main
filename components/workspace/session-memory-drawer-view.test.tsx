@@ -44,6 +44,8 @@ describe("SessionMemoryDrawerView", () => {
             messages: [],
             projectName: "Jarvis",
             updatedAt: new Date().toISOString(),
+            artifacts: [],
+            activeArtifactId: null,
           },
         ]}
         activeSessionId="session-a"

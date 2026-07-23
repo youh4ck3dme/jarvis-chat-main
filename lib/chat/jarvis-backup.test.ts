@@ -18,6 +18,8 @@ const baseState: ChatSessionsState = {
       messages: [],
       projectName: "Jarvis",
       updatedAt: "2026-07-10T10:00:00.000Z",
+      artifacts: [],
+      activeArtifactId: null,
     },
   ],
 };
@@ -33,6 +35,8 @@ describe("jarvis-backup", () => {
           messages: [{ id: "m1", role: "user", content: "Ahoj", createdAt: "2026-07-10T11:00:00.000Z" }],
           projectName: "Jarvis",
           updatedAt: "2026-07-10T12:00:00.000Z",
+          artifacts: [],
+          activeArtifactId: null,
         },
         {
           id: "local-1",
@@ -40,6 +44,8 @@ describe("jarvis-backup", () => {
           messages: [],
           projectName: "Jarvis",
           updatedAt: "2026-07-10T09:00:00.000Z",
+          artifacts: [],
+          activeArtifactId: null,
         },
       ],
     };

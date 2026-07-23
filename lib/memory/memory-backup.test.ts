@@ -26,6 +26,8 @@ const sessionsState: ChatSessionsState = {
       ],
       projectName: "Jarvis",
       updatedAt: "2026-07-10T10:00:00.000Z",
+      artifacts: [],
+      activeArtifactId: null,
     },
   ],
 };
@@ -80,6 +82,8 @@ describe("memory-backup roundtrip", () => {
           ],
           projectName: "Jarvis",
           updatedAt: "2026-07-10T11:00:00.000Z",
+          artifacts: [],
+          activeArtifactId: null,
         },
       ],
     };
