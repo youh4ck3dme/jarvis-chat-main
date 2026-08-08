@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ChatShell } from "@/components/chat/chat-shell";
-import { DEVICE_PRESETS } from "@/lib/test/viewport-presets";
+import { DEVICE_PRESETS, IPHONE_17_AIR } from "@/lib/test/viewport-presets";
 import {
   assertNoHorizontalOverflow,
   mockElementRects,
@@ -77,7 +77,7 @@ describe("workspace integrity across devices", () => {
   }
 
   it("iPhone 17 Air uses single-panel mobile workspace shell", async () => {
-    setTestViewport(DEVICE_PRESETS[0]);
+    setTestViewport(IPHONE_17_AIR);
 
     render(<ChatShell />);
 

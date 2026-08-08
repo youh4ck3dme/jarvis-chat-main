@@ -37,6 +37,14 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Chat layout tokens — single source of truth for shell heights/gaps */
+  --header-h: 3rem;
+  --chat-toolbar-h: 3rem;
+  --composer-input-min-h: 72px;
+  --composer-input-max-h: 200px;
+  --composer-gap: 0.75rem;
+  --chat-list-px: 1rem;
 }
 
 .dark {
@@ -95,6 +103,14 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* Chat layout tokens (inherited from :root; redeclared for clarity in dark) */
+  --header-h: 3rem;
+  --chat-toolbar-h: 3rem;
+  --composer-input-min-h: 72px;
+  --composer-input-max-h: 200px;
+  --composer-gap: 0.75rem;
+  --chat-list-px: 1rem;
 }
 
 @theme inline {
@@ -146,6 +162,12 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior-y: none;
   }
   body {
     @apply bg-canvas text-fg antialiased;
@@ -899,6 +921,21 @@
 .jarvis-workspace {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+  overflow: hidden;
+  height: 100vh; /* fallback for older browsers */
+  height: 100svh; /* stable when mobile URL bar hides */
+  height: 100dvh; /* tracks keyboard / chrome on modern browsers */
+  max-height: 100vh;
+  max-height: 100svh;
+  max-height: 100dvh;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+@media (pointer: fine) {
+  .jarvis-chat-scroll {
+    scrollbar-gutter: stable;
+  }
 }
 
 .jarvis-workspace::before {
@@ -990,11 +1027,8 @@
   );
 }
 
-/* Workspace home — pixel-anchored (no vh/dvh reflow when mobile chrome shifts) */
+/* Landing: animation lock only — height comes from .jarvis-workspace */
 .jarvis-workspace--landing {
-  height: 100svh;
-  max-height: 100svh;
-  overflow: hidden;
   overscroll-behavior: none;
   touch-action: manipulation;
 }

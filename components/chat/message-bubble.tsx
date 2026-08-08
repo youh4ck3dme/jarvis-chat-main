@@ -87,6 +87,7 @@ export function MessageBubble({ message, isStreaming = false, onEdit, onDelete }
 
   return (
     <div
+      data-testid="message-bubble"
       className={cn(
         "flex max-w-[90%] md:max-w-[80%] gap-2",
         isUser

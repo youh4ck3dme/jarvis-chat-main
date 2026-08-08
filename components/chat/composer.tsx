@@ -362,7 +362,9 @@ export function Composer({
     const textarea = textareaRef.current
     if (textarea) {
       textarea.style.height = "auto"
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 400)}px`
+      const computedMax = Number.parseInt(getComputedStyle(textarea).maxHeight, 10)
+      const maxHeight = Number.isFinite(computedMax) && computedMax > 0 ? computedMax : 200
+      textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`
     }
   }, [])
 
@@ -651,7 +653,7 @@ export function Composer({
         ) : null}
         <div
           className={cn(
-            "jarvis-composer-shell focus-ring relative flex w-full items-end gap-1.5 border border-border bg-panel glass-panel transition-none",
+            "jarvis-composer-shell focus-ring relative flex w-full @container items-end gap-1.5 border border-border bg-panel glass-panel transition-none",
             "max-md:rounded-none max-md:border-x-0 max-md:border-b-0 max-md:p-2",
             "md:gap-2 md:rounded-2xl md:p-3",
           )}
@@ -829,7 +831,7 @@ export function Composer({
             disabled={isStreaming || disabled}
             rows={3}
             className={cn(
-              "composer-input min-h-[72px] max-h-[240px] min-w-0 flex-1 resize-none bg-transparent py-3 text-[14px] leading-5 text-fg",
+              "composer-input min-h-(--composer-input-min-h) max-h-(--composer-input-max-h) min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-3 text-[16px] leading-6 text-fg",
               "placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
             )}
             aria-label="Message input"
@@ -842,7 +844,7 @@ export function Composer({
                 disabled={isStreaming || disabled}
                 aria-label={`AI model: ${currentModel.name}`}
                 className={cn(
-                  "hidden h-8 max-w-[9rem] shrink-0 items-center gap-1.5 rounded-lg border px-2 text-[12px] font-medium transition-all sm:inline-flex",
+                  "hidden h-8 max-w-[9rem] shrink-0 items-center gap-1.5 rounded-lg border px-2 text-[12px] font-medium transition-all @min-[480px]:inline-flex",
                   "glass-button-hover border-white/15 text-fg/80 backdrop-blur-sm",
                   "hover:border-white/30 hover:bg-white/8 disabled:opacity-40",
                 )}
@@ -967,8 +969,14 @@ export function Composer({
   }
 
   return (
-    <div className={cn("fixed bottom-3 md:bottom-4 left-0 right-0 px-3 md:px-4 pointer-events-none z-10", hasAnimated && "composer-intro")}>
-      <div className="relative max-w-2xl mx-auto pointer-events-auto">
+    <div
+      className={cn(
+        "shrink-0 border-t border-border bg-background px-3 pt-2 md:px-4",
+        hasAnimated && "composer-intro",
+      )}
+      style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + var(--composer-gap))" }}
+    >
+      <div className="relative mx-auto w-full max-w-2xl">
         <div
           className={cn(
             "flex flex-col gap-2 md:gap-3 p-3 md:p-4 bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 transition-all duration-200 overflow-hidden relative rounded-3xl",
@@ -1010,9 +1018,8 @@ export function Composer({
               disabled={isStreaming || disabled}
               rows={3}
               className={cn(
-                "composer-input min-h-[72px] flex-1 resize-none bg-transparent px-2 py-3 text-sm text-stone-800 dark:text-zinc-50 placeholder:text-stone-400 dark:placeholder:text-zinc-500",
+                "composer-input min-h-(--composer-input-min-h) max-h-(--composer-input-max-h) flex-1 resize-none overflow-y-auto bg-transparent px-2 py-3 text-[16px] leading-6 text-stone-800 dark:text-zinc-50 placeholder:text-stone-400 dark:placeholder:text-zinc-500",
                 "focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
-                "max-h-[112px] overflow-y-auto",
               )}
               aria-label="Message input"
             />

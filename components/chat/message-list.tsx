@@ -226,7 +226,7 @@ export function MessageList({
 
   if (!isLoaded) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center">
+      <div className="flex min-h-0 flex-1 items-center justify-center">
         <AnimatedOrb size={64} />
       </div>
     )
@@ -251,8 +251,8 @@ export function MessageList({
       onScroll={handleScroll}
       className={
         isWorkspace
-          ? "min-h-0 flex-1 space-y-3 overflow-y-auto border-none px-4 pb-4 pt-14 md:px-5 [scrollbar-color:#333_transparent] [scrollbar-width:thin]"
-          : "absolute inset-0 overflow-y-auto space-y-4 border-none px-4 pb-36 pt-16 md:px-6"
+          ? "jarvis-chat-scroll min-h-0 flex-1 space-y-3 overflow-y-auto border-none px-(--chat-list-px) pb-4 pt-4 md:px-5 [scrollbar-color:#333_transparent] [scrollbar-width:thin]"
+          : "jarvis-chat-scroll min-h-0 flex-1 space-y-4 overflow-y-auto border-none px-(--chat-list-px) py-4 md:px-6 [scrollbar-color:#333_transparent] [scrollbar-width:thin]"
       }
       role="log"
       aria-label="Chat messages"
@@ -261,7 +261,7 @@ export function MessageList({
 
       {/* Empty state (default variant only) */}
       {!isWorkspace && isEmptyLanding ? (
-        <div className="flex h-full flex-col items-center justify-center text-center">
+        <div className="flex min-h-full flex-col items-center justify-center text-center">
           <p className="mb-2 text-2xl font-semibold text-stone-800 dark:text-zinc-50">
             Hi, my name is Jarvis
           </p>

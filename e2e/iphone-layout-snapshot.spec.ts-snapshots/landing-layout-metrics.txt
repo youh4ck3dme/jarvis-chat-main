@@ -13,27 +13,27 @@
   },
   "emptyState": {
     "top": 65,
-    "bottom": 810,
+    "bottom": 798,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 745
+    "height": 733
   },
   "footer": {
-    "top": 810,
+    "top": 798,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 102
+    "height": 114
   },
   "composer": {
-    "top": 811,
+    "top": 799,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 101
+    "height": 113
   },
   "touchTargets": [
     {

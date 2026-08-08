@@ -1426,7 +1426,7 @@ export function ChatShell() {
   return (
     <div
       className={cn(
-        "jarvis-workspace flex h-dvh max-h-dvh flex-col overflow-hidden bg-background text-fg",
+        "jarvis-workspace flex flex-col overflow-hidden bg-background text-fg",
         isWorkspaceLanding && "jarvis-workspace--landing",
       )}
     >
@@ -1479,16 +1479,20 @@ export function ChatShell() {
         {!mounted || isMobile ? (
           <div className="h-full">
             {showChatPanel && (
-              <div className="relative flex h-full min-h-0 flex-col">
-                <Button
-                  onClick={clearChat}
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-3 top-3 z-10 h-11 w-11 min-h-11 min-w-11 rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
-                  aria-label="Reset chat"
-                >
-                  <MessageSquareDashed className="h-4 w-4" />
-                </Button>
+              <div className="flex h-full min-h-0 flex-col">
+                {!isWorkspaceLanding ? (
+                  <div className="flex h-(--chat-toolbar-h) shrink-0 items-center border-b border-border/60 px-3">
+                    <Button
+                      onClick={clearChat}
+                      variant="ghost"
+                      size="icon"
+                      className="h-11 w-11 min-h-11 min-w-11 rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+                      aria-label="Reset chat"
+                    >
+                      <MessageSquareDashed className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : null}
                 <MessageList
                   messages={messages}
                   isStreaming={isStreaming}
@@ -1508,16 +1512,20 @@ export function ChatShell() {
         {mounted && !isMobile ? (
           <ResizablePanelGroup direction="horizontal" className="h-full">
             <ResizablePanel defaultSize={42} minSize={28}>
-              <div className="relative flex h-full flex-col border-r border-border bg-background">
-                <Button
-                  onClick={clearChat}
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-3 top-3 z-10 h-11 w-11 min-h-11 min-w-11 rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
-                  aria-label="Reset chat"
-                >
-                  <MessageSquareDashed className="h-4 w-4" />
-                </Button>
+              <div className="flex h-full min-h-0 flex-col border-r border-border bg-background">
+                {!isWorkspaceLanding ? (
+                  <div className="flex h-(--chat-toolbar-h) shrink-0 items-center border-b border-border/60 px-3">
+                    <Button
+                      onClick={clearChat}
+                      variant="ghost"
+                      size="icon"
+                      className="h-11 w-11 min-h-11 min-w-11 rounded-lg border border-border bg-surface text-muted-foreground hover:bg-surface hover:text-fg/80 sm:h-8 sm:w-8 sm:min-h-8 sm:min-w-8"
+                      aria-label="Reset chat"
+                    >
+                      <MessageSquareDashed className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : null}
                 <MessageList
                   messages={messages}
                   isStreaming={isStreaming}
@@ -1532,7 +1540,7 @@ export function ChatShell() {
               </div>
             </ResizablePanel>
 
-            <ResizableHandle className="w-px bg-border/50" />
+            <ResizableHandle className="w-px bg-border/50" data-testid="chat-resize-handle" />
 
             <ResizablePanel defaultSize={58} minSize={32}>
               {artifactPanel}

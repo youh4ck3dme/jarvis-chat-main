@@ -21,35 +21,35 @@
   },
   "emptyState": {
     "top": 65,
-    "bottom": 810,
+    "bottom": 798,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 745
+    "height": 733
   },
   "footer": {
-    "top": 810,
+    "top": 798,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 102
+    "height": 114
   },
   "composerShell": {
-    "top": 811,
+    "top": 799,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 101
+    "height": 113
   },
   "messageInput": {
-    "top": 820,
+    "top": 808,
     "bottom": 904,
     "left": 108,
     "right": 312,
     "width": 204,
-    "height": 84
+    "height": 96
   },
   "modeControl": {
     "top": 14,
@@ -76,16 +76,16 @@
     "height": 44
   },
   "landingOrb": {
-    "top": 279,
-    "bottom": 351,
+    "top": 273,
+    "bottom": 345,
     "left": 174,
     "right": 246,
     "width": 72,
     "height": 72
   },
   "landingTitle": {
-    "top": 371,
-    "bottom": 404,
+    "top": 365,
+    "bottom": 398,
     "left": 126,
     "right": 294,
     "width": 168,
