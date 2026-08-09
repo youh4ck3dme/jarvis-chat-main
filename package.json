@@ -82,6 +82,7 @@
     "diff-dom": "^5.2.1",
     "embla-carousel-react": "8.5.1",
     "fflate": "^0.8.3",
+    "framer-motion": "^13.0.0",
     "heic2any": "^0.0.4",
     "html2canvas": "^1.4.1",
     "input-otp": "1.4.1",

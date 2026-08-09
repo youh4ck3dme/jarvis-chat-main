@@ -64,7 +64,7 @@ export function ProfileSettingsView({ onClose, className }: ProfileSettingsViewP
     <div className={cn('space-y-6', className)}>
       {/* User Profile Card */}
       <UserProfileCard
-        email={user.email}
+        email={user.email ?? ''}
         displayName={displayName}
         avatarId={avatarId}
         onUpdate={handleUpdateProfile}
