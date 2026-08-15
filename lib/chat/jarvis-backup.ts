@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { ChatSession, ChatSessionsState, StoredChatMessage } from "./chat-sessions";
 import { DEFAULT_SESSION_TITLE } from "./chat-sessions";
+import { normalizeSessionArtifacts } from "./session-artifacts";
 
 export const JARVIS_BACKUP_VERSION = 1 as const;
 
@@ -16,12 +17,22 @@ const storedMessageSchema = z.object({
   narrative: z.boolean().optional(),
 });
 
+const sessionArtifactSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  html: z.string(),
+  createdAt: z.string(),
+});
+
 const sessionSchema = z.object({
   id: z.string(),
   title: z.string(),
   messages: z.array(storedMessageSchema),
   projectName: z.string(),
   updatedAt: z.string(),
+  artifacts: z.array(sessionArtifactSchema).optional().default([]),
+  activeArtifactId: z.string().nullable().optional().default(null),
 });
 
 const sessionsStateSchema = z.object({
@@ -161,13 +172,23 @@ export function normalizeImportedSessionsState(
   sessions: ChatSessionsState,
   fallbackProjectName = "Jarvis",
 ): ChatSessionsState {
-  const normalizedSessions = sessions.sessions.map((session) => ({
-    id: session.id,
-    title: session.title?.trim() || DEFAULT_SESSION_TITLE,
-    messages: session.messages as StoredChatMessage[],
-    projectName: session.projectName?.trim() || fallbackProjectName,
-    updatedAt: session.updatedAt || new Date().toISOString(),
-  }));
+  const normalizedSessions = sessions.sessions.map((session) => {
+    const messages = session.messages as StoredChatMessage[];
+    const { artifacts, activeArtifactId } = normalizeSessionArtifacts(
+      session.artifacts,
+      session.activeArtifactId,
+    );
+
+    return {
+      id: session.id,
+      title: session.title?.trim() || DEFAULT_SESSION_TITLE,
+      messages,
+      projectName: session.projectName?.trim() || fallbackProjectName,
+      updatedAt: session.updatedAt || new Date().toISOString(),
+      artifacts,
+      activeArtifactId,
+    };
+  });
 
   const activeSessionId = normalizedSessions.some(
     (session) => session.id === sessions.activeSessionId,

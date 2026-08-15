@@ -1076,6 +1076,25 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
+/* Full-bleed mobile dock: liquid-glass .glass-panel padding/border must not inset the composer. */
+@media (max-width: 767px) {
+  [data-testid="workspace-footer"].glass-panel {
+    padding: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 0;
+  }
+
+  .jarvis-composer-shell.glass-panel {
+    padding: 0.5rem;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-radius: 0;
+  }
+}
+
 .jarvis-starter-chip {
   border: 1px solid var(--jarvis-border);
   background: var(--jarvis-panel);

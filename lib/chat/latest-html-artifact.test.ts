@@ -17,6 +17,8 @@ const sessions: ChatSession[] = [
         createdAt: "2026-07-09T10:00:00.000Z",
       },
     ],
+    artifacts: [],
+    activeArtifactId: null,
   },
   {
     id: "session-new",
@@ -31,6 +33,8 @@ const sessions: ChatSession[] = [
         createdAt: "2026-07-10T12:00:00.000Z",
       },
     ],
+    artifacts: [],
+    activeArtifactId: null,
   },
 ];
 
@@ -59,6 +63,8 @@ describe("findLatestHtmlArtifact", () => {
               createdAt: "2026-07-10T12:00:00.000Z",
             },
           ],
+          artifacts: [],
+          activeArtifactId: null,
         },
       ]),
     ).toBeNull();

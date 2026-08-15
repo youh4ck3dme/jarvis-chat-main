@@ -61,6 +61,16 @@ describe("/api/sessions/sync", () => {
           title: "Test",
           project_name: "Jarvis",
           messages: [],
+          artifacts: [
+            {
+              id: "art-1",
+              slug: "index",
+              title: "Home",
+              html: "<html><body>Home</body></html>",
+              createdAt: "2026-07-10T12:00:00.000Z",
+            },
+          ],
+          active_artifact_id: "art-1",
           updated_at: "2026-07-10T12:00:00.000Z",
           deleted_at: null,
         },
@@ -79,6 +89,43 @@ describe("/api/sessions/sync", () => {
     expect(response.status).toBe(200);
     expect(payload.data.sessions).toHaveLength(1);
     expect(payload.data.sessions[0].id).toBe("s1");
+    expect(payload.data.sessions[0].artifacts).toHaveLength(1);
+    expect(payload.data.sessions[0].activeArtifactId).toBe("art-1");
+  });
+
+  it("GET falls back when artifacts columns are missing", async () => {
+    selectMock
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: "column jarvis_chat_sessions.artifacts does not exist", code: "42703" },
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            session_id: "s1",
+            sync_key: "user-123",
+            title: "Legacy",
+            project_name: "Jarvis",
+            messages: [],
+            updated_at: "2026-07-10T12:00:00.000Z",
+            deleted_at: null,
+          },
+        ],
+        error: null,
+      });
+
+    const { GET } = await import("./route");
+    const response = await GET(
+      new Request("http://localhost/api/sessions/sync", {
+        headers: { Authorization: "Bearer test-token" },
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.data.sessions).toHaveLength(1);
+    expect(payload.data.sessions[0].artifacts).toEqual([]);
+    expect(selectMock).toHaveBeenCalledTimes(2);
   });
 
   it("POST upserts sessions for authenticated user", async () => {
@@ -101,6 +148,16 @@ describe("/api/sessions/sync", () => {
               messages: [],
               projectName: "Jarvis",
               updatedAt: "2026-07-10T12:00:00.000Z",
+              artifacts: [
+                {
+                  id: "art-1",
+                  slug: "index",
+                  title: "Home",
+                  html: "<html><body>Home</body></html>",
+                  createdAt: "2026-07-10T12:00:00.000Z",
+                },
+              ],
+              activeArtifactId: "art-1",
             },
           ],
           deletedSessionIds: ["old-1"],
@@ -113,5 +170,14 @@ describe("/api/sessions/sync", () => {
     expect(payload.data.synced).toBe(1);
     expect(upsertMock).toHaveBeenCalled();
     expect(updateMock).toHaveBeenCalled();
+    expect(upsertMock).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          artifacts: expect.arrayContaining([expect.objectContaining({ slug: "index" })]),
+          active_artifact_id: "art-1",
+        }),
+      ],
+      { onConflict: "sync_key,session_id" },
+    );
   });
 });

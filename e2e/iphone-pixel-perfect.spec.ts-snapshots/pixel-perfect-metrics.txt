@@ -13,35 +13,35 @@
   },
   "header": {
     "top": 0,
-    "bottom": 65,
+    "bottom": 96,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 65
+    "height": 96
   },
   "emptyState": {
-    "top": 65,
-    "bottom": 798,
+    "top": 96,
+    "bottom": 788,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 733
+    "height": 692
   },
   "footer": {
-    "top": 798,
+    "top": 788,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 114
+    "height": 124
   },
   "composerShell": {
-    "top": 799,
+    "top": 794,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 113
+    "height": 118
   },
   "messageInput": {
     "top": 808,
@@ -52,40 +52,40 @@
     "height": 96
   },
   "modeControl": {
-    "top": 14,
-    "bottom": 64,
+    "top": 23,
+    "bottom": 73,
     "left": 162,
     "right": 258,
     "width": 96,
     "height": 50
   },
   "menuButton": {
-    "top": 17,
-    "bottom": 61,
-    "left": 8,
-    "right": 52,
+    "top": 26,
+    "bottom": 70,
+    "left": 23,
+    "right": 67,
     "width": 44,
     "height": 44
   },
   "settingsButton": {
-    "top": 17,
-    "bottom": 61,
-    "left": 368,
-    "right": 412,
-    "width": 44,
-    "height": 44
+    "top": 25,
+    "bottom": 71,
+    "left": 352,
+    "right": 397,
+    "width": 46,
+    "height": 46
   },
   "landingOrb": {
-    "top": 273,
-    "bottom": 345,
+    "top": 283,
+    "bottom": 355,
     "left": 174,
     "right": 246,
     "width": 72,
     "height": 72
   },
   "landingTitle": {
-    "top": 365,
-    "bottom": 398,
+    "top": 375,
+    "bottom": 408,
     "left": 126,
     "right": 294,
     "width": 168,
@@ -98,8 +98,8 @@
     "composerBottomInset": 0
   },
   "symmetry": {
-    "headerLeftInset": 8,
-    "headerRightInset": 8,
+    "headerLeftInset": 23,
+    "headerRightInset": 23,
     "headerInsetDelta": 0,
     "modeControlViewportOffset": 0,
     "landingOrbCenterOffset": 0,
@@ -151,8 +151,8 @@
   ],
   "starterChips": [
     {
-      "top": 564,
-      "bottom": 608,
+      "top": 568,
+      "bottom": 612,
       "left": 25,
       "right": 125,
       "width": 100,
@@ -160,8 +160,8 @@
       "label": "Ahoj Jarvis"
     },
     {
-      "top": 564,
-      "bottom": 608,
+      "top": 568,
+      "bottom": 612,
       "left": 133,
       "right": 270,
       "width": 137,
@@ -169,8 +169,8 @@
       "label": "Čo vieš postaviť?"
     },
     {
-      "top": 564,
-      "bottom": 608,
+      "top": 568,
+      "bottom": 612,
       "left": 278,
       "right": 395,
       "width": 117,

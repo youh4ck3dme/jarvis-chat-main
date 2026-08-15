@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
+import { normalizeArtifactNavigateMessage } from "@/lib/artifact-router";
+import type { SessionArtifact } from "@/lib/chat/session-artifacts";
 import { DeployMenu } from "./deploy-menu-stub";
 import type { JarvisSourceBundle } from "../../lib/jarvis-workspace";
 import {
@@ -53,6 +55,11 @@ interface JarvisPreviewPanelProps {
   showPreview?: boolean;
   /** Replaces the static preview empty state (e.g. Orb Mind-Map). */
   emptyPreview?: React.ReactNode;
+  /** Multi-artifact workspace pages for preview tabs. */
+  artifacts?: SessionArtifact[];
+  activeArtifactId?: string | null;
+  onSelectArtifact?: (artifactId: string) => void;
+  onArtifactNavigate?: (slug: string) => void;
 }
 
 const PREVIEW_VIEWPORTS = [
@@ -80,6 +87,10 @@ export function JarvisPreviewPanel({
   showSource = true,
   showPreview = true,
   emptyPreview,
+  artifacts = [],
+  activeArtifactId = null,
+  onSelectArtifact,
+  onArtifactNavigate,
 }: JarvisPreviewPanelProps) {
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -94,7 +105,8 @@ export function JarvisPreviewPanel({
       onNavigationEntry ||
       onErrorEntry ||
       onNetworkEntry ||
-      onPerformanceEntry,
+      onPerformanceEntry ||
+      onArtifactNavigate,
   );
   const resolvedHtmlContent = useMemo(
     () => (iframeDoc && runtimeCaptureEnabled ? injectConsoleBridge(iframeDoc) : iframeDoc),
@@ -104,6 +116,7 @@ export function JarvisPreviewPanel({
   const sourceSummary = useMemo(() => summarizeJarvisSourceBundle(sourceBundle), [sourceBundle]);
   const visibleSectionCount = Number(showSource) + Number(showPreview);
   const canFullscreen = Boolean(showPreview && resolvedHtmlContent && !hiddenSandbox);
+  const showArtifactTabs = artifacts.length > 1 && Boolean(onSelectArtifact);
 
   useLockBodyScroll(isFullscreen);
 
@@ -140,6 +153,12 @@ export function JarvisPreviewPanel({
     const handler = (event: MessageEvent) => {
       if (!isTrustedPreviewMessage(event)) return;
 
+      const artifactNavigate = normalizeArtifactNavigateMessage(event.data);
+      if (artifactNavigate && onArtifactNavigate) {
+        onArtifactNavigate(artifactNavigate.slug);
+        return;
+      }
+
       const consoleEntry = normalizePreviewConsoleMessage(event.data);
       if (consoleEntry && onConsoleEntry) {
         onConsoleEntry(consoleEntry);
@@ -172,6 +191,7 @@ export function JarvisPreviewPanel({
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, [
+    onArtifactNavigate,
     onConsoleEntry,
     onErrorEntry,
     onNavigationEntry,
@@ -186,10 +206,11 @@ export function JarvisPreviewPanel({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "jarvis-output.html";
+    const active = artifacts.find((artifact) => artifact.id === activeArtifactId);
+    a.download = active ? `${active.slug}.html` : "jarvis-output.html";
     a.click();
     URL.revokeObjectURL(url);
-  }, [htmlContent]);
+  }, [activeArtifactId, artifacts, htmlContent]);
 
   const handleCopy = useCallback(async () => {
     if (!htmlContent) return;
@@ -288,6 +309,38 @@ export function JarvisPreviewPanel({
           )}
         </div>
       </div>
+
+      {showArtifactTabs && (
+        <div
+          className="flex items-center gap-1 overflow-x-auto border-b border-border/80 bg-background px-3 py-1.5"
+          data-testid="jarvis-artifact-tabs"
+          role="tablist"
+          aria-label="Site pages"
+        >
+          {artifacts.map((artifact) => {
+            const isActive = artifact.id === activeArtifactId;
+            return (
+              <button
+                key={artifact.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                data-testid={`jarvis-artifact-tab-${artifact.slug}`}
+                onClick={() => onSelectArtifact?.(artifact.id)}
+                className={cn(
+                  "shrink-0 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  isActive
+                    ? "bg-zinc-800 text-fg"
+                    : "text-muted-foreground hover:bg-surface hover:text-fg",
+                )}
+                title={`${artifact.title} (${artifact.slug}.html)`}
+              >
+                {artifact.title}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {isViewingSnapshot && (
         <div className="flex items-center justify-between gap-3 border-b border-border/80 bg-background px-4 py-2 text-xs text-muted-foreground">

@@ -194,6 +194,13 @@ describe("ChatShell", () => {
     await waitFor(() => {
       expect(screen.getByText(/rozložím v hlave/i)).toBeInTheDocument()
     })
+
+    expect(
+      await screen.findByText(/section id="hero"/i, {}, { timeout: 10000 }),
+    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Stop generating" })).not.toBeInTheDocument()
+    })
   })
 
   it("chat mode with build intent auto-starts planner when builder is unlocked", async () => {
@@ -239,6 +246,15 @@ describe("ChatShell", () => {
       },
       { timeout: 5000 },
     )
+
+    // Let the async builder round finish before cleanup; otherwise it can persist
+    // its HTML artifact into localStorage during the following test.
+    expect(
+      await screen.findByText(/section id="hero"/i, {}, { timeout: 10000 }),
+    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Stop generating" })).not.toBeInTheDocument()
+    })
   })
 
   it(
@@ -303,7 +319,9 @@ describe("ChatShell", () => {
         await screen.findByText("Ahoj! Ako ti môžem pomôcť?", {}, { timeout: 10000 }),
       ).toBeInTheDocument()
 
-      expect(screen.queryByRole("button", { name: /Live Preview/i })).not.toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.queryByRole("button", { name: /Live Preview/i })).not.toBeInTheDocument()
+      })
     },
     20000,
   )

@@ -25,6 +25,8 @@ const sessionsState: ChatSessionsState = {
           createdAt: "2026-07-10T12:00:00.000Z",
         },
       ],
+      artifacts: [],
+      activeArtifactId: null,
     },
   ],
 };
@@ -78,6 +80,55 @@ describe("project-zip-export", () => {
 
     const html = new TextDecoder().decode(entries["latest-build.html"]);
     expect(html).toContain("Coffee");
+  });
+
+  it("embeds multi-artifact pages under pages/", () => {
+    const multiPageState: ChatSessionsState = {
+      activeSessionId: "session-1",
+      sessions: [
+        {
+          id: "session-1",
+          title: "Multi site",
+          projectName: "Coffee Shop",
+          updatedAt: "2026-07-10T12:00:00.000Z",
+          messages: [],
+          artifacts: [
+            {
+              id: "a1",
+              slug: "index",
+              title: "Home",
+              html: "<html><body>Home</body></html>",
+              createdAt: "2026-07-10T12:00:00.000Z",
+            },
+            {
+              id: "a2",
+              slug: "about",
+              title: "About",
+              html: "<html><body>About</body></html>",
+              createdAt: "2026-07-10T12:00:00.000Z",
+            },
+          ],
+          activeArtifactId: "a1",
+        },
+      ],
+    };
+
+    const archive = buildProjectZipArchive({
+      sessions: multiPageState,
+      memory: { conversations: [], userProfile: null },
+      buildHistory: [],
+      projectName: "Coffee Shop",
+    });
+
+    const entries = unzipSync(archive);
+    expect(Object.keys(entries)).toContain("pages/index.html");
+    expect(Object.keys(entries)).toContain("pages/about.html");
+
+    const manifest = JSON.parse(new TextDecoder().decode(entries["manifest.json"])) as {
+      pages: Array<{ slug: string; file: string }>;
+    };
+    expect(manifest.pages).toHaveLength(2);
+    expect(new TextDecoder().decode(entries["pages/about.html"])).toContain("About");
   });
 
   it("embeds a backup.json importable via parseJarvisBackup", () => {

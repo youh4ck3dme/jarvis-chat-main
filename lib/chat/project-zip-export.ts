@@ -28,6 +28,14 @@ export type JarvisProjectManifest = {
     createdAt: string;
     htmlChars: number;
   } | null;
+  pages: Array<{
+    sessionId: string;
+    sessionTitle: string;
+    slug: string;
+    title: string;
+    file: string;
+    htmlChars: number;
+  }>;
   readme: string;
 };
 
@@ -56,14 +64,63 @@ export function buildProjectZipFilename(projectName: string, exportedAt = new Da
   return `jarvis-${slugifyProjectName(projectName)}-${date}.zip`;
 }
 
+function collectSessionPages(sessions: ChatSessionsState): Array<{
+  sessionId: string;
+  sessionTitle: string;
+  slug: string;
+  title: string;
+  file: string;
+  html: string;
+  htmlChars: number;
+}> {
+  const pages: Array<{
+    sessionId: string;
+    sessionTitle: string;
+    slug: string;
+    title: string;
+    file: string;
+    html: string;
+    htmlChars: number;
+  }> = [];
+  const usedFiles = new Set<string>();
+
+  for (const session of sessions.sessions) {
+    for (const artifact of session.artifacts ?? []) {
+      if (!artifact.html?.trim()) continue;
+      let file = `${artifact.slug || "page"}.html`;
+      if (usedFiles.has(file)) {
+        file = `${session.id.slice(0, 8)}-${file}`;
+      }
+      usedFiles.add(file);
+      pages.push({
+        sessionId: session.id,
+        sessionTitle: session.title,
+        slug: artifact.slug,
+        title: artifact.title,
+        file,
+        html: artifact.html,
+        htmlChars: artifact.html.length,
+      });
+    }
+  }
+
+  return pages;
+}
+
 function buildManifest(input: {
   projectName: string;
   sessions: ChatSessionsState;
   memory: JarvisBackupPayload["memory"];
   buildHistory: BuildHistoryRecord[];
   latestHtml: LatestHtmlArtifact | null;
+  pages: ReturnType<typeof collectSessionPages>;
   exportedAt: string;
 }): JarvisProjectManifest {
+  const pageLines =
+    input.pages.length > 0
+      ? input.pages.map((page) => `- pages/${page.file} — ${page.title} (${page.sessionTitle})`)
+      : ["- pages/ — none"];
+
   const readmeLines = [
     "Jarvis project export",
     `Project: ${input.projectName}`,
@@ -74,6 +131,7 @@ function buildManifest(input: {
     input.latestHtml
       ? `Latest HTML: ${input.latestHtml.sessionTitle} (${input.latestHtml.html.length} chars)`
       : "Latest HTML: none",
+    `Pages: ${input.pages.length}`,
     "",
     "Files:",
     "- manifest.json — export metadata",
@@ -81,6 +139,8 @@ function buildManifest(input: {
     "- build-history.json — build telemetry metadata",
     "- latest-build.html — newest HTML artifact (if any)",
     "- latest-build.meta.json — source session/message for HTML",
+    "- pages/*.html — multi-artifact workspace pages (if any)",
+    ...pageLines,
   ];
 
   return {
@@ -101,6 +161,7 @@ function buildManifest(input: {
           htmlChars: input.latestHtml.html.length,
         }
       : null,
+    pages: input.pages.map(({ html: _html, ...meta }) => meta),
     readme: readmeLines.join("\n"),
   };
 }
@@ -113,12 +174,14 @@ export function buildProjectZipArchive(input: JarvisProjectZipInput): Uint8Array
     syncKey: input.syncKey,
   });
   const latestHtml = findLatestHtmlArtifact(input.sessions.sessions);
+  const pages = collectSessionPages(input.sessions);
   const manifest = buildManifest({
     projectName: input.projectName,
     sessions: input.sessions,
     memory: input.memory,
     buildHistory: input.buildHistory,
     latestHtml,
+    pages,
     exportedAt,
   });
 
@@ -144,6 +207,10 @@ export function buildProjectZipArchive(input: JarvisProjectZipInput): Uint8Array
         2,
       ),
     );
+  }
+
+  for (const page of pages) {
+    files[`pages/${page.file}`] = strToU8(page.html);
   }
 
   return zipSync(files);

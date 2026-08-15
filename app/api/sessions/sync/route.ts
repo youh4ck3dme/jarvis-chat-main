@@ -3,9 +3,18 @@ import { z } from "zod";
 import { jsonError, jsonSuccess } from "@/lib/api-response";
 import { Logger } from "@/lib/logger";
 import type { ChatSession } from "@/lib/chat/chat-sessions";
+import { normalizeSessionArtifacts } from "@/lib/chat/session-artifacts";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import { isSupabaseSyncConfigured } from "@/lib/supabase/config";
 import { verifyRequestAuth } from "@/lib/supabase/verify-request-auth";
+
+const sessionArtifactSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  html: z.string(),
+  createdAt: z.string(),
+});
 
 const sessionSchema = z.object({
   id: z.string(),
@@ -13,6 +22,8 @@ const sessionSchema = z.object({
   messages: z.array(z.unknown()),
   projectName: z.string(),
   updatedAt: z.string(),
+  artifacts: z.array(sessionArtifactSchema).optional().default([]),
+  activeArtifactId: z.string().nullable().optional().default(null),
 });
 
 const pushBodySchema = z.object({
@@ -26,18 +37,50 @@ type RemoteSessionRow = {
   title: string;
   project_name: string;
   messages: ChatSession["messages"];
+  artifacts?: ChatSession["artifacts"] | null;
+  active_artifact_id?: string | null;
   updated_at: string;
   deleted_at: string | null;
 };
 
+const SESSION_SELECT_WITH_ARTIFACTS =
+  "session_id,sync_key,title,project_name,messages,artifacts,active_artifact_id,updated_at,deleted_at";
+const SESSION_SELECT_LEGACY =
+  "session_id,sync_key,title,project_name,messages,updated_at,deleted_at";
+
 function mapRowToSession(row: RemoteSessionRow): ChatSession {
+  const { artifacts, activeArtifactId } = normalizeSessionArtifacts(
+    row.artifacts,
+    row.active_artifact_id,
+  );
+
   return {
     id: row.session_id,
     title: row.title,
     messages: row.messages,
     projectName: row.project_name,
     updatedAt: row.updated_at,
+    artifacts,
+    activeArtifactId,
   };
+}
+
+/** True when migration 003 (artifacts columns) is not applied yet. */
+export function isMissingArtifactColumnError(
+  error: { message?: string; code?: string; details?: string } | null | undefined,
+): boolean {
+  if (!error) return false;
+  const haystack = `${error.message ?? ""} ${error.details ?? ""} ${error.code ?? ""}`.toLowerCase();
+  const mentionsColumn =
+    haystack.includes("artifacts") || haystack.includes("active_artifact_id");
+  return (
+    mentionsColumn &&
+    (haystack.includes("does not exist") ||
+      haystack.includes("could not find") ||
+      haystack.includes("schema cache") ||
+      error.code === "42703" ||
+      error.code === "PGRST204")
+  );
 }
 
 export async function GET(req: Request) {
@@ -55,19 +98,35 @@ export async function GET(req: Request) {
     return jsonError("Supabase klient nie je dostupný.", 503);
   }
 
-  const { data, error } = await supabase
+  let result: {
+    data: RemoteSessionRow[] | null;
+    error: { message?: string; code?: string; details?: string } | null;
+  } = await supabase
     .from("jarvis_chat_sessions")
-    .select("session_id,sync_key,title,project_name,messages,updated_at,deleted_at")
+    .select(SESSION_SELECT_WITH_ARTIFACTS)
     .eq("sync_key", auth.user.userId)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 
-  if (error) {
-    Logger.error("Session sync pull error", error);
+  if (result.error && isMissingArtifactColumnError(result.error)) {
+    Logger.warn(
+      "Session sync pull: artifacts columns missing — falling back until migration 003 is applied",
+      { error: String(result.error.message ?? result.error) },
+    );
+    result = await supabase
+      .from("jarvis_chat_sessions")
+      .select(SESSION_SELECT_LEGACY)
+      .eq("sync_key", auth.user.userId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false });
+  }
+
+  if (result.error) {
+    Logger.error("Session sync pull error", result.error);
     return jsonError("Nepodarilo sa načítať sessions zo Supabase.", 500);
   }
 
-  const sessions = (data ?? []).map((row) => mapRowToSession(row as RemoteSessionRow));
+  const sessions = (result.data ?? []).map((row) => mapRowToSession(row as RemoteSessionRow));
 
   return jsonSuccess({
     sessions,
@@ -97,20 +156,45 @@ export async function POST(req: Request) {
     return jsonError("Supabase klient nie je dostupný.", 503);
   }
 
-  const rows = body.sessions.map((session) => ({
+  const rowsWithArtifacts = body.sessions.map((session) => ({
     session_id: session.id,
     sync_key: auth.user.userId,
     title: session.title,
     project_name: session.projectName,
     messages: session.messages,
+    artifacts: session.artifacts,
+    active_artifact_id: session.activeArtifactId,
     updated_at: session.updatedAt,
     deleted_at: null,
   }));
 
-  if (rows.length > 0) {
-    const { error: upsertError } = await supabase
-      .from("jarvis_chat_sessions")
-      .upsert(rows, { onConflict: "sync_key,session_id" });
+  if (rowsWithArtifacts.length > 0) {
+    let upsertError = (
+      await supabase.from("jarvis_chat_sessions").upsert(rowsWithArtifacts, {
+        onConflict: "sync_key,session_id",
+      })
+    ).error;
+
+    if (upsertError && isMissingArtifactColumnError(upsertError)) {
+      Logger.warn(
+        "Session sync push: artifacts columns missing — falling back until migration 003 is applied",
+        { error: String(upsertError.message ?? upsertError) },
+      );
+      const legacyRows = body.sessions.map((session) => ({
+        session_id: session.id,
+        sync_key: auth.user.userId,
+        title: session.title,
+        project_name: session.projectName,
+        messages: session.messages,
+        updated_at: session.updatedAt,
+        deleted_at: null,
+      }));
+      upsertError = (
+        await supabase.from("jarvis_chat_sessions").upsert(legacyRows, {
+          onConflict: "sync_key,session_id",
+        })
+      ).error;
+    }
 
     if (upsertError) {
       Logger.error("Session sync push error", upsertError);
@@ -132,5 +216,8 @@ export async function POST(req: Request) {
     }
   }
 
-  return jsonSuccess({ synced: rows.length, deleted: body.deletedSessionIds?.length ?? 0 });
+  return jsonSuccess({
+    synced: rowsWithArtifacts.length,
+    deleted: body.deletedSessionIds?.length ?? 0,
+  });
 }
