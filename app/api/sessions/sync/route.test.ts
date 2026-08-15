@@ -93,6 +93,41 @@ describe("/api/sessions/sync", () => {
     expect(payload.data.sessions[0].activeArtifactId).toBe("art-1");
   });
 
+  it("GET falls back when artifacts columns are missing", async () => {
+    selectMock
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: "column jarvis_chat_sessions.artifacts does not exist", code: "42703" },
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            session_id: "s1",
+            sync_key: "user-123",
+            title: "Legacy",
+            project_name: "Jarvis",
+            messages: [],
+            updated_at: "2026-07-10T12:00:00.000Z",
+            deleted_at: null,
+          },
+        ],
+        error: null,
+      });
+
+    const { GET } = await import("./route");
+    const response = await GET(
+      new Request("http://localhost/api/sessions/sync", {
+        headers: { Authorization: "Bearer test-token" },
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.data.sessions).toHaveLength(1);
+    expect(payload.data.sessions[0].artifacts).toEqual([]);
+    expect(selectMock).toHaveBeenCalledTimes(2);
+  });
+
   it("POST upserts sessions for authenticated user", async () => {
     upsertMock.mockResolvedValue({ error: null });
     updateMock.mockResolvedValue({ error: null });

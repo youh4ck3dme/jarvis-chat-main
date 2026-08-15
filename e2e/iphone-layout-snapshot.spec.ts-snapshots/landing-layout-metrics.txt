@@ -5,35 +5,35 @@
   "clientWidth": 420,
   "header": {
     "top": 0,
-    "bottom": 65,
+    "bottom": 96,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 65
+    "height": 96
   },
   "emptyState": {
-    "top": 65,
-    "bottom": 798,
+    "top": 96,
+    "bottom": 788,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 733
+    "height": 692
   },
   "footer": {
-    "top": 798,
+    "top": 788,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 114
+    "height": 124
   },
   "composer": {
-    "top": 799,
+    "top": 794,
     "bottom": 912,
     "left": 0,
     "right": 420,
     "width": 420,
-    "height": 113
+    "height": 118
   },
   "touchTargets": [
     {
@@ -50,7 +50,7 @@
     },
     {
       "selector": "[aria-label=\"Open settings\"]",
-      "size": 44
+      "size": 46
     }
   ]
 }
